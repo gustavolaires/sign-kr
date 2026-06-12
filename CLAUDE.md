@@ -3,3 +3,20 @@
 ## Escopo do Projeto
 
 Aplicação de gestão de negócios (ERP) para controle de estoque, vendas, clientes e fornecedores, além de fornecer relatórios integrados. A aplicação é construída com Django 5.2 e Python 3.13.9 e aplicada em Desktops através do PyWebView e PyInstaller.
+
+## Documentação detalhada (`docs/`)
+
+Observações específicas de recursos e fluxos ficam na pasta [`docs/`](docs/).
+Consulte e mantenha esses documentos ao alterar as áreas correspondentes:
+
+- [`docs/produtos.md`](docs/produtos.md) — Gestão de Produtos e Fabricantes (app `sign`): models, forms, views, URLs, templates e build do Tailwind.
+
+## Convenções e aprendizados importantes
+
+- **Idiomas**: identificadores de código em inglês; `verbose_name`, labels e textos de UI em **PT-BR**. Os **paths das rotas também são em inglês** (ex.: `products/`, `manufacturers/`).
+- **Valores monetários**: armazenados **em centavos como inteiro** (`PositiveIntegerField`, sufixo `_cents`). A UI trabalha em reais; a conversão reais ↔ centavos (com `Decimal`/`ROUND_HALF_UP`) é feita **no backend** (camada de form), nunca em float.
+- **Tailwind CSS**: a app roda **offline** (PyWebView/PyInstaller), portanto **sem CDN**. Usa-se o **Tailwind CLI standalone v4** (binário não versionado, no `.gitignore`); sintaxe CSS-based em `sign/static/sign/css/input.css`; o `output.css` é **commitado**. Rebuild após mudar classes nos templates (ver `docs/produtos.md`).
+- **Templates**: existe um `base.html` reutilizável por app (`sign/templates/sign/base.html`) que os demais estendem. Use-o como base para novas telas.
+- **Forms**: herde de `StyledModelForm` (`sign/forms.py`) para aplicar a estilização Tailwind automaticamente aos widgets.
+- **CRUD**: padrão com Class-Based Views genéricas + `SuccessMessageMixin`; FKs sensíveis usam `on_delete=PROTECT` e as views tratam `ProtectedError`.
+- **Ambiente**: o Python do venv fica em `./venv/Scripts/python.exe`; comandos `manage.py` devem usá-lo.

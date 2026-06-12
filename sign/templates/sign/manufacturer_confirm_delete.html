@@ -1,0 +1,26 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Excluir fabricante · SIGN-KR{% endblock %}
+
+{% block content %}
+<h1 class="mb-6 text-2xl font-bold">Excluir fabricante</h1>
+
+<div class="max-w-xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <p class="text-gray-700">
+        Tem certeza que deseja excluir o fabricante
+        <strong>{{ manufacturer.name }}</strong>? Esta ação não pode ser desfeita.
+    </p>
+
+    <form method="post" class="mt-6 flex gap-3">
+        {% csrf_token %}
+        <button type="submit"
+                class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
+            Sim, excluir
+        </button>
+        <a href="{% url 'sign:manufacturer_list' %}"
+           class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            Cancelar
+        </a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "sign/base.html" %}
+
+{% block title %}{{ product.name }} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">{{ product.name }}</h1>
+    <div class="flex gap-3 text-sm">
+        <a href="{% url 'sign:product_update' product.pk %}"
+           class="rounded-lg bg-amber-500 px-4 py-2 font-medium text-white shadow hover:bg-amber-600">Editar</a>
+        <a href="{% url 'sign:product_list' %}"
+           class="rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50">Voltar</a>
+    </div>
+</div>
+
+<dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Descrição</dt>
+        <dd class="mt-1 text-gray-900">{{ product.description|default:"—" }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Código de barras</dt>
+        <dd class="mt-1 text-gray-900">{{ product.barcode|default:"—" }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fabricante</dt>
+        <dd class="mt-1 text-gray-900">{{ product.manufacturer.name }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Código do fabricante</dt>
+        <dd class="mt-1 text-gray-900">{{ product.manufacturer_code|default:"—" }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Quantidade</dt>
+        <dd class="mt-1 text-gray-900">{{ product.quantity }} {{ product.get_unit_type_display }}</dd>
+    </div>
+    <div class="bg-white px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Preço unitário</dt>
+        <dd class="mt-1 text-gray-900">R$ {{ product.unit_price|floatformat:2 }} <span class="text-xs text-gray-500">({{ product.unit_price_cents }} centavos)</span></dd>
+    </div>
+</dl>
+{% endblock %}

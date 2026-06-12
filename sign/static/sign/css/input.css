@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+/* Fontes de classes a serem escaneadas (templates do app sign). */
+@source "../../../templates/**/*.html";

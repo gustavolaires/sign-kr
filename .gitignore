@@ -189,6 +189,10 @@ cython_debug/
 .vscode/
 
 
+# Tailwind CLI standalone binary (baixado localmente; não versionar)
+tailwindcss.exe
+tailwindcss
+
 # Ruff stuff:
 .ruff_cache/
 

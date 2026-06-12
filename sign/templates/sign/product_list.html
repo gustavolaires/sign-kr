@@ -1,0 +1,48 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Produtos · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Produtos</h1>
+    <a href="{% url 'sign:product_create' %}"
+       class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700">
+        + Novo produto
+    </a>
+</div>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <tr>
+                <th class="px-4 py-3">Nome</th>
+                <th class="px-4 py-3">Fabricante</th>
+                <th class="px-4 py-3">Quantidade</th>
+                <th class="px-4 py-3">Preço unit.</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for product in products %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ product.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ product.manufacturer.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{% if product.unit_type == 'unid' or product.unit_type == 'pct' %}{{ product.quantity|floatformat:"0" }}{% else %}{{ product.quantity|floatformat:"-3" }}{% endif %} {{ product.get_unit_type_display }}</td>
+                    <td class="px-4 py-3 text-gray-600">R$ {{ product.unit_price|floatformat:2 }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-3 text-sm">
+                            <a href="{% url 'sign:product_detail' product.pk %}" class="text-indigo-600 hover:underline">Ver</a>
+                            <a href="{% url 'sign:product_update' product.pk %}" class="text-amber-600 hover:underline">Editar</a>
+                            <a href="{% url 'sign:product_delete' product.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhum produto cadastrado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

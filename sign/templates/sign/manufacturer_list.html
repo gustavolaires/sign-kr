@@ -1,0 +1,41 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Fabricantes · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Fabricantes</h1>
+    <a href="{% url 'sign:manufacturer_create' %}"
+       class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700">
+        + Novo fabricante
+    </a>
+</div>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <tr>
+                <th class="px-4 py-3">Nome</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for manufacturer in manufacturers %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ manufacturer.name }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-3 text-sm">
+                            <a href="{% url 'sign:manufacturer_update' manufacturer.pk %}" class="text-amber-600 hover:underline">Editar</a>
+                            <a href="{% url 'sign:manufacturer_delete' manufacturer.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2" class="px-4 py-8 text-center text-gray-500">Nenhum fabricante cadastrado.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
