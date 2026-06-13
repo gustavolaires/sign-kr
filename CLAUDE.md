@@ -10,6 +10,7 @@ Observações específicas de recursos e fluxos ficam na pasta [`docs/`](docs/).
 Consulte e mantenha esses documentos ao alterar as áreas correspondentes:
 
 - [`docs/produtos.md`](docs/produtos.md) — Gestão de Produtos e Fabricantes (app `sign`): models, forms, views, URLs, templates e build do Tailwind.
+- [`docs/carrinho.md`](docs/carrinho.md) — Carrinho de compras (app `sign`): armazenamento em cookie, fluxo AJAX/fetch + CSRF, validação de estoque no backend, UI (modal, badge, tela do carrinho) e nota sobre persistência no PyWebView.
 
 ## Convenções e aprendizados importantes
 

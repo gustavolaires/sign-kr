@@ -1,0 +1,73 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Carrinho · SIGN-KR{% endblock %}
+
+{% block content %}
+<div id="cart-app" data-update-url="{% url 'sign:cart_update' %}" data-remove-url="{% url 'sign:cart_remove' %}">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Carrinho de compras</h1>
+        <a href="{% url 'sign:product_list' %}"
+           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <i class="fa-solid fa-arrow-left w-5"></i>
+            Continuar comprando
+        </a>
+    </div>
+
+    <div id="cart-empty" class="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center text-gray-500 shadow-sm {% if cart_items %}hidden{% endif %}">
+        Seu carrinho está vazio.
+    </div>
+
+    <div id="cart-table-wrap" class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm {% if not cart_items %}hidden{% endif %}">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">Cód. barras</th>
+                    <th class="px-4 py-3">Produto</th>
+                    <th class="px-4 py-3">Fabricante</th>
+                    <th class="px-4 py-3">Disponível</th>
+                    <th class="px-4 py-3">Quantidade</th>
+                    <th class="px-4 py-3">Preço unit.</th>
+                    <th class="px-4 py-3">Subtotal</th>
+                    <th class="px-4 py-3 text-right">Ações</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in cart_items %}
+                    <tr data-id="{{ item.product.pk }}" class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.barcode|default:"—" }}</td>
+                        <td class="px-4 py-3 font-medium">{% if item.product.manufacturer_code %}[{{ item.product.manufacturer_code }}] {% endif %}{{ item.product.name }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer.name }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.quantity }} {{ item.product.unit_type }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <input type="number" min="1" step="1" max="{{ item.product.quantity }}"
+                                       value="{{ item.quantity }}"
+                                       class="cart-qty-input w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                                <button type="button" class="cart-update-btn text-blue-600 hover:text-blue-800"
+                                        title="Atualizar" aria-label="Atualizar"><i class="fa-solid fa-check fa-lg"></i></button>
+                            </div>
+                            <p class="cart-row-error mt-1 hidden text-xs text-red-600"></p>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600">R$ {{ item.unit_price|floatformat:2 }}</td>
+                        <td class="px-4 py-3 text-gray-600"><span class="cart-item-total">R$ {{ item.total_price|floatformat:2 }}</span></td>
+                        <td class="px-4 py-3">
+                            <div class="flex justify-end gap-4 text-base">
+                                <button type="button" class="cart-remove-btn text-red-600 hover:text-red-800"
+                                        title="Remover" aria-label="Remover"><i class="fa-solid fa-trash fa-lg"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="border-t border-gray-200 bg-gray-50">
+                <tr>
+                    <td colspan="6" class="px-4 py-3 text-right font-semibold">Total geral</td>
+                    <td colspan="2" class="px-4 py-3 font-bold">
+                        <span id="cart-grand-total">R$ {{ cart_total|floatformat:2 }}</span>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

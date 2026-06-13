@@ -16,6 +16,7 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
             <tr>
+                <th class="px-4 py-3">Cód. barras</th>
                 <th class="px-4 py-3">Nome</th>
                 <th class="px-4 py-3">Fabricante</th>
                 <th class="px-4 py-3">Quantidade</th>
@@ -26,12 +27,25 @@
         <tbody class="divide-y divide-gray-100">
             {% for product in products %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-medium">{{ product.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ product.barcode|default:"—" }}</td>
+                    <td class="px-4 py-3 font-medium">{% if product.manufacturer_code %}[{{ product.manufacturer_code }}] {% endif %}{{ product.name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ product.manufacturer.name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ product.quantity }} {{ product.unit_type }}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ product.unit_price|floatformat:2 }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-4 text-base">
+                            {% if product.quantity %}
+                                <button type="button"
+                                        class="cart-add-btn text-green-600 hover:text-green-800"
+                                        data-id="{{ product.pk }}" data-name="{{ product.name }}" data-max="{{ product.quantity }}"
+                                        data-unit="{{ product.unit_type }}"
+                                        data-manufacturer="{{ product.manufacturer.name }}"
+                                        data-manufacturer-code="{{ product.manufacturer_code }}"
+                                        data-barcode="{{ product.barcode }}"
+                                        title="Adicionar ao carrinho" aria-label="Adicionar ao carrinho"><i class="fa-solid fa-cart-plus fa-lg"></i></button>
+                            {% else %}
+                                <span class="text-gray-300" title="Sem estoque" aria-label="Sem estoque"><i class="fa-solid fa-cart-plus fa-lg"></i></span>
+                            {% endif %}
                             <a href="{% url 'sign:product_detail' product.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
                             <a href="{% url 'sign:product_update' product.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
                             <a href="{% url 'sign:product_delete' product.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
@@ -40,10 +54,59 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhum produto cadastrado.</td>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">Nenhum produto cadastrado.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<div id="cart-modal" data-add-url="{% url 'sign:cart_add' %}"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white px-8 py-6 shadow-xl">
+        <h2 class="text-lg font-bold">Adicionar ao carrinho</h2>
+
+        <dl class="mt-4 space-y-1 rounded-lg bg-gray-50 px-3 py-3 text-sm">
+            <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">Produto</dt>
+                <dd id="cart-modal-product" class="text-right font-medium text-gray-700"></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">Fabricante</dt>
+                <dd id="cart-modal-manufacturer" class="text-right font-medium text-gray-700"></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">Código do fabricante</dt>
+                <dd id="cart-modal-manufacturer-code" class="text-right font-medium text-gray-700"></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">Código de barras</dt>
+                <dd id="cart-modal-barcode" class="text-right font-medium text-gray-700"></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+                <dt class="text-gray-500">Quantidade disponível</dt>
+                <dd id="cart-modal-max" class="text-right font-medium text-gray-700"></dd>
+            </div>
+        </dl>
+
+        <label for="cart-modal-quantity" class="mt-4 block text-sm font-medium text-gray-700">Quantidade</label>
+        <input id="cart-modal-quantity" type="number" name="quantity" min="1" step="1" value="1"
+               class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+
+        <p id="cart-modal-error" class="mt-2 hidden rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"></p>
+
+        <div class="mt-6 flex justify-end gap-3">
+            <button id="cart-modal-confirm" type="button"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                <i class="fa-solid fa-check"></i>
+                Adicionar
+            </button>
+            <button id="cart-modal-cancel" type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
