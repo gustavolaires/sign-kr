@@ -48,8 +48,11 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 
 ## Templates (`sign/templates/sign/`)
 
-- **`base.html`** é o template base reutilizável (navbar + bloco de mensagens + `{% block content %}`); todas as telas o estendem.
-- **Exibição da quantidade na listagem** (`product_list.html`): quando `unit_type` é `unid` ou `pct`, usa `floatformat:"0"` (sem casas decimais, ex.: `100`); para as demais unidades usa `floatformat:"-3"` (até 3 casas, removendo zeros à direita, ex.: `1.5`).
+- **`base.html`** é o template base reutilizável (navbar + bloco de mensagens + `{% block content %}`); todas as telas o estendem (`{% extends "sign/base.html" %}`).
+- Os templates de cada recurso ficam em **subpastas próprias**, referenciadas em `template_name` das views:
+  - **Produtos** (`sign/products/`): `list.html`, `detail.html`, `form.html`, `confirm_delete.html`.
+  - **Fabricantes** (`sign/manufacturers/`): `list.html`, `form.html`, `confirm_delete.html`.
+- **Exibição da quantidade** (`products/list.html` e `products/detail.html`): `quantity` é inteiro, exibido como `{{ product.quantity }} {{ product.unit_type }}` (a sigla do tipo, não o label completo).
 - Preço é exibido com `R$ {{ product.unit_price|floatformat:2 }}`.
 
 ## Tailwind CSS — build offline (importante)

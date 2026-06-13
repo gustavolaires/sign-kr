@@ -46,9 +46,7 @@ class Product(models.Model):
     manufacturer_code = models.CharField(
         "Código do fabricante", max_length=64, blank=True
     )
-    quantity = models.DecimalField(
-        "Quantidade", max_digits=12, decimal_places=3, default=0
-    )
+    quantity = models.PositiveIntegerField("Quantidade", default=0)
     unit_type = models.CharField(
         "Tipo de unidade",
         max_length=4,

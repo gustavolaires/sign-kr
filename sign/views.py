@@ -20,7 +20,7 @@ from .models import Manufacturer, Product
 
 class ProductListView(ListView):
     model = Product
-    template_name = "sign/product_list.html"
+    template_name = "sign/products/list.html"
     context_object_name = "products"
 
     def get_queryset(self):
@@ -29,14 +29,14 @@ class ProductListView(ListView):
 
 class ProductDetailView(DetailView):
     model = Product
-    template_name = "sign/product_detail.html"
+    template_name = "sign/products/detail.html"
     context_object_name = "product"
 
 
 class ProductCreateView(SuccessMessageMixin, CreateView):
     model = Product
     form_class = ProductForm
-    template_name = "sign/product_form.html"
+    template_name = "sign/products/form.html"
     success_url = reverse_lazy("sign:product_list")
     success_message = "Produto criado com sucesso."
 
@@ -44,14 +44,14 @@ class ProductCreateView(SuccessMessageMixin, CreateView):
 class ProductUpdateView(SuccessMessageMixin, UpdateView):
     model = Product
     form_class = ProductForm
-    template_name = "sign/product_form.html"
+    template_name = "sign/products/form.html"
     success_url = reverse_lazy("sign:product_list")
     success_message = "Produto atualizado com sucesso."
 
 
 class ProductDeleteView(DeleteView):
     model = Product
-    template_name = "sign/product_confirm_delete.html"
+    template_name = "sign/products/confirm_delete.html"
     success_url = reverse_lazy("sign:product_list")
 
     def form_valid(self, form):
@@ -65,14 +65,14 @@ class ProductDeleteView(DeleteView):
 
 class ManufacturerListView(ListView):
     model = Manufacturer
-    template_name = "sign/manufacturer_list.html"
+    template_name = "sign/manufacturers/list.html"
     context_object_name = "manufacturers"
 
 
 class ManufacturerCreateView(SuccessMessageMixin, CreateView):
     model = Manufacturer
     form_class = ManufacturerForm
-    template_name = "sign/manufacturer_form.html"
+    template_name = "sign/manufacturers/form.html"
     success_url = reverse_lazy("sign:manufacturer_list")
     success_message = "Fabricante criado com sucesso."
 
@@ -80,14 +80,14 @@ class ManufacturerCreateView(SuccessMessageMixin, CreateView):
 class ManufacturerUpdateView(SuccessMessageMixin, UpdateView):
     model = Manufacturer
     form_class = ManufacturerForm
-    template_name = "sign/manufacturer_form.html"
+    template_name = "sign/manufacturers/form.html"
     success_url = reverse_lazy("sign:manufacturer_list")
     success_message = "Fabricante atualizado com sucesso."
 
 
 class ManufacturerDeleteView(DeleteView):
     model = Manufacturer
-    template_name = "sign/manufacturer_confirm_delete.html"
+    template_name = "sign/manufacturers/confirm_delete.html"
     success_url = reverse_lazy("sign:manufacturer_list")
 
     def form_valid(self, form):

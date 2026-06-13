@@ -11,7 +11,7 @@
         <strong>{{ manufacturer.name }}</strong>? Esta ação não pode ser desfeita.
     </p>
 
-    <form method="post" class="mt-6 flex gap-3">
+    <form method="post" class="mt-6 flex justify-end gap-3">
         {% csrf_token %}
         <button type="submit"
                 class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">

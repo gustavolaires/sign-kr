@@ -32,11 +32,11 @@
     </div>
     <div class="bg-white px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Quantidade</dt>
-        <dd class="mt-1 text-gray-900">{{ product.quantity }} {{ product.get_unit_type_display }}</dd>
+        <dd class="mt-1 text-gray-900">{{ product.quantity }} {{ product.unit_type }}</dd>
     </div>
     <div class="bg-white px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Preço unitário</dt>
-        <dd class="mt-1 text-gray-900">R$ {{ product.unit_price|floatformat:2 }} <span class="text-xs text-gray-500">({{ product.unit_price_cents }} centavos)</span></dd>
+        <dd class="mt-1 text-gray-900">R$ {{ product.unit_price|floatformat:2 }}</dd>
     </div>
 </dl>
 {% endblock %}

@@ -27,7 +27,7 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium">{{ product.name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ product.manufacturer.name }}</td>
-                    <td class="px-4 py-3 text-gray-600">{% if product.unit_type == 'unid' or product.unit_type == 'pct' %}{{ product.quantity|floatformat:"0" }}{% else %}{{ product.quantity|floatformat:"-3" }}{% endif %} {{ product.get_unit_type_display }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ product.quantity }} {{ product.unit_type }}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ product.unit_price|floatformat:2 }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-3 text-sm">

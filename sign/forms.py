@@ -47,13 +47,17 @@ class ProductForm(StyledModelForm):
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
-            # step="any" faz as setas incrementarem de 1 em 1, mas ainda
-            # aceita valores fracionados (ex.: kg, g, l).
-            "quantity": forms.NumberInput(attrs={"step": "any"}),
+            "quantity": forms.NumberInput(attrs={"step": "1", "min": "0"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # No <select> de tipo de unidade, exibe a sigla (valor) em vez do
+        # nome completo; o blank inicial, se houver, é preservado.
+        self.fields["unit_type"].choices = [
+            (value, value if value else label)
+            for value, label in self.fields["unit_type"].choices
+        ]
         # Ao editar, preenche o campo em reais a partir dos centavos armazenados.
         if self.instance and self.instance.pk:
             self.fields["unit_price"].initial = (
