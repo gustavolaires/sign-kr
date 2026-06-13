@@ -5,35 +5,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}SIGN-KR{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'sign/fontawesome/css/all.min.css' %}">
     <link rel="stylesheet" href="{% static 'sign/css/output.css' %}">
 </head>
-<body class="min-h-screen bg-gray-100 text-gray-900">
-    <nav class="bg-indigo-700 text-white shadow">
-        <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <a href="{% url 'sign:product_list' %}" class="text-lg font-bold tracking-tight">SIGN-KR</a>
-            <div class="flex gap-2">
-                <a href="{% url 'sign:product_list' %}"
-                   class="rounded-md px-3 py-2 text-sm font-medium hover:bg-indigo-600">Produtos</a>
-                <a href="{% url 'sign:manufacturer_list' %}"
-                   class="rounded-md px-3 py-2 text-sm font-medium hover:bg-indigo-600">Fabricantes</a>
-            </div>
+<body class="min-h-screen bg-canvas text-gray-900">
+    {% with url_name=request.resolver_match.url_name %}
+    <aside id="sidebar" class="fixed inset-y-0 left-0 flex w-64 flex-col bg-navy text-slate-300 transition-transform duration-200">
+        <div class="border-b border-white/10 px-6 py-6">
+            <a href="{% url 'sign:product_list' %}" class="text-lg font-bold tracking-tight text-white">
+                Kasa dos Reparos
+            </a>
         </div>
-    </nav>
 
-    <main class="mx-auto max-w-5xl px-4 py-8">
-        {% if messages %}
-            <div class="mb-6 space-y-2">
-                {% for message in messages %}
-                    <div class="rounded-lg border px-4 py-3 text-sm
-                        {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-800
-                        {% else %}border-green-300 bg-green-50 text-green-800{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+        <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-6">
+            <div>
+                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Logística</p>
+                <a href="{% url 'sign:product_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'product' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-tag w-5 text-center"></i>
+                    Produtos
+                </a>
             </div>
-        {% endif %}
 
-        {% block content %}{% endblock %}
-    </main>
+            <div>
+                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Social</p>
+                <a href="{% url 'sign:manufacturer_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'manufacturer' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-building-user w-5 text-center"></i>
+                    Fabricantes
+                </a>
+            </div>
+        </nav>
+    </aside>
+    {% endwith %}
+
+    <div id="content" class="ml-64 flex min-h-screen flex-col transition-all duration-200">
+        <header class="flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6">
+            <button id="sidebarToggle" type="button" aria-label="Exibir/ocultar menu"
+                    class="rounded-md p-2 text-gray-600 hover:bg-gray-100">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            {% block header %}{% endblock %}
+        </header>
+
+        <main class="flex-1 px-6 py-8">
+            {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for message in messages %}
+                        <div class="rounded-lg border px-4 py-3 text-sm
+                            {% if message.tags == 'error' %}border-red-300 bg-red-50 text-red-800
+                            {% else %}border-green-300 bg-green-50 text-green-800{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('sidebarToggle').addEventListener('click', function () {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('content').classList.toggle('ml-64');
+            document.getElementById('content').classList.toggle('ml-0');
+        });
+    </script>
 </body>
 </html>

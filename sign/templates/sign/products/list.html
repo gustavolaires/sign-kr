@@ -6,8 +6,9 @@
 <div class="mb-6 flex items-center justify-between">
     <h1 class="text-2xl font-bold">Produtos</h1>
     <a href="{% url 'sign:product_create' %}"
-       class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-700">
-        + Novo produto
+       class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+        <i class="fa-solid fa-plus w-5"></i>
+        Novo produto
     </a>
 </div>
 
@@ -30,10 +31,10 @@
                     <td class="px-4 py-3 text-gray-600">{{ product.quantity }} {{ product.unit_type }}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ product.unit_price|floatformat:2 }}</td>
                     <td class="px-4 py-3">
-                        <div class="flex justify-end gap-3 text-sm">
-                            <a href="{% url 'sign:product_detail' product.pk %}" class="text-indigo-600 hover:underline">Ver</a>
-                            <a href="{% url 'sign:product_update' product.pk %}" class="text-amber-600 hover:underline">Editar</a>
-                            <a href="{% url 'sign:product_delete' product.pk %}" class="text-red-600 hover:underline">Excluir</a>
+                        <div class="flex justify-end gap-4 text-base">
+                            <a href="{% url 'sign:product_detail' product.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
+                            <a href="{% url 'sign:product_update' product.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
+                            <a href="{% url 'sign:product_delete' product.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
                         </div>
                     </td>
                 </tr>

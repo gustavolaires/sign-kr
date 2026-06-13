@@ -36,3 +36,9 @@ Adicione a biblioteca em requirements.txt e execute:
 ```
 pip install -r requirements.txt
 ```
+
+## Build do CSS
+
+```
+./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify
+```
