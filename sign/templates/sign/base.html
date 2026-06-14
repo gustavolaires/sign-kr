@@ -27,6 +27,12 @@
                     <i class="fa-solid fa-tag w-5 text-center"></i>
                     Produtos
                 </a>
+                <a href="{% url 'sign:manufacturer_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'manufacturer' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-industry w-5 text-center"></i>
+                    Fabricantes
+                </a>
             </div>
 
             <div>
@@ -36,12 +42,6 @@
                    {% if 'client' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
                     <i class="fa-solid fa-users w-5 text-center"></i>
                     Clientes
-                </a>
-                <a href="{% url 'sign:manufacturer_list' %}"
-                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
-                   {% if 'manufacturer' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
-                    <i class="fa-solid fa-building-user w-5 text-center"></i>
-                    Fabricantes
                 </a>
             </div>
         </nav>
