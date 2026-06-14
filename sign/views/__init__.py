@@ -4,6 +4,13 @@ from .cart import (
     cart_remove,
     cart_update,
 )
+from .clients import (
+    ClientCreateView,
+    ClientDeleteView,
+    ClientDetailView,
+    ClientListView,
+    ClientUpdateView,
+)
 from .manufacturers import (
     ManufacturerCreateView,
     ManufacturerDeleteView,
@@ -23,6 +30,11 @@ __all__ = [
     "cart_detail",
     "cart_remove",
     "cart_update",
+    "ClientCreateView",
+    "ClientDeleteView",
+    "ClientDetailView",
+    "ClientListView",
+    "ClientUpdateView",
     "ManufacturerCreateView",
     "ManufacturerDeleteView",
     "ManufacturerListView",

@@ -1,0 +1,75 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<h1 class="mb-6 text-2xl font-bold">
+    {% if form.instance.pk %}Editar cliente{% else %}Novo cliente{% endif %}
+</h1>
+
+<div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="grow max-w-2xl">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <section>
+                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Dados básicos</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.name %}
+                    {% include "sign/clients/_field.html" with field=form.person_type %}
+                    {% include "sign/clients/_field.html" with field=form.service_provider %}
+                    {% include "sign/clients/_field.html" with field=form.cpf_cnpj %}
+                    {% include "sign/clients/_field.html" with field=form.birth_date %}
+                </div>
+            </section>
+
+            <section>
+                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Contato</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.email %}
+                    {% include "sign/clients/_field.html" with field=form.phone_primary %}
+                    {% include "sign/clients/_field.html" with field=form.phone_primary_is_whatsapp %}
+                    {% include "sign/clients/_field.html" with field=form.phone_secondary %}
+                    {% include "sign/clients/_field.html" with field=form.phone_secondary_is_whatsapp %}
+                </div>
+            </section>
+
+            <section>
+                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Endereço</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.street %}
+                    {% include "sign/clients/_field.html" with field=form.number %}
+                    {% include "sign/clients/_field.html" with field=form.complement %}
+                    {% include "sign/clients/_field.html" with field=form.district %}
+                    {% include "sign/clients/_field.html" with field=form.city %}
+                    {% include "sign/clients/_field.html" with field=form.postal_code %}
+                </div>
+            </section>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+                <a href="{% url 'sign:client_list' %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+<script src="{% static 'sign/js/masks.js' %}" defer></script>
+{% endblock %}

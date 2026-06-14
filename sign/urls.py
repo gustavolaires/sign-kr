@@ -18,6 +18,12 @@ urlpatterns = [
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/update/", views.cart_update, name="cart_update"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),
+    # Clientes
+    path("clients/", views.ClientListView.as_view(), name="client_list"),
+    path("clients/new/", views.ClientCreateView.as_view(), name="client_create"),
+    path("clients/<int:pk>/", views.ClientDetailView.as_view(), name="client_detail"),
+    path("clients/<int:pk>/edit/", views.ClientUpdateView.as_view(), name="client_update"),
+    path("clients/<int:pk>/delete/", views.ClientDeleteView.as_view(), name="client_delete"),
     # Fabricantes
     path("manufacturers/", views.ManufacturerListView.as_view(), name="manufacturer_list"),
     path("manufacturers/new/", views.ManufacturerCreateView.as_view(), name="manufacturer_create"),

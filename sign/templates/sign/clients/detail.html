@@ -1,0 +1,102 @@
+{% extends "sign/base.html" %}
+{% load sign_format %}
+
+{% block title %}{{ client.name }} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full flex-col">
+    <div class="mb-4 flex items-center justify-between">
+        <h1 class="text-2xl font-bold">{{ client.name }}</h1>
+        <a href="{% url 'sign:client_list' %}"
+           class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <i class="fa-solid fa-arrow-left w-5"></i>
+            Voltar
+        </a>
+    </div>
+
+    <div class="flex grow flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <section>
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Dados básicos</h2>
+            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tipo de pessoa</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.get_person_type_display }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Prestador de serviço</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.service_provider|yesno:"Sim,Não" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">CPF/CNPJ</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.cpf_cnpj|cpf_cnpj }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Data de nascimento</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.birth_date|date:"d/m/Y"|default:"—" }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <section>
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Contato</h2>
+            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">E-mail</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.email|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Telefone principal</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.phone_primary|phone|default:"—" }}{% if client.phone_primary and client.phone_primary_is_whatsapp %} <i class="fa-brands fa-whatsapp text-green-600" title="WhatsApp"></i>{% endif %}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Telefone alternativo</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.phone_secondary|phone|default:"—" }}{% if client.phone_secondary and client.phone_secondary_is_whatsapp %} <i class="fa-brands fa-whatsapp text-green-600" title="WhatsApp"></i>{% endif %}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                </div>
+            </dl>
+        </section>
+
+        <section>
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Endereço</h2>
+            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Rua</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.street|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Número</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.number|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Complemento</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.complement|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Bairro</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.district|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Cidade</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.city|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Código postal</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.postal_code|cep|default:"—" }}</dd>
+                </div>
+            </dl>
+        </section>
+
+        <div class="mt-2 flex justify-end gap-3 text-sm">
+            <a href="{% url 'sign:client_update' client.pk %}"
+               class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 font-medium text-white shadow hover:bg-amber-600">
+                <i class="fa-solid fa-pen-to-square"></i> Editar
+            </a>
+            <a href="{% url 'sign:client_delete' client.pk %}"
+               class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 font-medium text-white shadow hover:bg-red-700">
+                <i class="fa-solid fa-trash"></i> Deletar
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
