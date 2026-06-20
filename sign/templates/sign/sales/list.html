@@ -1,0 +1,109 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Vendas · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Vendas</h1>
+    <button type="button" id="toggle-filters" aria-controls="sale-filters" aria-expanded="true"
+            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+        <i class="fa-solid fa-filter w-5"></i>
+        Filtros
+    </button>
+</div>
+
+<form method="get" id="sale-filters" class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+            <label for="filter-client" class="mb-1 block text-xs font-medium text-gray-600">Cliente</label>
+            <input id="filter-client" type="text" name="client" value="{{ filters.client }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-date-from" class="mb-1 block text-xs font-medium text-gray-600">De</label>
+            <input id="filter-date-from" type="date" name="date_from" value="{{ filters.date_from }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-date-to" class="mb-1 block text-xs font-medium text-gray-600">Até</label>
+            <input id="filter-date-to" type="date" name="date_to" value="{{ filters.date_to }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+    </div>
+    <div class="mt-3 flex gap-2 justify-end">
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        {% if has_filters %}
+            <a href="{% url 'sign:sale_list' %}"
+               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i> Limpar
+            </a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <tr>
+                <th class="px-4 py-3">Venda</th>
+                <th class="px-4 py-3">Data</th>
+                <th class="px-4 py-3">Cliente</th>
+                <th class="px-4 py-3">Desconto</th>
+                <th class="px-4 py-3">Total</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for sale in sales %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">#{{ sale.pk }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ sale.client.name|default:"Venda avulsa" }}</td>
+                    <td class="px-4 py-3 text-gray-600">R$ {{ sale.discount|floatformat:2 }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-700">R$ {{ sale.total|floatformat:2 }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-4 text-base">
+                            <a href="{% url 'sign:sale_detail' sale.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                        {% if has_filters %}Nenhuma venda encontrada.{% else %}Nenhuma venda registrada.{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+    {% with qs="client="|add:filters.client|add:"&date_from="|add:filters.date_from|add:"&date_to="|add:filters.date_to %}
+    <div class="mt-4 flex items-center justify-center gap-2 text-sm">
+        {% if page_obj.has_previous %}
+            <a href="?{{ qs }}&page={{ page_obj.previous_page_number }}" class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-700 hover:bg-gray-50">Anterior</a>
+        {% endif %}
+        <span class="text-gray-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{{ qs }}&page={{ page_obj.next_page_number }}" class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-700 hover:bg-gray-50">Próxima</a>
+        {% endif %}
+    </div>
+    {% endwith %}
+{% endif %}
+
+<script>
+    (function () {
+        var btn = document.getElementById("toggle-filters");
+        var panel = document.getElementById("sale-filters");
+        if (!btn || !panel) return;
+        btn.addEventListener("click", function () {
+            var open = panel.classList.toggle("hidden") === false;
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    })();
+</script>
+{% endblock %}

@@ -18,6 +18,10 @@ urlpatterns = [
     path("cart/add/", views.cart_add, name="cart_add"),
     path("cart/update/", views.cart_update, name="cart_update"),
     path("cart/remove/", views.cart_remove, name="cart_remove"),
+    # Vendas
+    path("sales/checkout/", views.checkout, name="checkout"),
+    path("sales/", views.SaleListView.as_view(), name="sale_list"),
+    path("sales/<int:pk>/", views.SaleDetailView.as_view(), name="sale_detail"),
     # Clientes
     path("clients/", views.ClientListView.as_view(), name="client_list"),
     path("clients/new/", views.ClientCreateView.as_view(), name="client_create"),

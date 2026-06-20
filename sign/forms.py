@@ -2,7 +2,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from django import forms
 
-from .models import Client, Manufacturer, Product
+from .models import Client, Manufacturer, Product, Sale
 
 # Classe base aplicada aos inputs para padronizar o estilo Tailwind.
 INPUT_CLASSES = (
@@ -79,6 +79,27 @@ class ManufacturerForm(StyledModelForm):
     class Meta:
         model = Manufacturer
         fields = ["name"]
+
+
+class SaleForm(StyledModelForm):
+    """Campos simples da venda (cliente e observações).
+
+    Desconto e pagamentos são dinâmicos e ficam fora do form; são parseados do
+    POST e validados na camada de serviço (``sign.services.create_sale``).
+    """
+
+    class Meta:
+        model = Sale
+        fields = ["client", "obs"]
+        widgets = {
+            "obs": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Cliente é opcional (venda avulsa); rótulo do option vazio em PT-BR.
+        self.fields["client"].required = False
+        self.fields["client"].empty_label = "Sem cliente (venda avulsa)"
 
 
 def _only_digits(value):

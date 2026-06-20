@@ -12,6 +12,7 @@ Consulte e mantenha esses documentos ao alterar as áreas correspondentes:
 - [`docs/produtos.md`](docs/produtos.md) — Gestão de Produtos e Fabricantes (app `sign`): models, forms, views, URLs, templates e build do Tailwind.
 - [`docs/carrinho.md`](docs/carrinho.md) — Carrinho de compras (app `sign`): armazenamento em cookie, fluxo AJAX/fetch + CSRF, validação de estoque no backend, UI (modal, badge, tela do carrinho) e nota sobre persistência no PyWebView.
 - [`docs/clientes.md`](docs/clientes.md) — Cadastro de Clientes (app `sign`): model `Client` + `PersonType`, campos obrigatórios/opcionais, form, views, URLs, templates e item de menu (Social).
+- [`docs/vendas.md`](docs/vendas.md) — Vendas/Checkout (app `sign`): models `Sale`/`ProductSnapshot` (réplica reaproveitável)/`SaleItem`/`SalePayment`, serviço atômico `create_sale` (matemática em centavos, baixa de estoque, desconto e troco), telas e `checkout.js`, item de menu (Comercial).
 
 ## Convenções e aprendizados importantes
 

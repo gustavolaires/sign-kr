@@ -24,6 +24,11 @@ from .products import (
     ProductListView,
     ProductUpdateView,
 )
+from .sales import (
+    SaleDetailView,
+    SaleListView,
+    checkout,
+)
 
 __all__ = [
     "cart_add",
@@ -44,4 +49,7 @@ __all__ = [
     "ProductDetailView",
     "ProductListView",
     "ProductUpdateView",
+    "checkout",
+    "SaleDetailView",
+    "SaleListView",
 ]

@@ -36,6 +36,16 @@
             </div>
 
             <div>
+                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Comercial</p>
+                <a href="{% url 'sign:sale_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'sale' in url_name or url_name == 'checkout' %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-receipt w-5 text-center"></i>
+                    Vendas
+                </a>
+            </div>
+
+            <div>
                 <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Social</p>
                 <a href="{% url 'sign:client_list' %}"
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium

@@ -1,0 +1,227 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}Finalizar venda · SIGN-KR{% endblock %}
+
+{% block content %}
+<div id="checkout-app" data-subtotal-cents="{{ cart_total_cents }}">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold">Finalizar venda</h1>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'sign:cart_detail' %}"
+               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-arrow-left w-5"></i>
+                Voltar ao carrinho
+            </a>
+            <button type="button" id="toggle-discount" aria-controls="discount-group" aria-expanded="false"
+                    class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                <i class="fa-solid fa-tag w-5"></i>
+                Desconto
+            </button>
+        </div>
+    </div>
+
+    {# Itens (somente leitura) — revisão antes de finalizar. #}
+    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <tr>
+                    <th class="px-4 py-3">Cód. barras</th>
+                    <th class="px-4 py-3">Produto</th>
+                    <th class="px-4 py-3">Fabricante</th>
+                    <th class="px-4 py-3">Qtd.</th>
+                    <th class="px-4 py-3">Preço unit.</th>
+                    <th class="px-4 py-3 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in cart_items %}
+                    <tr>
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.barcode|default:"—" }}</td>
+                        <td class="px-4 py-3 font-medium">{% if item.product.manufacturer_code %}[{{ item.product.manufacturer_code }}] {% endif %}{{ item.product.name }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer.name }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.quantity }} {{ item.product.unit_type }}</td>
+                        <td class="px-4 py-3 text-gray-600">R$ {{ item.unit_price|floatformat:2 }}</td>
+                        <td class="px-4 py-3 text-right text-gray-600">R$ {{ item.total_price|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post" id="checkout-form" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {# Cliente e observações #}
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">Cliente e observações</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="{{ form.client.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">Cliente</label>
+                        {{ form.client }}
+                        {% for error in form.client.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div>
+                        <label for="{{ form.obs.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">Observações</label>
+                        {{ form.obs }}
+                        {% for error in form.obs.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {# Desconto da venda — oculto por padrão; alternado pelo botão "Desconto". #}
+            <div id="discount-group" class="hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">Desconto</h2>
+                <div class="flex items-end gap-3">
+                    <div>
+                        <label for="discount-mode" class="mb-1 block text-sm font-medium text-gray-700">Tipo</label>
+                        <select id="discount-mode" name="discount_mode"
+                                class="rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                            <option value="value" {% if discount_mode == 'value' %}selected{% endif %}>R$ (valor)</option>
+                            <option value="percent" {% if discount_mode == 'percent' %}selected{% endif %}>% (percentual)</option>
+                        </select>
+                    </div>
+                    <div class="grow">
+                        <label for="discount-amount" class="mb-1 block text-sm font-medium text-gray-700">
+                            Valor do desconto <span id="discount-suffix" class="text-gray-400"></span>
+                        </label>
+                        <input id="discount-amount" name="discount_amount" type="text" inputmode="decimal"
+                               value="{{ discount_amount }}"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                    </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">Desconto aplicado pelo vendedor sobre o total da venda.</p>
+            </div>
+        </div>
+
+        {# Pagamentos (dinâmico) #}
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Pagamentos</h2>
+                <button type="button" id="add-payment"
+                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-plus"></i> Adicionar pagamento
+                </button>
+            </div>
+
+            <div id="payments-list" class="space-y-3">
+                {% for payment in payments %}
+                    <div class="payment-row">
+                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+                            <div class="sm:col-span-4">
+                                <label class="mb-1 block text-xs font-medium text-gray-600">Forma</label>
+                                <select name="payment_type"
+                                        class="payment-type w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                                    {% for value, label in payment_types %}
+                                        <option value="{{ value }}" {% if value == payment.payment_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="sm:col-span-4">
+                                <label class="mb-1 block text-xs font-medium text-gray-600">Valor (R$)</label>
+                                <input name="payment_value" type="text" inputmode="decimal" value="{{ payment.value }}"
+                                       class="payment-value w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                            </div>
+                            <div class="payment-installments-wrap sm:col-span-3">
+                                <label class="mb-1 block text-xs font-medium text-gray-600">Parcelas</label>
+                                <input name="payment_installments" type="number" min="1" step="1" value="{{ payment.installments|default:1 }}"
+                                       class="payment-installments w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                            </div>
+                            <div class="sm:col-span-1 sm:col-start-12 sm:text-right">
+                                <button type="button" class="remove-payment p-2 text-red-600 hover:text-red-800" title="Remover" aria-label="Remover pagamento">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="sm:grid sm:grid-cols-12 sm:gap-3">
+                            <div class="sm:col-span-8 sm:col-start-5">
+                                <button type="button" data-fill="0" style="display:none"
+                                        class="payment-hint mt-1 cursor-pointer items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-100"></button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# Resumo (recalculado ao vivo no JS; o servidor é autoritativo). #}
+        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">Resumo</h2>
+            <dl class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Subtotal</dt>
+                    <dd class="font-medium text-gray-700" id="summary-subtotal">R$ {{ cart_total|floatformat:2 }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Desconto</dt>
+                    <dd class="font-medium text-gray-700" id="summary-discount">R$ 0,00</dd>
+                </div>
+                <div class="flex justify-between border-t border-gray-200 pt-2 text-base">
+                    <dt class="font-semibold">Total</dt>
+                    <dd class="font-bold text-gray-900" id="summary-total">R$ {{ cart_total|floatformat:2 }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Pago</dt>
+                    <dd class="font-medium text-gray-700" id="summary-paid">R$ 0,00</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Troco</dt>
+                    <dd class="font-medium text-gray-700" id="summary-change">R$ 0,00</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'sign:cart_detail' %}"
+               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+            </a>
+            <button type="submit" id="checkout-submit"
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700">
+                <i class="fa-solid fa-check"></i> Finalizar venda
+            </button>
+        </div>
+    </form>
+
+    {# Modelo de linha de pagamento para novas linhas adicionadas via JS. #}
+    <template id="payment-row-template">
+        <div class="payment-row">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+            <div class="sm:col-span-4">
+                <label class="mb-1 block text-xs font-medium text-gray-600">Forma</label>
+                <select name="payment_type"
+                        class="payment-type w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                    {% for value, label in payment_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="sm:col-span-4">
+                <label class="mb-1 block text-xs font-medium text-gray-600">Valor (R$)</label>
+                <input name="payment_value" type="text" inputmode="decimal"
+                       class="payment-value w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+            </div>
+            <div class="payment-installments-wrap sm:col-span-3">
+                <label class="mb-1 block text-xs font-medium text-gray-600">Parcelas</label>
+                <input name="payment_installments" type="number" min="1" step="1" value="1"
+                       class="payment-installments w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+            </div>
+            <div class="sm:col-span-1 sm:col-start-12 sm:text-right">
+                <button type="button" class="remove-payment p-2 text-red-600 hover:text-red-800" title="Remover" aria-label="Remover pagamento">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            </div>
+            <div class="sm:grid sm:grid-cols-12 sm:gap-3">
+                <div class="sm:col-span-8 sm:col-start-5">
+                    <button type="button" data-fill="0" style="display:none"
+                            class="payment-hint mt-1 cursor-pointer items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-100"></button>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+
+<script src="{% static 'sign/js/checkout.js' %}" defer></script>
+{% endblock %}

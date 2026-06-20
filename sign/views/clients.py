@@ -2,6 +2,8 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db.models import ProtectedError
+from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -115,6 +117,13 @@ class ClientDeleteView(DeleteView):
     success_url = reverse_lazy("sign:client_list")
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            messages.error(
+                self.request,
+                "Não é possível excluir: há vendas vinculadas a este cliente.",
+            )
+            return redirect("sign:client_list")
         messages.success(self.request, "Cliente excluído com sucesso.")
         return response
