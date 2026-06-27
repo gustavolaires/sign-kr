@@ -57,8 +57,14 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
   - **Header** branco no topo com um botão `fa-bars` (`id="sidebarToggle"`) que mostra/oculta o side menu via um pequeno `<script>` no fim do `<body>` (alterna `-translate-x-full` na sidebar e `ml-64`/`ml-0` no `#content`). Há um `{% block header %}` reservado para botões futuros.
   - Mantém o bloco de mensagens e o `{% block content %}`.
 - Os templates de cada recurso ficam em **subpastas próprias**, referenciadas em `template_name` das views:
-  - **Produtos** (`sign/products/`): `list.html`, `detail.html`, `form.html`, `confirm_delete.html`.
+  - **Produtos** (`sign/products/`): `list.html`, `detail.html`, `form.html`, `_field.html`, `confirm_delete.html`.
   - **Fabricantes** (`sign/manufacturers/`): `list.html`, `form.html`, `confirm_delete.html`.
+- **Forms seccionados** (cabeçalho de seção navy — ver
+  [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#forms)):
+  - **Produto**: *Dados básicos* (nome, descrição, código de barras), *Fabricante*
+    (fabricante, código do fabricante) e *Estoque e preço* (quantidade, tipo de
+    unidade, preço unitário). Campos via partial `products/_field.html`.
+  - **Fabricante**: seção única *Dados básicos* (nome).
 - **Telas de form e exclusão**: o conteúdo ocupa o espaço inteiro disponível (`flex min-h-full`); cards menores ficam centralizados. As **ações de listagem** são ícones (`fa-eye`, `fa-pen-to-square`, `fa-trash`) com `title`/`aria-label`; os **botões** usam ícones: Salvar=`fa-check`, excluir=`fa-trash`, Cancelar=`fa-xmark`, Voltar=`fa-arrow-left`. A tela de **detalhes** mostra o `dl` num card branco e os botões Editar/Deletar/Voltar abaixo.
 - **Exibição da quantidade** (`products/list.html` e `products/detail.html`): `quantity` é inteiro, exibido como `{{ product.quantity }} {{ product.unit_type }}` (a sigla do tipo, não o label completo).
 - Preço é exibido com `R$ {{ product.unit_price|floatformat:2 }}`.
