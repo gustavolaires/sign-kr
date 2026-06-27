@@ -17,7 +17,7 @@ leia antes de alterar o carrinho.
     `unit_price` (reais) e `total_price` (reais).
   - `total_price_cents()`/`total_price()`: total em **centavos** (inteiro) e em
     reais — cálculo monetário sempre sobre centavos, **nunca em float** (convenção
-    do projeto; ver `docs/produtos.md`).
+    do projeto; ver [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#valores-monetários--centavos-inteiros)).
   - `save(response)`: grava o cookie com `max_age = 30 dias` e `samesite="Lax"`.
 - **As escritas são feitas pelas views**, que validam e chamam `cart.save(response)`
   na resposta JSON. O cookie é a fonte de verdade; o servidor só o lê para
@@ -71,7 +71,8 @@ leia antes de alterar o carrinho.
 ## Build do Tailwind
 
 Novas classes (modal, badge) exigem rebuild do `output.css` (committado, app
-offline) — ver `docs/produtos.md`:
+offline) — ver
+[`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build):
 
 ```
 ./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify

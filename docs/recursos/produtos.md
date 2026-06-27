@@ -63,40 +63,17 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 - **Exibição da quantidade** (`products/list.html` e `products/detail.html`): `quantity` é inteiro, exibido como `{{ product.quantity }} {{ product.unit_type }}` (a sigla do tipo, não o label completo).
 - Preço é exibido com `R$ {{ product.unit_price|floatformat:2 }}`.
 
-## Tailwind CSS — build offline (importante)
+## Build offline (Tailwind, paleta, ícones)
 
-A app é empacotada para desktop **offline** (PyWebView/PyInstaller), então **não** usamos CDN.
+São **convenções transversais** — documentadas uma única vez em
+[`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#app-offline--tailwind-paleta-e-ícones).
+Em resumo: app offline (sem CDN), Tailwind CLI v4 com `output.css` **commitado**
+(rebuild após mudar classes), paleta `navy`/`navy-hover`/`canvas` + `blue-600`
+(sem `indigo`) e FontAwesome Free local.
 
-- Usa-se o **Tailwind CLI standalone v4** (binário, sem Node/npm). O binário `tailwindcss.exe` fica na raiz e **não é versionado** (está no `.gitignore`).
-- Sintaxe **v4** (CSS-based, não há `tailwind.config.js`): o arquivo de entrada `sign/static/sign/css/input.css` usa `@import "tailwindcss";` + `@source "../../../templates/**/*.html";`.
-- O **`output.css` é commitado** no repositório para funcionar offline no app empacotado.
-- Comando de build (rodar sempre que classes mudarem nos templates):
-  ```
-  ./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify
-  ```
-- Adicionar `--watch` durante o desenvolvimento.
-
-### Paleta de cores (tokens `@theme`)
-
-O `input.css` define cores customizadas via `@theme`, expostas como utilitários Tailwind:
-
-| Token | Valor | Uso |
-|---|---|---|
-| `navy` | `#1b2a4e` | fundo do side menu |
-| `navy-hover` | `#25365e` | hover dos itens do menu |
-| `canvas` | `#eef1f6` | fundo da área de conteúdo (`<body>`) |
-
-O azul de **destaque/ação** (item ativo do menu, botões primários, link "Ver") é o **`blue-600`** nativo do Tailwind. **Não use `indigo`** — foi substituído por `blue` em toda a UI.
-
-## Ícones — FontAwesome Free (offline)
-
-Como o app roda offline, o **FontAwesome Free** é servido **localmente** (sem CDN):
-
-- Assets em **`sign/static/sign/fontawesome/`** (`css/all.min.css` + `webfonts/`), **commitados** no repositório. Versão **6.7.2**.
-- Linkado no `base.html` (`{% static 'sign/fontawesome/css/all.min.css' %}`) **antes** do `output.css`.
-- Uso nos templates: `<i class="fa-solid fa-NOME"></i>` (apenas o estilo **solid** é usado).
-- Ícones em uso: menu `fa-tag`/`fa-building-user`; header `fa-bars`; ações `fa-eye`/`fa-pen-to-square`/`fa-trash`; botões `fa-check`/`fa-xmark`/`fa-arrow-left`/`fa-plus`.
-- Para **adicionar/atualizar** os assets, baixe o pacote "web" do FontAwesome Free e copie `css/all.min.css` + `webfonts/` para a pasta acima (o CSS referencia `../webfonts/`).
+Ícones desta área: menu `fa-tag` (Produtos) / `fa-industry` (Fabricantes);
+ações `fa-eye`/`fa-pen-to-square`/`fa-trash`; botões `fa-check`/`fa-xmark`/
+`fa-arrow-left`/`fa-plus`.
 
 ## Verificação rápida
 

@@ -108,7 +108,8 @@ Item **Despesas** (`fa-money-bill-wave`) na nova seção **Financeiro** do
 ## Build / migrações
 
 - Migração: `0005_expense_expenseinstallment`.
-- Rebuild Tailwind após mexer em classes:
+- Rebuild Tailwind após mexer em classes (ver
+  [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):
   `./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify`.
 
 ## Verificação rápida

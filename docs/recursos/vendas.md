@@ -81,8 +81,9 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
   pagamento dinâmicas, alternância desconto %/R$, parcelas só no crédito,
   recálculo ao vivo de subtotal/desconto/total/pago/troco (**só exibição** — o
   backend é autoritativo) e bloqueio de duplo-submit.
-- **Tailwind**: ao mudar classes nos templates, rebuild do `output.css`
-  (app offline, sem CDN — ver `docs/produtos.md`):
+- **Tailwind**: ao mudar classes nos templates, rebuild do `output.css` (app
+  offline, sem CDN — ver
+  [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):
   `./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify`.
 
 ## Decisões deixadas para depois

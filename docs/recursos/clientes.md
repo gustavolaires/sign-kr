@@ -116,7 +116,7 @@ Não há validação de dígitos verificadores nem obrigatoriedade de formato �
 ## Build do Tailwind
 
 Mesma regra das outras áreas — rebuild do `output.css` após mudar classes nos templates
-(ver [`produtos.md`](produtos.md#tailwind-css--build-offline-importante)):
+(ver [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):
 ```
 ./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify
 ```
