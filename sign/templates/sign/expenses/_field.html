@@ -1,0 +1,22 @@
+{% comment %}Renderiza um campo do form de despesa (checkbox inline ou label acima){% endcomment %}
+{% if field.field.widget.input_type == "checkbox" %}
+    <div class="flex items-center gap-2">
+        {{ field }}
+        <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700">
+            {{ field.label }}
+        </label>
+    </div>
+{% else %}
+    <div>
+        <label for="{{ field.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">
+            {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+        </label>
+        {{ field }}
+        {% if field.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+        {% endif %}
+    </div>
+{% endif %}
+{% for error in field.errors %}
+    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+{% endfor %}

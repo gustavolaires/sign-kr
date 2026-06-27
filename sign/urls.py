@@ -28,6 +28,17 @@ urlpatterns = [
     path("clients/<int:pk>/", views.ClientDetailView.as_view(), name="client_detail"),
     path("clients/<int:pk>/edit/", views.ClientUpdateView.as_view(), name="client_update"),
     path("clients/<int:pk>/delete/", views.ClientDeleteView.as_view(), name="client_delete"),
+    # Despesas
+    path("expenses/", views.ExpenseListView.as_view(), name="expense_list"),
+    path("expenses/new/", views.ExpenseCreateView.as_view(), name="expense_create"),
+    path("expenses/<int:pk>/", views.ExpenseDetailView.as_view(), name="expense_detail"),
+    path("expenses/<int:pk>/edit/", views.ExpenseUpdateView.as_view(), name="expense_update"),
+    path("expenses/<int:pk>/delete/", views.ExpenseDeleteView.as_view(), name="expense_delete"),
+    # Parcelas de despesa
+    path("expenses/<int:expense_pk>/installments/new/", views.ExpenseInstallmentCreateView.as_view(), name="installment_create"),
+    path("installments/<int:pk>/edit/", views.ExpenseInstallmentUpdateView.as_view(), name="installment_update"),
+    path("installments/<int:pk>/delete/", views.ExpenseInstallmentDeleteView.as_view(), name="installment_delete"),
+    path("installments/<int:pk>/pay/", views.installment_pay, name="installment_pay"),
     # Fabricantes
     path("manufacturers/", views.ManufacturerListView.as_view(), name="manufacturer_list"),
     path("manufacturers/new/", views.ManufacturerCreateView.as_view(), name="manufacturer_create"),

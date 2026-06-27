@@ -1,0 +1,117 @@
+{% extends "sign/base.html" %}
+
+{% block title %}{% if form.instance.pk %}Editar despesa{% else %}Nova despesa{% endif %} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">
+        {% if form.instance.pk %}Editar despesa{% else %}Nova despesa{% endif %}
+    </h1>
+    <a href="{% if form.instance.pk %}{% url 'sign:expense_detail' form.instance.pk %}{% else %}{% url 'sign:expense_list' %}{% endif %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="grow max-w-2xl">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <section class="space-y-5">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Dados básicos</h2>
+                {% include "sign/expenses/_field.html" with field=form.name %}
+                {% include "sign/expenses/_field.html" with field=form.description %}
+                {% include "sign/expenses/_field.html" with field=form.recurrent %}
+            </section>
+
+            {# Bloco da despesa isolada (parcelamento). #}
+            <section id="block-isolated" class="space-y-5">
+                {% if not form.instance.pk %}
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Parcelamento</h2>
+                    {% include "sign/expenses/_field.html" with field=form.installment_total %}
+                    {% include "sign/expenses/_field.html" with field=form.first_due_date %}
+                    <p id="warn-first-due" class="hidden text-xs text-amber-600">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Atenção: esta data de vencimento já passou.
+                    </p>
+                {% endif %}
+            </section>
+
+            {# Bloco da despesa recorrente. #}
+            <section id="block-recurrent" class="space-y-5">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Recorrência</h2>
+                {% include "sign/expenses/_field.html" with field=form.scheduled_for %}
+                {% if not form.instance.pk %}
+                    {% include "sign/expenses/_field.html" with field=form.months_ahead %}
+                {% endif %}
+            </section>
+
+            {% if not form.instance.pk %}
+                <section class="space-y-5">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Valor</h2>
+                    {% include "sign/expenses/_field.html" with field=form.value %}
+                    <p class="text-xs text-gray-500">O valor é aplicado a todas as parcelas geradas. Para valores variáveis, edite cada parcela depois de criar.</p>
+                </section>
+            {% endif %}
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+                <a href="{% if form.instance.pk %}{% url 'sign:expense_detail' form.instance.pk %}{% else %}{% url 'sign:expense_list' %}{% endif %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+    (function () {
+        var rec = document.getElementById("id_recurrent");
+        var blockRec = document.getElementById("block-recurrent");
+        var blockIso = document.getElementById("block-isolated");
+        if (!rec) return;
+        function sync() {
+            var on = rec.checked;
+            if (blockRec) blockRec.classList.toggle("hidden", !on);
+            if (blockIso) blockIso.classList.toggle("hidden", on);
+        }
+        rec.addEventListener("change", sync);
+        sync();
+    })();
+
+    // Aviso (não bloqueia) quando o 1º vencimento já passou.
+    (function () {
+        var input = document.getElementById("id_first_due_date");
+        var warn = document.getElementById("warn-first-due");
+        if (!input || !warn) return;
+        function today() {
+            var d = new Date();
+            return d.getFullYear() + "-"
+                + String(d.getMonth() + 1).padStart(2, "0") + "-"
+                + String(d.getDate()).padStart(2, "0");
+        }
+        var iso = today();
+        function check() {
+            warn.classList.toggle("hidden", !(input.value && input.value < iso));
+        }
+        input.addEventListener("change", check);
+        input.addEventListener("input", check);
+        check();
+    })();
+</script>
+{% endblock %}

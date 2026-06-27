@@ -46,6 +46,16 @@
             </div>
 
             <div>
+                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Financeiro</p>
+                <a href="{% url 'sign:expense_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'expense' in url_name or 'installment' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-money-bill-wave w-5 text-center"></i>
+                    Despesas
+                </a>
+            </div>
+
+            <div>
                 <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Social</p>
                 <a href="{% url 'sign:client_list' %}"
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium

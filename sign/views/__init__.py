@@ -11,6 +11,17 @@ from .clients import (
     ClientListView,
     ClientUpdateView,
 )
+from .expenses import (
+    ExpenseCreateView,
+    ExpenseDeleteView,
+    ExpenseDetailView,
+    ExpenseInstallmentCreateView,
+    ExpenseInstallmentDeleteView,
+    ExpenseInstallmentUpdateView,
+    ExpenseListView,
+    ExpenseUpdateView,
+    installment_pay,
+)
 from .manufacturers import (
     ManufacturerCreateView,
     ManufacturerDeleteView,
@@ -40,6 +51,15 @@ __all__ = [
     "ClientDetailView",
     "ClientListView",
     "ClientUpdateView",
+    "ExpenseCreateView",
+    "ExpenseDeleteView",
+    "ExpenseDetailView",
+    "ExpenseInstallmentCreateView",
+    "ExpenseInstallmentDeleteView",
+    "ExpenseInstallmentUpdateView",
+    "ExpenseListView",
+    "ExpenseUpdateView",
+    "installment_pay",
     "ManufacturerCreateView",
     "ManufacturerDeleteView",
     "ManufacturerListView",

@@ -1,7 +1,9 @@
 import hashlib
 import json
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Manufacturer(models.Model):
@@ -357,3 +359,107 @@ class SalePayment(models.Model):
     def value(self):
         """Valor em reais (somente leitura)."""
         return self.value_cents / 100
+
+
+class Expense(models.Model):
+    """Despesa (definição). As ocorrências/parcelas ficam em ``ExpenseInstallment``.
+
+    Uma despesa pode ser isolada (``recurrent=False``) ou recorrente
+    (``recurrent=True``), caso em que ``scheduled_for`` guarda o dia previsto de
+    vencimento (1–31) e as parcelas são geradas por horizonte (próximos N meses).
+    "Parcela única vs múltiplas" e "valor fixo vs variável" são resolvidos pelas
+    parcelas filhas: cada uma tem seu próprio valor e vencimento.
+    """
+
+    name = models.CharField("Nome", max_length=200)
+    description = models.TextField("Descrição", blank=True)
+    recurrent = models.BooleanField("Recorrente", default=False)
+    scheduled_for = models.PositiveSmallIntegerField(
+        "Dia previsto de vencimento",
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(31)],
+        help_text="Dia do mês (1–31) usado quando a despesa é recorrente.",
+    )
+    created_at = models.DateTimeField("Criada em", auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Despesa"
+        verbose_name_plural = "Despesas"
+        ordering = ["-id"]
+
+    def __str__(self):
+        return self.name
+
+
+class ExpenseInstallment(models.Model):
+    """Parcela/ocorrência de uma despesa.
+
+    Os valores ficam em centavos (inteiro). O ``status`` é derivado (não
+    armazenado) a partir do valor pago e da data de vencimento.
+    """
+
+    PENDING = "pending"
+    PARTIAL = "partial"
+    PAID = "paid"
+    OVERDUE = "overdue"
+
+    STATUS_LABELS = {
+        PENDING: "Pendente",
+        PARTIAL: "Parcial",
+        PAID: "Pago",
+        OVERDUE: "Atrasado",
+    }
+
+    expense = models.ForeignKey(
+        Expense,
+        on_delete=models.CASCADE,
+        related_name="installments",
+        verbose_name="Despesa",
+    )
+    installment_current = models.PositiveIntegerField("Parcela", default=1)
+    installment_total = models.PositiveIntegerField("Total de parcelas", default=1)
+    value_cents = models.PositiveIntegerField("Valor (centavos)", default=0)
+    due_date = models.DateField("Data de vencimento")
+    paid_value_cents = models.PositiveIntegerField("Valor pago (centavos)", default=0)
+    paid_at = models.DateField("Data de pagamento", null=True, blank=True)
+    created_at = models.DateTimeField("Criada em", auto_now_add=True)
+    updated_at = models.DateTimeField("Atualizada em", auto_now=True)
+
+    class Meta:
+        verbose_name = "Parcela"
+        verbose_name_plural = "Parcelas"
+        ordering = ["due_date", "installment_current"]
+
+    def __str__(self):
+        return f"{self.installment_current}/{self.installment_total} — {self.expense.name}"
+
+    @property
+    def value(self):
+        """Valor em reais (somente leitura)."""
+        return self.value_cents / 100
+
+    @property
+    def paid_value(self):
+        """Valor pago em reais (somente leitura)."""
+        return self.paid_value_cents / 100
+
+    @property
+    def status(self):
+        """Situação derivada: pago / parcial / atrasado / pendente.
+
+        Prioridade: quitada (pago ≥ devido) > paga em parte > vencida em aberto
+        > pendente. Usa a data local atual para detectar atraso.
+        """
+        if self.value_cents and self.paid_value_cents >= self.value_cents:
+            return self.PAID
+        if self.paid_value_cents > 0:
+            return self.PARTIAL
+        if self.due_date and self.due_date < timezone.localdate():
+            return self.OVERDUE
+        return self.PENDING
+
+    @property
+    def status_label(self):
+        """Rótulo PT-BR da situação (para exibição)."""
+        return self.STATUS_LABELS[self.status]

@@ -1,8 +1,17 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from django import forms
+from django.utils import timezone
 
-from .models import Client, Manufacturer, Product, Sale
+from .models import (
+    Client,
+    Expense,
+    ExpenseInstallment,
+    Manufacturer,
+    Product,
+    Sale,
+)
+from .services import reais_to_cents
 
 # Classe base aplicada aos inputs para padronizar o estilo Tailwind.
 INPUT_CLASSES = (
@@ -162,3 +171,129 @@ class ClientForm(StyledModelForm):
 
     def clean_postal_code(self):
         return _only_digits(self.cleaned_data.get("postal_code"))
+
+
+class ExpenseForm(StyledModelForm):
+    """Cadastro de despesa: definição + parâmetros de geração das parcelas.
+
+    Os campos de geração (``value``, ``installment_total``, ``first_due_date``,
+    ``months_ahead``) não pertencem ao model; são consumidos pela view via
+    ``services.create_expense``. A validação por modo (recorrente vs isolada)
+    fica no ``clean()``.
+    """
+
+    value = forms.DecimalField(
+        label="Valor da parcela (R$)", max_digits=12, decimal_places=2, min_value=0
+    )
+    installment_total = forms.IntegerField(
+        label="Número de parcelas", min_value=1, initial=1, required=False
+    )
+    first_due_date = forms.DateField(
+        label="Data do 1º vencimento",
+        required=False,
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+    months_ahead = forms.IntegerField(
+        label="Gerar parcelas (meses)", min_value=1, initial=12, required=False
+    )
+
+    class Meta:
+        model = Expense
+        fields = ["name", "description", "recurrent", "scheduled_for"]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "scheduled_for": forms.NumberInput(
+                attrs={"min": "1", "max": "31", "step": "1"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # 1º vencimento já vem preenchido com a data de hoje.
+        self.fields["first_due_date"].initial = timezone.localdate()
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("recurrent"):
+            if not cleaned.get("scheduled_for"):
+                self.add_error(
+                    "scheduled_for", "Obrigatório para despesa recorrente."
+                )
+            if not cleaned.get("months_ahead"):
+                self.add_error("months_ahead", "Informe o horizonte em meses.")
+        else:
+            if not cleaned.get("first_due_date"):
+                self.add_error(
+                    "first_due_date", "Informe a data do primeiro vencimento."
+                )
+            if not cleaned.get("installment_total"):
+                self.add_error(
+                    "installment_total", "Informe o número de parcelas."
+                )
+        return cleaned
+
+
+class ExpenseUpdateForm(StyledModelForm):
+    """Edição apenas da definição da despesa (as parcelas são editadas à parte)."""
+
+    class Meta:
+        model = Expense
+        fields = ["name", "description", "recurrent", "scheduled_for"]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "scheduled_for": forms.NumberInput(
+                attrs={"min": "1", "max": "31", "step": "1"}
+            ),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("recurrent") and not cleaned.get("scheduled_for"):
+            self.add_error("scheduled_for", "Obrigatório para despesa recorrente.")
+        return cleaned
+
+
+class ExpenseInstallmentForm(StyledModelForm):
+    """Edição/criação de uma parcela isolada (valor variável e vencimento)."""
+
+    value = forms.DecimalField(
+        label="Valor (R$)", max_digits=12, decimal_places=2, min_value=0
+    )
+
+    class Meta:
+        model = ExpenseInstallment
+        fields = ["installment_current", "installment_total", "due_date"]
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["value"].initial = Decimal(self.instance.value_cents) / 100
+
+    def save(self, commit=True):
+        installment = super().save(commit=False)
+        installment.value_cents = reais_to_cents(self.cleaned_data["value"])
+        if commit:
+            installment.save()
+        return installment
+
+
+class InstallmentPaymentForm(forms.Form):
+    """Registro de pagamento de uma parcela (valor pago + data)."""
+
+    paid_value = forms.DecimalField(
+        label="Valor pago (R$)", max_digits=12, decimal_places=2, min_value=0
+    )
+    paid_at = forms.DateField(
+        label="Data de pagamento",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Form simples (não-ModelForm): aplica a estilização Tailwind manualmente.
+        for field in self.fields.values():
+            existing = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()

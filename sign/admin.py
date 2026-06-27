@@ -2,6 +2,8 @@ from django.contrib import admin
 
 from .models import (
     Client,
+    Expense,
+    ExpenseInstallment,
     Manufacturer,
     Product,
     ProductSnapshot,
@@ -66,6 +68,28 @@ class SaleAdmin(admin.ModelAdmin):
         "obs",
         "created_at",
     ]
+
+
+class ExpenseInstallmentInline(admin.TabularInline):
+    model = ExpenseInstallment
+    extra = 0
+    fields = [
+        "installment_current",
+        "installment_total",
+        "value_cents",
+        "due_date",
+        "paid_value_cents",
+        "paid_at",
+    ]
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ["name", "recurrent", "scheduled_for", "created_at"]
+    list_filter = ["recurrent"]
+    search_fields = ["name", "description"]
+    date_hierarchy = "created_at"
+    inlines = [ExpenseInstallmentInline]
 
 
 @admin.register(ProductSnapshot)

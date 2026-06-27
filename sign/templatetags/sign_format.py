@@ -40,3 +40,12 @@ def cep(value):
     if len(d) == 8:
         return f"{d[:5]}-{d[5:]}"
     return value
+
+
+@register.filter(name="centavos")
+def centavos(value):
+    """Converte centavos (inteiro) em reais (para usar com ``floatformat:2``)."""
+    try:
+        return (value or 0) / 100
+    except (TypeError, ValueError):
+        return 0

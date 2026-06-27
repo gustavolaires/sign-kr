@@ -1,0 +1,110 @@
+{% extends "sign/base.html" %}
+{% load sign_format %}
+
+{% block title %}{{ expense.name }} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full flex-col">
+    <div class="mb-4 flex items-center justify-between">
+        <h1 class="text-2xl font-bold">{{ expense.name }}</h1>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'sign:expense_update' expense.pk %}"
+               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-pen-to-square w-5"></i> Editar
+            </a>
+            <a href="{% url 'sign:expense_list' %}"
+               class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-arrow-left w-5"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <div class="flex grow flex-col gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        {# Definição #}
+        <section>
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Definição</h2>
+            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tipo</dt>
+                    <dd class="mt-1 text-gray-900">
+                        {% if expense.recurrent %}Recorrente (dia {{ expense.scheduled_for }}){% else %}Isolada{% endif %}
+                    </dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Criada em</dt>
+                    <dd class="mt-1 text-gray-900">{{ expense.created_at|date:"d/m/Y H:i" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total</dt>
+                    <dd class="mt-1 font-semibold text-gray-900">R$ {{ total_cents|centavos|floatformat:2 }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Pago</dt>
+                    <dd class="mt-1 font-semibold text-gray-900">R$ {{ paid_cents|centavos|floatformat:2 }}</dd>
+                </div>
+                {% if expense.description %}
+                    <div class="bg-white px-4 py-3 sm:col-span-2">
+                        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Descrição</dt>
+                        <dd class="mt-1 whitespace-pre-line text-gray-900">{{ expense.description }}</dd>
+                    </div>
+                {% endif %}
+            </dl>
+        </section>
+
+        {# Parcelas #}
+        <section>
+            <div class="mb-3 flex items-center justify-between">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Parcelas</h2>
+                <a href="{% url 'sign:installment_create' expense.pk %}"
+                   class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-plus"></i> Adicionar parcela
+                </a>
+            </div>
+            <div class="overflow-hidden rounded-xl border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <tr>
+                            <th class="px-4 py-3">Parcela</th>
+                            <th class="px-4 py-3">Vencimento</th>
+                            <th class="px-4 py-3 text-right">Valor</th>
+                            <th class="px-4 py-3 text-right">Pago</th>
+                            <th class="px-4 py-3">Pago em</th>
+                            <th class="px-4 py-3">Situação</th>
+                            <th class="px-4 py-3 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for inst in installments %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium">{{ inst.installment_current }}/{{ inst.installment_total }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ inst.due_date|date:"d/m/Y" }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">R$ {{ inst.value|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">R$ {{ inst.paid_value|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ inst.paid_at|date:"d/m/Y"|default:"—" }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                                        {% if inst.status == 'paid' %}bg-green-100 text-green-800
+                                        {% elif inst.status == 'partial' %}bg-amber-100 text-amber-800
+                                        {% elif inst.status == 'overdue' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                        {{ inst.status_label }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex justify-end gap-4 text-base">
+                                        <a href="{% url 'sign:installment_pay' inst.pk %}" class="text-green-600 hover:text-green-800" title="Registrar pagamento" aria-label="Registrar pagamento"><i class="fa-solid fa-money-bill-wave fa-lg"></i></a>
+                                        <a href="{% url 'sign:installment_update' inst.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
+                                        <a href="{% url 'sign:installment_delete' inst.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Nenhuma parcela cadastrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}
