@@ -29,7 +29,7 @@
             {% endif %}
 
             <section>
-                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Dados básicos</h2>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Dados básicos</h2>
                 <div class="space-y-5">
                     {% include "sign/clients/_field.html" with field=form.name %}
                     {% include "sign/clients/_field.html" with field=form.person_type %}
@@ -40,7 +40,7 @@
             </section>
 
             <section>
-                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Contato</h2>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Contato</h2>
                 <div class="space-y-5">
                     {% include "sign/clients/_field.html" with field=form.email %}
                     {% include "sign/clients/_field.html" with field=form.phone_primary %}
@@ -51,7 +51,7 @@
             </section>
 
             <section>
-                <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Endereço</h2>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Endereço</h2>
                 <div class="space-y-5">
                     {% include "sign/clients/_field.html" with field=form.street %}
                     {% include "sign/clients/_field.html" with field=form.number %}

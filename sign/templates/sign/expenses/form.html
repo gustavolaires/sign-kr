@@ -28,7 +28,7 @@
             {% endif %}
 
             <section class="space-y-5">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Dados básicos</h2>
+                <h2 class="rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Dados básicos</h2>
                 {% include "sign/expenses/_field.html" with field=form.name %}
                 {% include "sign/expenses/_field.html" with field=form.description %}
                 {% include "sign/expenses/_field.html" with field=form.recurrent %}
@@ -37,7 +37,7 @@
             {# Bloco da despesa isolada (parcelamento). #}
             <section id="block-isolated" class="space-y-5">
                 {% if not form.instance.pk %}
-                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Parcelamento</h2>
+                    <h2 class="rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Parcelamento</h2>
                     {% include "sign/expenses/_field.html" with field=form.installment_total %}
                     {% include "sign/expenses/_field.html" with field=form.first_due_date %}
                     <p id="warn-first-due" class="hidden text-xs text-amber-600">
@@ -48,7 +48,7 @@
 
             {# Bloco da despesa recorrente. #}
             <section id="block-recurrent" class="space-y-5">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Recorrência</h2>
+                <h2 class="rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Recorrência</h2>
                 {% include "sign/expenses/_field.html" with field=form.scheduled_for %}
                 {% if not form.instance.pk %}
                     {% include "sign/expenses/_field.html" with field=form.months_ahead %}
@@ -57,7 +57,7 @@
 
             {% if not form.instance.pk %}
                 <section class="space-y-5">
-                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Valor</h2>
+                    <h2 class="rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Valor</h2>
                     {% include "sign/expenses/_field.html" with field=form.value %}
                     <p class="text-xs text-gray-500">O valor é aplicado a todas as parcelas geradas. Para valores variáveis, edite cada parcela depois de criar.</p>
                 </section>

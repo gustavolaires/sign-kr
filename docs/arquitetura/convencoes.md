@@ -73,6 +73,10 @@ Não há validação de dígito verificador — apenas máscara. Detalhes em
   `INPUT_CLASSES` manualmente.
 - Campos em reais são declarados como `DecimalField` **virtuais** (fora do
   `Meta.fields`) e convertidos para centavos no `save()`/na view.
+- **Forms seccionados** (ex.: Clientes, Despesas) agrupam campos em `<section>` com
+  um `<h2>` de cabeçalho. O cabeçalho é uma faixa de largura total (alinhada às
+  bordas dos campos) com fundo e borda **`navy`** e fonte **branca**:
+  `rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white`.
 
 ## App offline — Tailwind, paleta e ícones
 
@@ -100,7 +104,7 @@ Cores customizadas definidas via `@theme` no `input.css`:
 
 | Token | Valor | Uso |
 |---|---|---|
-| `navy` | `#1b2a4e` | fundo do side menu |
+| `navy` | `#1b2a4e` | fundo do side menu; fundo/borda dos cabeçalhos de seção nos forms |
 | `navy-hover` | `#25365e` | hover dos itens do menu |
 | `canvas` | `#eef1f6` | fundo da área de conteúdo (`<body>`) |
 
