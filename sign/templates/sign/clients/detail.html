@@ -81,6 +81,10 @@
                     <dd class="mt-1 text-gray-900">{{ client.city|default:"—" }}</dd>
                 </div>
                 <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Estado</dt>
+                    <dd class="mt-1 text-gray-900">{{ client.get_state_display|default:"—" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
                     <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Código postal</dt>
                     <dd class="mt-1 text-gray-900">{{ client.postal_code|cep|default:"—" }}</dd>
                 </div>

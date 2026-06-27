@@ -135,6 +135,7 @@ class ClientForm(StyledModelForm):
             "complement",
             "district",
             "city",
+            "state",
             "postal_code",
         ]
         widgets = {

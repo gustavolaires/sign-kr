@@ -10,7 +10,8 @@ antes de alterar o model, form ou templates desta área.
 | Model | Campos principais | Observações |
 |---|---|---|
 | `PersonType` | `TextChoices` | `pf` → "Pessoa Física", `pj` → "Pessoa Jurídica". |
-| `Client` | `name`, `person_type`, `service_provider`, `cpf_cnpj`, `birth_date`, `email`, `phone_primary`, `phone_primary_is_whatsapp`, `phone_secondary`, `phone_secondary_is_whatsapp`, `street`, `number`, `complement`, `district`, `city`, `postal_code` | Ver detalhes abaixo. |
+| `BrazilianState` | `TextChoices` | 27 UFs; valor = label = sigla (ex.: `SP` → "SP"). |
+| `Client` | `name`, `person_type`, `service_provider`, `cpf_cnpj`, `birth_date`, `email`, `phone_primary`, `phone_primary_is_whatsapp`, `phone_secondary`, `phone_secondary_is_whatsapp`, `street`, `number`, `complement`, `district`, `city`, `state`, `postal_code` | Ver detalhes abaixo. |
 
 ### Campos obrigatórios x opcionais
 - **Obrigatórios** (sem `blank`): `name`, `person_type` (default `PF`), `cpf_cnpj`.
@@ -18,6 +19,8 @@ antes de alterar o model, form ou templates desta área.
   também `null=True`, pois data vazia precisa ser `NULL` no banco.
 - **Tipo de pessoa**: `TextChoices` (`PersonType`), mesmo padrão de `UnitType`; renderizado
   como `<select>`. Na exibição use `{{ client.get_person_type_display }}`.
+- **Estado (UF)**: `TextChoices` (`BrazilianState`), renderizado como `<select>` com a sigla
+  da UF. Na exibição use `{{ client.get_state_display }}`.
 - **WhatsApp**: `phone_primary_is_whatsapp` / `phone_secondary_is_whatsapp` são
   `BooleanField(default=False)`.
 - **Prestador de serviço**: `service_provider` é `BooleanField(default=False)`. Exibido na
@@ -77,7 +80,7 @@ antes de alterar o model, form ou templates desta área.
 - **Form**: organizado nas mesmas **3 seções** da tela de detalhes — **Dados básicos**
   (Nome, Tipo de pessoa, Prestador de serviço, CPF/CNPJ, Data de nascimento), **Contato**
   (E-mail, Telefone principal + flag WhatsApp, Telefone alternativo + flag WhatsApp) e
-  **Endereço** (Rua, Número, Complemento, Bairro, Cidade, Código postal). Cada campo é
+  **Endereço** (Rua, Número, Complemento, Bairro, Cidade, Estado, Código postal). Cada campo é
   renderizado pelo partial **`sign/clients/_field.html`** (`{% include ... with field=form.X %}`),
   que trata `checkbox` (input + label lado a lado) e os demais campos (label acima).
 - **Detalhes**: organizado em **3 seções** (cada uma com seu `<h2>` + `dl` em grid 2
@@ -86,7 +89,7 @@ antes de alterar o model, form ou templates desta área.
     Data de nascimento.
   - **Contato**: E-mail, Telefone principal, Telefone alternativo (telefones mostram o ícone
     `fa-brands fa-whatsapp` verde quando a flag de WhatsApp correspondente está marcada).
-  - **Endereço**: Rua, Número, Complemento, Bairro, Cidade, Código postal.
+  - **Endereço**: Rua, Número, Complemento, Bairro, Cidade, Estado, Código postal.
 - **Side menu** (`base.html`): item **Clientes** na seção **Social** (acima de Fabricantes),
   ícone `fa-users`, ativo via `{% if 'client' in url_name %}` (não colide com "manufacturer").
 
