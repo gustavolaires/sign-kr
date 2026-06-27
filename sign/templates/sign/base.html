@@ -20,23 +20,19 @@
 
         <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-6">
             <div>
-                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Logística</p>
-                <a href="{% url 'sign:product_list' %}"
-                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
-                   {% if 'product' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
-                    <i class="fa-solid fa-tag w-5 text-center"></i>
-                    Produtos
-                </a>
+                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Comercial</p>
                 <a href="{% url 'sign:manufacturer_list' %}"
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
                    {% if 'manufacturer' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
                     <i class="fa-solid fa-industry w-5 text-center"></i>
                     Fabricantes
                 </a>
-            </div>
-
-            <div>
-                <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Comercial</p>
+                <a href="{% url 'sign:product_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'product' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-tag w-5 text-center"></i>
+                    Produtos
+                </a>
                 <a href="{% url 'sign:sale_list' %}"
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
                    {% if 'sale' in url_name or url_name == 'checkout' %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">

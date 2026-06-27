@@ -13,10 +13,9 @@ Estrutura fixa herdada por todas as páginas:
 │  SIDE MENU ├──────────────────────────────────────────────┤
 │  (navy)    │  main:                                         │
 │            │    {mensagens flash}                           │
-│  Logística │    {% block content %}                         │
-│   Produtos │                                                │
+│  Comercial │    {% block content %}                         │
 │   Fabric.  │                                                │
-│  Comercial │                                                │
+│   Produtos │                                                │
 │   Vendas   │                                                │
 │  Financeiro│                                                │
 │   Despesas │                                                │
@@ -36,11 +35,13 @@ uppercase), espelhando as áreas funcionais do sistema:
 
 | Seção | Item | Ícone | Rota |
 |---|---|---|---|
-| **Logística** | Produtos | `fa-tag` | `sign:product_list` |
-| | Fabricantes | `fa-industry` | `sign:manufacturer_list` |
-| **Comercial** | Vendas | `fa-receipt` | `sign:sale_list` |
+| **Comercial** | Fabricantes | `fa-industry` | `sign:manufacturer_list` |
+| | Produtos | `fa-tag` | `sign:product_list` |
+| | Vendas | `fa-receipt` | `sign:sale_list` |
 | **Financeiro** | Despesas | `fa-money-bill-wave` | `sign:expense_list` |
 | **Social** | Clientes | `fa-users` | `sign:client_list` |
+
+As seções e os itens dentro de cada seção seguem **ordem alfabética**.
 
 No topo, a marca **"Kasa dos Reparos"** linka para a lista de produtos.
 
@@ -49,8 +50,8 @@ No topo, a marca **"Kasa dos Reparos"** linka para a lista de produtos.
 O item da seção atual é destacado em **`bg-blue-600`**. A detecção é por
 `request.resolver_match.url_name` (capturado num `{% with url_name=... %}`):
 
-- `{% if 'product' in url_name %}` → Produtos
 - `{% if 'manufacturer' in url_name %}` → Fabricantes
+- `{% if 'product' in url_name %}` → Produtos
 - `{% if 'sale' in url_name or url_name == 'checkout' %}` → Vendas (inclui o checkout)
 - `{% if 'expense' in url_name or 'installment' in url_name %}` → Despesas (inclui parcelas)
 - `{% if 'client' in url_name %}` → Clientes
