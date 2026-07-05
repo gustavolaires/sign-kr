@@ -35,6 +35,88 @@ def reais_to_cents(value):
     return int((value * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
+def compute_quote_amounts(*, items, has_perc_discount, discount_input, payments):
+    """Calcula os montantes de um orçamento (somente exibição), sem persistir.
+
+    Espelha as fórmulas monetárias de ``create_sale`` (centavos, ``Decimal``/
+    ``ROUND_HALF_UP``), mas é **lenient**: não valida estoque nem exige que os
+    pagamentos cubram o total, e **nunca levanta** ``ValidationError``. Desconto
+    fora de faixa é clampado; linhas de pagamento inválidas são ignoradas.
+
+    Retorna ``(subtotal_cents, discount_cents, total_cents, change_cents,
+    perc_discount, normalized_payments)``, onde ``normalized_payments`` é uma lista
+    de dicts ``{"payment_type", "installments", "value_cents"}``.
+    """
+    subtotal_cents = 0
+    for item in items:
+        product = item["product"]
+        quantity = max(int(item["quantity"] or 0), 0)
+        subtotal_cents += product.unit_price_cents * quantity
+
+    # Desconto (percentual clampado a 0–100, ou valor não-negativo), sem exceder o subtotal.
+    perc_discount = None
+    if has_perc_discount:
+        perc_discount = Decimal(discount_input or 0)
+        if perc_discount < 0:
+            perc_discount = Decimal(0)
+        elif perc_discount > 100:
+            perc_discount = Decimal(100)
+        discount_cents = int(
+            (Decimal(subtotal_cents) * perc_discount / 100).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+        )
+    else:
+        discount_cents = reais_to_cents(discount_input or 0)
+        if discount_cents < 0:
+            discount_cents = 0
+    if discount_cents > subtotal_cents:
+        discount_cents = subtotal_cents
+
+    total_cents = subtotal_cents - discount_cents
+
+    # Pagamentos: ignora tipos inválidos/duplicados e valores não positivos.
+    seen_types = set()
+    normalized_payments = []
+    paid_cents = 0
+    for payment in payments:
+        payment_type = payment.get("payment_type")
+        if payment_type not in PaymentType.values or payment_type in seen_types:
+            continue
+        value_cents = reais_to_cents(payment.get("value") or 0)
+        if value_cents <= 0:
+            continue
+        seen_types.add(payment_type)
+
+        installments = 1
+        if payment_type == PaymentType.CREDIT:
+            try:
+                installments = int(payment.get("installments") or 1)
+            except (TypeError, ValueError):
+                installments = 1
+            if installments < 1:
+                installments = 1
+
+        normalized_payments.append(
+            {
+                "payment_type": payment_type,
+                "installments": installments,
+                "value_cents": value_cents,
+            }
+        )
+        paid_cents += value_cents
+
+    change_cents = max(paid_cents - total_cents, 0)
+    return (
+        subtotal_cents,
+        discount_cents,
+        total_cents,
+        change_cents,
+        perc_discount,
+        normalized_payments,
+    )
+
+
 @transaction.atomic
 def create_sale(*, cart, client, has_perc_discount, discount_input, payments, obs):
     """Cria uma venda completa a partir do carrinho, de forma atômica.

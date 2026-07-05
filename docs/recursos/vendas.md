@@ -89,7 +89,7 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
 ## Comprovante (não fiscal)
 
 Documento de **garantia/troca**, sem valor fiscal. A tela de detalhe tem o botão
-**"Ver comprovante"** → `sign:sale_receipt` (`sales/<pk>/receipt/`,
+**"Comprovante"** → `sign:sale_receipt` (`sales/<pk>/receipt/`,
 view `sale_receipt` em `sign/views/sales.py`).
 
 - **Dois formatos**, alternáveis pelo querystring `?format=`: `58mm` (papel térmico,
@@ -97,6 +97,10 @@ view `sale_receipt` em `sign/views/sales.py`).
 - Template **standalone** `sign/templates/sign/sales/receipt.html` — **não** estende
   `base.html`; tem CSS próprio embutido (com `@page` por formato) e **não depende do
   Tailwind** (não exige rebuild do `output.css`).
+- O template consome um **contexto normalizado** (`items`, `payments`, `op_label`,
+  `number`, `created_at`, `subtotal`/`discount`/`total`/`change`, `client`, `obs`,
+  `mode`) montado pelo helper `_receipt_context` — não acessa mais o objeto `Sale`
+  diretamente. Isso permite reusá-lo também para o **orçamento** (ver abaixo).
 - Impressão via **diálogo nativo** (`window.print()`) — 100% offline, coerente com o
   PyWebView; a barra de ações some no `@media print`. Salvar em PDF é feito escolhendo
   esse destino no próprio diálogo (não dá para pré-selecioná-lo por JS, então não há
@@ -106,6 +110,25 @@ view `sale_receipt` em `sign/views/sales.py`).
   context processor `sign.context_processors.company` (também alimenta o nome no
   side menu do `base.html`). Um modelo `Company` editável pela UI ficou para depois —
   a estrutura de chaves do dict já espelha esse futuro modelo.
+
+## Orçamento (a partir do checkout)
+
+Mesmo comprovante, montado a partir dos dados **ainda não salvos** da tela de
+`Finalizar venda` — usado como **orçamento**. Botão **"Orçamento"** (ícone
+`fa-scroll`) no rodapé do checkout: submete o próprio formulário (mesma aba, via
+`formaction`) a `sign:sale_quote` (`sales/quote/`, só POST).
+
+- Reusa o `receipt.html` (mesmo contexto normalizado). Única diferença de conteúdo:
+  `op_label = "Orçamento"` (título no 58mm, Natureza da operação no A4). **Sem número**
+  (não há `Sale` persistida).
+- **Nada é gravado**. Os montantes vêm de `services.compute_quote_amounts` — versão
+  **lenient** das fórmulas de `create_sale`: não valida estoque nem exige pagamento ≥
+  total, clampa desconto e ignora linhas de pagamento inválidas (nunca levanta
+  `ValidationError`). `create_sale` permanece o caminho autoritativo da venda real.
+- **Sem perder dados**: o orçamento carrega os campos do checkout como `<input hidden>`
+  (`_quote_hidden_fields`); trocar formato re-posta a `sale_quote` e o botão **"Voltar"**
+  re-posta ao `checkout` com `intent=edit`, que apenas re-renderiza o formulário
+  preenchido (reusa o `rerender()`), sem finalizar a venda.
 
 ## Decisões deixadas para depois
 

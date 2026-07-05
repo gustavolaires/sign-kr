@@ -41,12 +41,14 @@
         .btn:hover { background: #1d4ed8; }
         .btn-ghost { background: transparent; border-color: rgba(255,255,255,.35); color: #fff; }
         .btn-ghost:hover { background: rgba(255,255,255,.12); }
+        .toolbar form { display: contents; }
         .fmt-group { display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: .5rem; overflow: hidden; }
-        .fmt-group a {
-            padding: .45rem .8rem; font-size: .85rem; font-weight: 600;
+        .fmt-group a, .fmt-group button {
+            padding: .45rem .8rem; font: inherit; font-size: .85rem; font-weight: 600;
             text-decoration: none; color: #cbd5e1;
+            border: none; background: transparent; cursor: pointer;
         }
-        .fmt-group a.active { background: #2563eb; color: #fff; }
+        .fmt-group a.active, .fmt-group button.active { background: #2563eb; color: #fff; }
 
         /* ---- Documento ---- */
         .doc {
@@ -116,17 +118,35 @@
 </head>
 <body>
     <div class="toolbar">
-        <a href="{% url 'sign:sale_detail' sale.pk %}" class="btn btn-ghost">
+        {% if mode == 'quote' %}
+        <form method="post" action="{% url 'sign:sale_quote' %}">
+            {% csrf_token %}
+            {% for name, value in hidden_fields %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+            <button type="submit" formaction="{% url 'sign:checkout' %}" name="intent" value="edit" class="btn btn-ghost">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+            <div class="fmt-group" role="group" aria-label="Formato do comprovante">
+                <button type="submit" name="format" value="58mm" class="{% if fmt != 'a4' %}active{% endif %}">58mm</button>
+                <button type="submit" name="format" value="a4" class="{% if fmt == 'a4' %}active{% endif %}">A4</button>
+            </div>
+            <span class="spacer"></span>
+            <button type="button" class="btn" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Imprimir
+            </button>
+        </form>
+        {% else %}
+        <a href="{% url 'sign:sale_detail' sale_pk %}" class="btn btn-ghost">
             <i class="fa-solid fa-arrow-left"></i> Voltar
         </a>
         <div class="fmt-group" role="group" aria-label="Formato do comprovante">
-            <a href="{% url 'sign:sale_receipt' sale.pk %}?format=58mm" class="{% if fmt != 'a4' %}active{% endif %}">58mm</a>
-            <a href="{% url 'sign:sale_receipt' sale.pk %}?format=a4" class="{% if fmt == 'a4' %}active{% endif %}">A4</a>
+            <a href="{% url 'sign:sale_receipt' sale_pk %}?format=58mm" class="{% if fmt != 'a4' %}active{% endif %}">58mm</a>
+            <a href="{% url 'sign:sale_receipt' sale_pk %}?format=a4" class="{% if fmt == 'a4' %}active{% endif %}">A4</a>
         </div>
         <span class="spacer"></span>
         <button type="button" class="btn" onclick="window.print()">
             <i class="fa-solid fa-print"></i> Imprimir
         </button>
+        {% endif %}
     </div>
 
     {% if fmt == 'a4' %}
@@ -144,24 +164,26 @@
             </div>
             <div class="op-box">
                 <div class="lbl">Natureza da operação</div>
-                <div class="val">Venda</div>
+                <div class="val">{{ op_label }}</div>
+                {% if number %}
                 <div class="lbl">Nº do pedido</div>
-                <div class="val">{{ sale.pk }}</div>
+                <div class="val">{{ number }}</div>
+                {% endif %}
                 <div class="lbl">Data de emissão</div>
-                <div class="val">{{ sale.created_at|date:"d/m/Y H:i" }}</div>
+                <div class="val">{{ created_at|date:"d/m/Y H:i" }}</div>
             </div>
         </div>
 
         <div class="band">Cliente</div>
         <div class="fields">
-            <div class="fld span4"><span class="k">Nome / Razão social</span><span class="v">{% if sale.client %}{{ sale.client.name }}{% endif %}</span></div>
-            <div class="fld span2"><span class="k">CPF / CNPJ</span><span class="v">{% if sale.client %}{{ sale.client.cpf_cnpj|cpf_cnpj }}{% endif %}</span></div>
-            <div class="fld span4"><span class="k">Endereço</span><span class="v">{% if sale.client %}{{ sale.client.street }}{% if sale.client.number %}, {{ sale.client.number }}{% endif %}{% if sale.client.complement %} - {{ sale.client.complement }}{% endif %}{% endif %}</span></div>
-            <div class="fld span2"><span class="k">Bairro</span><span class="v">{% if sale.client %}{{ sale.client.district }}{% endif %}</span></div>
-            <div class="fld span2"><span class="k">Município</span><span class="v">{% if sale.client %}{{ sale.client.city }}{% endif %}</span></div>
-            <div class="fld"><span class="k">UF</span><span class="v">{% if sale.client %}{{ sale.client.state }}{% endif %}</span></div>
-            <div class="fld"><span class="k">CEP</span><span class="v">{% if sale.client and sale.client.postal_code %}{{ sale.client.postal_code|cep }}{% endif %}</span></div>
-            <div class="fld span2"><span class="k">Telefone</span><span class="v">{% if sale.client %}{{ sale.client.phone_primary|phone }}{% endif %}</span></div>
+            <div class="fld span4"><span class="k">Nome / Razão social</span><span class="v">{% if client %}{{ client.name }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">CPF / CNPJ</span><span class="v">{% if client %}{{ client.cpf_cnpj|cpf_cnpj }}{% endif %}</span></div>
+            <div class="fld span4"><span class="k">Endereço</span><span class="v">{% if client %}{{ client.street }}{% if client.number %}, {{ client.number }}{% endif %}{% if client.complement %} - {{ client.complement }}{% endif %}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Bairro</span><span class="v">{% if client %}{{ client.district }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Município</span><span class="v">{% if client %}{{ client.city }}{% endif %}</span></div>
+            <div class="fld"><span class="k">UF</span><span class="v">{% if client %}{{ client.state }}{% endif %}</span></div>
+            <div class="fld"><span class="k">CEP</span><span class="v">{% if client and client.postal_code %}{{ client.postal_code|cep }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Telefone</span><span class="v">{% if client %}{{ client.phone_primary|phone }}{% endif %}</span></div>
         </div>
 
         <div class="band">Dados do produto / serviço</div>
@@ -178,13 +200,13 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in sale.items.all %}
+                {% for item in items %}
                 <tr>
-                    <td>{{ item.product_snapshot.barcode|default:"—" }}</td>
-                    <td>{% if item.product_snapshot.manufacturer_code %}[{{ item.product_snapshot.manufacturer_code }}] {% endif %}{{ item.product_snapshot.name }}</td>
-                    <td>{{ item.product_snapshot.manufacturer_name }}</td>
+                    <td>{{ item.barcode|default:"—" }}</td>
+                    <td>{% if item.manufacturer_code %}[{{ item.manufacturer_code }}] {% endif %}{{ item.name }}</td>
+                    <td>{{ item.manufacturer_name }}</td>
                     <td class="num">{{ item.quantity }}</td>
-                    <td>{{ item.product_snapshot.unit_type }}</td>
+                    <td>{{ item.unit_type }}</td>
                     <td class="num">R$ {{ item.unit_price|floatformat:2 }}</td>
                     <td class="num">R$ {{ item.total|floatformat:2 }}</td>
                 </tr>
@@ -197,10 +219,10 @@
                 <div class="band">Formas de pagamento</div>
                 <table class="pay">
                     <tbody>
-                        {% for payment in sale.payments.all %}
+                        {% for p in payments %}
                         <tr>
-                            <td>{{ payment.get_payment_type_display }}{% if payment.installments > 1 %} ({{ payment.installments }}x){% endif %}</td>
-                            <td class="num">R$ {{ payment.value|floatformat:2 }}</td>
+                            <td>{{ p.label }}{% if p.installments > 1 %} ({{ p.installments }}x){% endif %}</td>
+                            <td class="num">R$ {{ p.value|floatformat:2 }}</td>
                         </tr>
                         {% empty %}
                         <tr><td colspan="2">—</td></tr>
@@ -212,17 +234,17 @@
                 <div class="band">Totais</div>
                 <table class="totals">
                     <tbody>
-                        <tr><td class="lbl">Subtotal</td><td class="num">R$ {{ sale.subtotal|floatformat:2 }}</td></tr>
-                        <tr><td class="lbl">Desconto{% if sale.has_perc_discount %} ({{ sale.perc_discount|floatformat:2 }}%){% endif %}</td><td class="num">R$ {{ sale.discount|floatformat:2 }}</td></tr>
-                        <tr class="grand"><td class="lbl">Total</td><td class="num">R$ {{ sale.total|floatformat:2 }}</td></tr>
-                        <tr><td class="lbl">Troco</td><td class="num">R$ {{ sale.change|floatformat:2 }}</td></tr>
+                        <tr><td class="lbl">Subtotal</td><td class="num">R$ {{ subtotal|floatformat:2 }}</td></tr>
+                        <tr><td class="lbl">Desconto{% if has_perc_discount %} ({{ perc_discount|floatformat:2 }}%){% endif %}</td><td class="num">R$ {{ discount|floatformat:2 }}</td></tr>
+                        <tr class="grand"><td class="lbl">Total</td><td class="num">R$ {{ total|floatformat:2 }}</td></tr>
+                        <tr><td class="lbl">Troco</td><td class="num">R$ {{ change|floatformat:2 }}</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
         <div class="band">Observações</div>
-        <div class="obs">{{ sale.obs }}</div>
+        <div class="obs">{{ obs }}</div>
     </div>
 
     {% else %}
@@ -234,49 +256,49 @@
             {% if company.street %}<div>{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}</div>{% endif %}
             {% if company.city %}<div>{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}</div>{% endif %}
             {% if company.phone_primary %}<div>Fone: {{ company.phone_primary|phone }}</div>{% endif %}
-            <div class="op">Venda</div>
+            <div class="op">{{ op_label }}</div>
         </div>
         <hr>
-        <div class="row"><span>Comprovante</span><span>Nº {{ sale.pk }}</span></div>
-        <div class="row"><span>Data</span><span>{{ sale.created_at|date:"d/m/Y H:i" }}</span></div>
+        <div class="row"><span>{{ doc_label }}</span>{% if number %}<span>Nº {{ number }}</span>{% endif %}</div>
+        <div class="row"><span>Data</span><span>{{ created_at|date:"d/m/Y H:i" }}</span></div>
         <hr>
         <div class="sec-title">Cliente</div>
-        <div>Nome: {% if sale.client %}{{ sale.client.name }}{% endif %}</div>
-        <div>CPF/CNPJ: {% if sale.client %}{{ sale.client.cpf_cnpj|cpf_cnpj }}{% endif %}</div>
-        <div>Fone: {% if sale.client %}{{ sale.client.phone_primary|phone }}{% endif %}</div>
-        <div>E-mail: {% if sale.client %}{{ sale.client.email }}{% endif %}</div>
+        <div>Nome: {% if client %}{{ client.name }}{% endif %}</div>
+        <div>CPF/CNPJ: {% if client %}{{ client.cpf_cnpj|cpf_cnpj }}{% endif %}</div>
+        <div>Fone: {% if client %}{{ client.phone_primary|phone }}{% endif %}</div>
+        <div>E-mail: {% if client %}{{ client.email }}{% endif %}</div>
         <hr>
         <div class="sec-title">Itens</div>
-        {% for item in sale.items.all %}
+        {% for item in items %}
         <div class="item">
-            <div class="name">{% if item.product_snapshot.barcode %}{{ item.product_snapshot.barcode }} · {% endif %}{% if item.product_snapshot.manufacturer_code %}[{{ item.product_snapshot.manufacturer_code }}] {% endif %}{{ item.product_snapshot.name }}</div>
+            <div class="name">{% if item.barcode %}{{ item.barcode }} · {% endif %}{% if item.manufacturer_code %}[{{ item.manufacturer_code }}] {% endif %}{{ item.name }}</div>
             <div class="row">
-                <span>{{ item.quantity }} {{ item.product_snapshot.unit_type }} x R$ {{ item.unit_price|floatformat:2 }}</span>
+                <span>{{ item.quantity }} {{ item.unit_type }} x R$ {{ item.unit_price|floatformat:2 }}</span>
                 <span>R$ {{ item.total|floatformat:2 }}</span>
             </div>
         </div>
         {% endfor %}
         <hr>
         <div class="totals">
-            <div class="row"><span>Subtotal</span><span>R$ {{ sale.subtotal|floatformat:2 }}</span></div>
-            <div class="row"><span>Desconto{% if sale.has_perc_discount %} ({{ sale.perc_discount|floatformat:2 }}%){% endif %}</span><span>R$ {{ sale.discount|floatformat:2 }}</span></div>
-            <div class="row grand"><span>TOTAL</span><span>R$ {{ sale.total|floatformat:2 }}</span></div>
-            <div class="row"><span>Troco</span><span>R$ {{ sale.change|floatformat:2 }}</span></div>
+            <div class="row"><span>Subtotal</span><span>R$ {{ subtotal|floatformat:2 }}</span></div>
+            <div class="row"><span>Desconto{% if has_perc_discount %} ({{ perc_discount|floatformat:2 }}%){% endif %}</span><span>R$ {{ discount|floatformat:2 }}</span></div>
+            <div class="row grand"><span>TOTAL</span><span>R$ {{ total|floatformat:2 }}</span></div>
+            <div class="row"><span>Troco</span><span>R$ {{ change|floatformat:2 }}</span></div>
         </div>
         <hr>
         <div class="sec-title">Formas de pagamento</div>
-        {% for payment in sale.payments.all %}
+        {% for p in payments %}
         <div class="row">
-            <span>{{ payment.get_payment_type_display }}{% if payment.installments > 1 %} ({{ payment.installments }}x){% endif %}</span>
-            <span>R$ {{ payment.value|floatformat:2 }}</span>
+            <span>{{ p.label }}{% if p.installments > 1 %} ({{ p.installments }}x){% endif %}</span>
+            <span>R$ {{ p.value|floatformat:2 }}</span>
         </div>
         {% empty %}
         <div>—</div>
         {% endfor %}
-        {% if sale.obs %}
+        {% if obs %}
         <hr>
         <div class="sec-title">Observações</div>
-        <div>{{ sale.obs }}</div>
+        <div>{{ obs }}</div>
         {% endif %}
         <hr>
         <div class="center">Documento sem valor fiscal</div>

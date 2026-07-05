@@ -20,6 +20,7 @@ urlpatterns = [
     path("cart/remove/", views.cart_remove, name="cart_remove"),
     # Vendas
     path("sales/checkout/", views.checkout, name="checkout"),
+    path("sales/quote/", views.sale_quote, name="sale_quote"),
     path("sales/", views.SaleListView.as_view(), name="sale_list"),
     path("sales/<int:pk>/", views.SaleDetailView.as_view(), name="sale_detail"),
     path("sales/<int:pk>/receipt/", views.sale_receipt, name="sale_receipt"),
