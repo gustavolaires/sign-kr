@@ -91,9 +91,7 @@
         <tbody class="divide-y divide-gray-100">
             {% for expense in expenses %}
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 font-medium">
-                        <a href="{% url 'sign:expense_detail' expense.pk %}" class="text-blue-600 hover:text-blue-800">{{ expense.name }}</a>
-                    </td>
+                    <td class="px-4 py-3 font-medium text-gray-900">{{ expense.name }}</td>
                     <td class="px-4 py-3 text-gray-600">
                         {% if expense.recurrent %}
                             <span class="inline-flex items-center gap-1"><i class="fa-solid fa-rotate text-gray-500"></i> Recorrente</span>

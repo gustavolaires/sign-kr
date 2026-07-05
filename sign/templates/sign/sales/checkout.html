@@ -1,12 +1,12 @@
 {% extends "sign/base.html" %}
 {% load static %}
 
-{% block title %}Finalizar venda · SIGN-KR{% endblock %}
+{% block title %}Checkout · SIGN-KR{% endblock %}
 
 {% block content %}
 <div id="checkout-app" data-subtotal-cents="{{ cart_total_cents }}">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Finalizar venda</h1>
+        <h1 class="text-2xl font-bold">Finalização</h1>
         <div class="flex items-center gap-3">
             <button type="submit" form="checkout-form" formaction="{% url 'sign:sale_quote' %}" name="format" value="58mm" formnovalidate
                     class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
@@ -178,14 +178,14 @@
         </div>
 
         <div class="flex justify-end gap-3">
+            <button type="submit" id="checkout-submit"
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700">
+                <i class="fa-solid fa-check"></i> Finalizar
+            </button>
             <a href="{% url 'sign:cart_detail' %}"
                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <i class="fa-solid fa-xmark"></i> Cancelar
             </a>
-            <button type="submit" id="checkout-submit"
-                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700">
-                <i class="fa-solid fa-check"></i> Finalizar venda
-            </button>
         </div>
     </form>
 

@@ -5,7 +5,7 @@
 {% block content %}
 <div id="cart-app" data-update-url="{% url 'sign:cart_update' %}" data-remove-url="{% url 'sign:cart_remove' %}">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Carrinho de compras</h1>
+        <h1 class="text-2xl font-bold">Carrinho</h1>
         <a href="{% url 'sign:product_list' %}"
            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
             <i class="fa-solid fa-arrow-left w-5"></i>
@@ -74,7 +74,7 @@
         <div class="mt-6 flex justify-end">
             <a href="{% url 'sign:checkout' %}"
                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700">
-                Checkout
+                Finalizar
                 <i class="fa-solid fa-arrow-right w-5"></i>
             </a>
         </div>

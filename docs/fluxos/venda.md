@@ -12,9 +12,9 @@ no **processamento** que acontece no backend. Referência das features:
         │  clica 🛒 no produto → modal → quantidade
         ▼  POST AJAX cart/add  (valida estoque, grava cookie)
   Carrinho (cookie JSON)  ◄── atualizar/remover (AJAX, sem reload)
-        │  "Checkout"
+        │  "Finalizar"
         ▼  GET sales/checkout/
-  Checkout  (resumo read-only + cliente + desconto + pagamentos + obs)
+  Finalização (checkout)  (resumo read-only + cliente + desconto + pagamentos + obs)
         │  POST sales/checkout/
         ▼  create_sale(...)  @transaction.atomic
   Sale + SaleItem(+Snapshot) + SalePayment   ·   baixa de estoque   ·   limpa cookie

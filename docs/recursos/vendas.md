@@ -6,7 +6,7 @@ de alterar o checkout ou os relatórios de vendas.
 
 ## Visão geral do fluxo
 
-1. Carrinho (cookie, ver [`docs/carrinho.md`](carrinho.md)) → botão **"Checkout"**
+1. Carrinho (cookie, ver [`docs/carrinho.md`](carrinho.md)) → botão **"Finalizar"**
    (abaixo da lista de itens) leva a `sign:checkout`.
 2. `checkout` (GET) renderiza o resumo do carrinho (somente leitura) + cliente
    (opcional) + desconto + pagamentos + observações.
@@ -114,7 +114,7 @@ view `sale_receipt` em `sign/views/sales.py`).
 ## Orçamento (a partir do checkout)
 
 Mesmo comprovante, montado a partir dos dados **ainda não salvos** da tela de
-`Finalizar venda` — usado como **orçamento**. Botão **"Orçamento"** (ícone
+`Finalização` (checkout) — usado como **orçamento**. Botão **"Orçamento"** (ícone
 `fa-scroll`) no rodapé do checkout: submete o próprio formulário (mesma aba, via
 `formaction`) a `sign:sale_quote` (`sales/quote/`, só POST).
 
