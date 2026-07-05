@@ -1,8 +1,7 @@
 """Context processors do app ``sign``."""
 
-from django.conf import settings
-
 from .cart import Cart
+from .models import Company
 
 
 def cart(request):
@@ -11,5 +10,5 @@ def cart(request):
 
 
 def company(request):
-    """Expõe os dados da empresa (settings.COMPANY) para todos os templates."""
-    return {"company": settings.COMPANY}
+    """Expõe os dados da empresa (singleton) para todos os templates."""
+    return {"company": Company.get_solo()}

@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Client,
+    Company,
     Expense,
     ExpenseInstallment,
     Manufacturer,
@@ -31,6 +32,11 @@ class ClientAdmin(admin.ModelAdmin):
     list_display = ["name", "person_type", "cpf_cnpj", "email", "phone_primary"]
     list_filter = ["person_type"]
     search_fields = ["name", "cpf_cnpj", "email"]
+
+
+@admin.register(Company)
+class CompanyAdmin(admin.ModelAdmin):
+    list_display = ["name", "legal_name", "cnpj", "email", "phone_primary"]
 
 
 class SaleItemInline(admin.TabularInline):

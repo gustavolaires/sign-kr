@@ -106,10 +106,10 @@ view `sale_receipt` em `sign/views/sales.py`).
   esse destino no próprio diálogo (não dá para pré-selecioná-lo por JS, então não há
   botão separado).
 - **Venda avulsa** (sem cliente): os campos do cliente são renderizados **em branco**.
-- **Dados da empresa**: `settings.COMPANY` (dict), exposto a todos os templates pelo
-  context processor `sign.context_processors.company` (também alimenta o nome no
-  side menu do `base.html`). Um modelo `Company` editável pela UI ficou para depois —
-  a estrutura de chaves do dict já espelha esse futuro modelo.
+- **Dados da empresa**: modelo `Company` (singleton, `pk=1`), exposto a todos os
+  templates pelo context processor `sign.context_processors.company` (também alimenta o
+  nome no side menu do `base.html`). Editável pela UI no dropdown do header
+  (`sign:company_settings`). Campos mascarados (CNPJ, telefones, CEP) guardam só dígitos.
 
 ## Orçamento (a partir do checkout)
 
@@ -134,8 +134,6 @@ Mesmo comprovante, montado a partir dos dados **ainda não salvos** da tela de
 
 - Sem campo de **status** na venda (não há fluxo de cancelamento/estorno ainda).
 - **Descontos por item** (promoções) — campos já existem em `SaleItem`, sem UI.
-- **Modelo `Company` editável pela UI** — hoje os dados da empresa vivem em
-  `settings.COMPANY` (constante).
 - **Gerar PDF determinístico do comprovante** — hoje o PDF depende do usuário
   escolher esse destino no diálogo de impressão. Melhoria: gerar o PDF no backend
   (WeasyPrint ou xhtml2pdf) e, por ser app desktop, salvá-lo via **diálogo nativo

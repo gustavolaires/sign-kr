@@ -41,6 +41,8 @@ urlpatterns = [
     path("installments/<int:pk>/edit/", views.ExpenseInstallmentUpdateView.as_view(), name="installment_update"),
     path("installments/<int:pk>/delete/", views.ExpenseInstallmentDeleteView.as_view(), name="installment_delete"),
     path("installments/<int:pk>/pay/", views.installment_pay, name="installment_pay"),
+    # Configurações
+    path("settings/company/", views.CompanySettingsView.as_view(), name="company_settings"),
     # Fabricantes
     path("manufacturers/", views.ManufacturerListView.as_view(), name="manufacturer_list"),
     path("manufacturers/new/", views.ManufacturerCreateView.as_view(), name="manufacturer_create"),

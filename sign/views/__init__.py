@@ -11,6 +11,9 @@ from .clients import (
     ClientListView,
     ClientUpdateView,
 )
+from .company import (
+    CompanySettingsView,
+)
 from .expenses import (
     ExpenseCreateView,
     ExpenseDeleteView,
@@ -53,6 +56,7 @@ __all__ = [
     "ClientDetailView",
     "ClientListView",
     "ClientUpdateView",
+    "CompanySettingsView",
     "ExpenseCreateView",
     "ExpenseDeleteView",
     "ExpenseDetailView",

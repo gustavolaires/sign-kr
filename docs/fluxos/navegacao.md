@@ -9,7 +9,7 @@ Estrutura fixa herdada por todas as páginas:
 
 ```
 ┌────────────┬──────────────────────────────────────────────┐
-│            │  header: [☰ toggle]   ...   [🛒 carrinho (n)]  │
+│            │  header: [☰ toggle]  ...  [⚙ config] [🛒 (n)] │
 │  SIDE MENU ├──────────────────────────────────────────────┤
 │  (navy)    │  main:                                         │
 │            │    {mensagens flash}                           │
@@ -43,7 +43,8 @@ uppercase), espelhando as áreas funcionais do sistema:
 
 As seções e os itens dentro de cada seção seguem **ordem alfabética**.
 
-No topo, a marca **"Kasa dos Reparos"** linka para a lista de produtos.
+No topo, a marca (`{{ company.name }}`, vinda do modelo `Company` singleton via
+context processor) linka para a lista de produtos.
 
 ### Item ativo
 
@@ -67,6 +68,9 @@ Barra branca no topo da área de conteúdo, com:
   `<body>` alterna `-translate-x-full` na sidebar e `ml-64`/`ml-0` no `#content`
   (mostra/oculta o menu com transição).
 - **`{% block header %}`**: ponto de extensão para botões específicos da tela.
+- **Configurações** (`#settingsToggle`, `fa-gear`, alinhado à direita): abre um
+  **dropdown** (vanilla JS — alterna `hidden`, fecha em clique-fora e `Escape`)
+  com o item **Configurações da empresa** (`fa-gears`, `sign:company_settings`).
 - **Carrinho** (`fa-cart-shopping`, alinhado à direita): leva a
   `sign:cart_detail`. Tem um **badge** (`#cart-count`) com o nº de produtos
   distintos, vindo do context processor `cart_count` (global em todo template);
@@ -93,6 +97,7 @@ Vendas       sales/checkout/ · sales/ · sales/<pk>/
 Despesas     expenses/ · expenses/new/ · expenses/<pk>/ · .../edit/ · .../delete/
 Parcelas     expenses/<expense_pk>/installments/new/
              installments/<pk>/edit/ · .../delete/ · .../pay/
+Configurações settings/company/     (singleton, editável no dropdown do header)
 ```
 
 Padrões de navegação CRUD (para onde cada salvar/cancelar volta) em

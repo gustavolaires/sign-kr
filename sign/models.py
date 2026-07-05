@@ -501,3 +501,52 @@ class ExpenseInstallment(models.Model):
     def status_label(self):
         """Rótulo PT-BR da situação (para exibição)."""
         return self.STATUS_LABELS[self.status]
+
+
+class Company(models.Model):
+    """Dados da empresa exibidos na UI e nos comprovantes (não fiscais).
+
+    É um *singleton*: existe sempre uma única linha (``pk=1``), editável pela
+    tela de configurações. Os campos mascarados (``cnpj``, telefones,
+    ``postal_code``) armazenam apenas dígitos; a formatação é aplicada na
+    exibição pelos filtros de ``sign_format``.
+    """
+
+    name = models.CharField("Nome", max_length=200)
+    legal_name = models.CharField("Razão social", max_length=200, blank=True)
+    cnpj = models.CharField("CNPJ", max_length=18, blank=True)
+    email = models.EmailField("E-mail", blank=True)
+    phone_primary = models.CharField("Telefone principal", max_length=20, blank=True)
+    phone_secondary = models.CharField(
+        "Telefone alternativo", max_length=20, blank=True
+    )
+    street = models.CharField("Rua", max_length=200, blank=True)
+    number = models.CharField("Número", max_length=20, blank=True)
+    complement = models.CharField("Complemento", max_length=120, blank=True)
+    district = models.CharField("Bairro", max_length=120, blank=True)
+    city = models.CharField("Cidade", max_length=120, blank=True)
+    state = models.CharField(
+        "Estado",
+        max_length=2,
+        choices=BrazilianState.choices,
+        blank=True,
+    )
+    postal_code = models.CharField("Código postal", max_length=12, blank=True)
+
+    class Meta:
+        verbose_name = "Empresa"
+        verbose_name_plural = "Empresa"
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        """Força o singleton: a empresa é sempre a linha ``pk=1``."""
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_solo(cls):
+        """Retorna a única instância da empresa, criando-a se necessário."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

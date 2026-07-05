@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from .models import (
     Client,
+    Company,
     Expense,
     ExpenseInstallment,
     Manufacturer,
@@ -163,6 +164,55 @@ class ClientForm(StyledModelForm):
     # Grava sem formatação: tira a máscara e persiste apenas os dígitos.
     def clean_cpf_cnpj(self):
         return _only_digits(self.cleaned_data.get("cpf_cnpj"))
+
+    def clean_phone_primary(self):
+        return _only_digits(self.cleaned_data.get("phone_primary"))
+
+    def clean_phone_secondary(self):
+        return _only_digits(self.cleaned_data.get("phone_secondary"))
+
+    def clean_postal_code(self):
+        return _only_digits(self.cleaned_data.get("postal_code"))
+
+
+class CompanyForm(StyledModelForm):
+    class Meta:
+        model = Company
+        fields = [
+            "name",
+            "legal_name",
+            "cnpj",
+            "email",
+            "phone_primary",
+            "phone_secondary",
+            "street",
+            "number",
+            "complement",
+            "district",
+            "city",
+            "state",
+            "postal_code",
+        ]
+        widgets = {
+            # Máscaras aplicadas só visualmente no front (ver static/sign/js/masks.js).
+            # O `clean_*` correspondente grava apenas os dígitos no banco.
+            "cnpj": forms.TextInput(
+                attrs={"data-mask": "cpf-cnpj", "inputmode": "numeric", "maxlength": "18"}
+            ),
+            "phone_primary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+            "phone_secondary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+            "postal_code": forms.TextInput(
+                attrs={"data-mask": "cep", "inputmode": "numeric", "maxlength": "9"}
+            ),
+        }
+
+    # Grava sem formatação: tira a máscara e persiste apenas os dígitos.
+    def clean_cnpj(self):
+        return _only_digits(self.cleaned_data.get("cnpj"))
 
     def clean_phone_primary(self):
         return _only_digits(self.cleaned_data.get("phone_primary"))
