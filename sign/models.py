@@ -540,6 +540,11 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def display_name(self):
+        """Nome de exibição: razão social se preenchida, senão o nome."""
+        return self.legal_name or self.name
+
     def save(self, *args, **kwargs):
         """Força o singleton: a empresa é sempre a linha ``pk=1``."""
         self.pk = 1

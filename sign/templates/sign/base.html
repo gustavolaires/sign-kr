@@ -14,19 +14,13 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 flex w-64 flex-col bg-navy text-slate-300 transition-transform duration-200">
         <div class="border-b border-white/10 px-6 py-6">
             <a href="{% url 'sign:product_list' %}" class="text-lg font-bold tracking-tight text-white">
-                {{ company.name }}
+                {{ company.display_name }}
             </a>
         </div>
 
         <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-6">
             <div>
                 <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Comercial</p>
-                <a href="{% url 'sign:manufacturer_list' %}"
-                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
-                   {% if 'manufacturer' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
-                    <i class="fa-solid fa-industry w-5 text-center"></i>
-                    Fabricantes
-                </a>
                 <a href="{% url 'sign:product_list' %}"
                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
                    {% if 'product' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
@@ -89,6 +83,11 @@
                     </button>
                     <div id="settingsMenu"
                          class="absolute right-0 top-full z-40 mt-1 hidden w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                        <a href="{% url 'sign:manufacturer_list' %}"
+                           class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            <i class="fa-solid fa-industry w-5 text-center"></i>
+                            Fabricantes
+                        </a>
                         <a href="{% url 'sign:company_settings' %}"
                            class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                             <i class="fa-solid fa-gears w-5 text-center"></i>

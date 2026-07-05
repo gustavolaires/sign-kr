@@ -154,8 +154,8 @@
     <div class="doc fmt-a4">
         <div class="head">
             <div class="company">
-                <div class="company-name">{{ company.name }}</div>
-                {% if company.legal_name %}<div class="company-line">{{ company.legal_name }}</div>{% endif %}
+                <div class="company-name">{{ company.display_name }}</div>
+                {% if company.legal_name %}<div class="company-line">{{ company.name }}</div>{% endif %}
                 {% if company.cnpj %}<div class="company-line">CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
                 {% if company.street %}<div class="company-line">{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}{% if company.complement %} - {{ company.complement }}{% endif %}</div>{% endif %}
                 {% if company.district or company.city %}<div class="company-line">{{ company.district }}{% if company.district and company.city %} - {% endif %}{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}{% if company.postal_code %} - CEP {{ company.postal_code|cep }}{% endif %}</div>{% endif %}
@@ -251,7 +251,7 @@
     {# ============================ FORMATO 58mm ============================ #}
     <div class="doc fmt-58mm">
         <div class="center">
-            <div class="company-name">{{ company.name }}</div>
+            <div class="company-name">{{ company.display_name }}</div>
             {% if company.cnpj %}<div>CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
             {% if company.street %}<div>{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}</div>{% endif %}
             {% if company.city %}<div>{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}</div>{% endif %}
@@ -271,7 +271,7 @@
         <div class="sec-title">Itens</div>
         {% for item in items %}
         <div class="item">
-            <div class="name">{% if item.barcode %}{{ item.barcode }} · {% endif %}{% if item.manufacturer_code %}[{{ item.manufacturer_code }}] {% endif %}{{ item.name }}</div>
+            <div class="name">{% if item.barcode %}{{ item.barcode }} · {% endif %}{{ item.name }}</div>
             <div class="row">
                 <span>{{ item.quantity }} {{ item.unit_type }} x R$ {{ item.unit_price|floatformat:2 }}</span>
                 <span>R$ {{ item.total|floatformat:2 }}</span>

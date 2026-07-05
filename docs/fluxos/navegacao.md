@@ -35,23 +35,25 @@ uppercase), espelhando as áreas funcionais do sistema:
 
 | Seção | Item | Ícone | Rota |
 |---|---|---|---|
-| **Comercial** | Fabricantes | `fa-industry` | `sign:manufacturer_list` |
-| | Produtos | `fa-tag` | `sign:product_list` |
+| **Comercial** | Produtos | `fa-tag` | `sign:product_list` |
 | | Vendas | `fa-receipt` | `sign:sale_list` |
 | **Financeiro** | Despesas | `fa-money-bill-wave` | `sign:expense_list` |
 | **Social** | Clientes | `fa-users` | `sign:client_list` |
 
+> **Fabricantes** não fica no side menu — é acessado pelo **dropdown do header**
+> (ver seção Header).
+
 As seções e os itens dentro de cada seção seguem **ordem alfabética**.
 
-No topo, a marca (`{{ company.name }}`, vinda do modelo `Company` singleton via
-context processor) linka para a lista de produtos.
+No topo, a marca (`{{ company.display_name }}` — razão social se preenchida, senão o
+nome; vinda do modelo `Company` singleton via context processor) linka para a lista de
+produtos.
 
 ### Item ativo
 
 O item da seção atual é destacado em **`bg-blue-600`**. A detecção é por
 `request.resolver_match.url_name` (capturado num `{% with url_name=... %}`):
 
-- `{% if 'manufacturer' in url_name %}` → Fabricantes
 - `{% if 'product' in url_name %}` → Produtos
 - `{% if 'sale' in url_name or url_name == 'checkout' %}` → Vendas (inclui o checkout)
 - `{% if 'expense' in url_name or 'installment' in url_name %}` → Despesas (inclui parcelas)
@@ -68,9 +70,10 @@ Barra branca no topo da área de conteúdo, com:
   `<body>` alterna `-translate-x-full` na sidebar e `ml-64`/`ml-0` no `#content`
   (mostra/oculta o menu com transição).
 - **`{% block header %}`**: ponto de extensão para botões específicos da tela.
-- **Configurações** (`#settingsToggle`, `fa-gear`, alinhado à direita): abre um
-  **dropdown** (vanilla JS — alterna `hidden`, fecha em clique-fora e `Escape`)
-  com o item **Configurações da empresa** (`fa-gears`, `sign:company_settings`).
+- **Dropdown de configurações** (`#settingsToggle`, `fa-gear`, alinhado à direita):
+  abre um **dropdown** (vanilla JS — alterna `hidden`, fecha em clique-fora e `Escape`,
+  abre para a esquerda com `right-0`) com os itens **Fabricantes** (`fa-industry`,
+  `sign:manufacturer_list`) e **Configurações** (`fa-gears`, `sign:company_settings`).
 - **Carrinho** (`fa-cart-shopping`, alinhado à direita): leva a
   `sign:cart_detail`. Tem um **badge** (`#cart-count`) com o nº de produtos
   distintos, vindo do context processor `cart_count` (global em todo template);
