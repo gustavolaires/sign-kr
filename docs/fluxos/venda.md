@@ -12,7 +12,7 @@ no **processamento** que acontece no backend. Referência das features:
         │  clica 🛒 no produto → modal → quantidade
         ▼  POST AJAX cart/add  (valida estoque, grava cookie)
   Carrinho (cookie JSON)  ◄── atualizar/remover (AJAX, sem reload)
-        │  "Finalizar compra"
+        │  "Checkout"
         ▼  GET sales/checkout/
   Checkout  (resumo read-only + cliente + desconto + pagamentos + obs)
         │  POST sales/checkout/

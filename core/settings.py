@@ -63,6 +63,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'sign.context_processors.cart',
+                'sign.context_processors.company',
             ],
         },
     },
@@ -122,3 +123,23 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Dados da empresa exibidos nos comprovantes (não fiscais).
+# TODO: substituir por um modelo Company editável pela UI (tarefa futura).
+# A estrutura de chaves espelha o que o futuro modelo exporá, para troca transparente.
+COMPANY = {
+    'name': 'Kasa dos Reparos',
+    'legal_name': '',        # Razão social
+    'cnpj': '',
+    'phone_primary': '',
+    'phone_secondary': '',
+    'email': '',
+    'street': '',
+    'number': '',
+    'complement': '',
+    'district': '',
+    'city': '',
+    'state': '',
+    'postal_code': '',
+}

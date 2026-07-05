@@ -6,8 +6,8 @@ de alterar o checkout ou os relatórios de vendas.
 
 ## Visão geral do fluxo
 
-1. Carrinho (cookie, ver [`docs/carrinho.md`](carrinho.md)) → botão **"Finalizar
-   compra"** (abaixo da lista de itens) leva a `sign:checkout`.
+1. Carrinho (cookie, ver [`docs/carrinho.md`](carrinho.md)) → botão **"Checkout"**
+   (abaixo da lista de itens) leva a `sign:checkout`.
 2. `checkout` (GET) renderiza o resumo do carrinho (somente leitura) + cliente
    (opcional) + desconto + pagamentos + observações.
 3. `checkout` (POST) delega à camada de serviço `sign.services.create_sale`, que
@@ -86,7 +86,38 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
   [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):
   `./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify`.
 
+## Comprovante (não fiscal)
+
+Documento de **garantia/troca**, sem valor fiscal. A tela de detalhe tem o botão
+**"Ver comprovante"** → `sign:sale_receipt` (`sales/<pk>/receipt/`,
+view `sale_receipt` em `sign/views/sales.py`).
+
+- **Dois formatos**, alternáveis pelo querystring `?format=`: `58mm` (papel térmico,
+  **padrão**) e `a4` (folha larga). Valor inválido cai no default 58mm.
+- Template **standalone** `sign/templates/sign/sales/receipt.html` — **não** estende
+  `base.html`; tem CSS próprio embutido (com `@page` por formato) e **não depende do
+  Tailwind** (não exige rebuild do `output.css`).
+- Impressão via **diálogo nativo** (`window.print()`) — 100% offline, coerente com o
+  PyWebView; a barra de ações some no `@media print`. Salvar em PDF é feito escolhendo
+  esse destino no próprio diálogo (não dá para pré-selecioná-lo por JS, então não há
+  botão separado).
+- **Venda avulsa** (sem cliente): os campos do cliente são renderizados **em branco**.
+- **Dados da empresa**: `settings.COMPANY` (dict), exposto a todos os templates pelo
+  context processor `sign.context_processors.company` (também alimenta o nome no
+  side menu do `base.html`). Um modelo `Company` editável pela UI ficou para depois —
+  a estrutura de chaves do dict já espelha esse futuro modelo.
+
 ## Decisões deixadas para depois
 
 - Sem campo de **status** na venda (não há fluxo de cancelamento/estorno ainda).
 - **Descontos por item** (promoções) — campos já existem em `SaleItem`, sem UI.
+- **Modelo `Company` editável pela UI** — hoje os dados da empresa vivem em
+  `settings.COMPANY` (constante).
+- **Gerar PDF determinístico do comprovante** — hoje o PDF depende do usuário
+  escolher esse destino no diálogo de impressão. Melhoria: gerar o PDF no backend
+  (WeasyPrint ou xhtml2pdf) e, por ser app desktop, salvá-lo via **diálogo nativo
+  "Salvar como" do PyWebView** (`window.create_file_dialog(SAVE_DIALOG, ...)`),
+  deixando o usuário escolher a pasta. Requer ponte JS↔Python (`window.pywebview.api`,
+  só funciona empacotado, não no navegador de dev) e atenção ao empacotamento
+  PyInstaller (WeasyPrint tem dependências nativas GTK/Pango/Cairo; `xhtml2pdf` é
+  Python puro, porém com CSS mais limitado).

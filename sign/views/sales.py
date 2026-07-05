@@ -2,13 +2,17 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView
 
 from ..cart import COOKIE_NAME, Cart
 from ..forms import SaleForm
 from ..models import PaymentType, Sale
 from ..services import create_sale
+
+# Formatos de comprovante suportados (58mm térmico / A4).
+RECEIPT_FORMATS = {"58mm", "a4"}
+DEFAULT_RECEIPT_FORMAT = "58mm"
 
 
 def _parse_decimal(raw):
@@ -170,3 +174,21 @@ class SaleDetailView(DetailView):
             .select_related("client")
             .prefetch_related("items__product_snapshot", "payments")
         )
+
+
+def sale_receipt(request, pk):
+    """Comprovante (não fiscal) da venda, imprimível em 58mm ou A4.
+
+    O formato vem do querystring ``?format=`` (default 58mm); a impressão e o
+    "salvar como PDF" usam o diálogo nativo (``window.print()``) no template.
+    """
+    sale = get_object_or_404(
+        Sale.objects.select_related("client").prefetch_related(
+            "items__product_snapshot", "payments"
+        ),
+        pk=pk,
+    )
+    fmt = request.GET.get("format", DEFAULT_RECEIPT_FORMAT)
+    if fmt not in RECEIPT_FORMATS:
+        fmt = DEFAULT_RECEIPT_FORMAT
+    return render(request, "sign/sales/receipt.html", {"sale": sale, "fmt": fmt})

@@ -1,0 +1,286 @@
+{% load static %}{% load sign_format %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprovante · Venda #{{ sale.pk }}</title>
+    <link rel="stylesheet" href="{% static 'sign/fontawesome/css/all.min.css' %}">
+    <style>
+        /* ---- Impressão: tamanho da página por formato ---- */
+        {% if fmt == 'a4' %}
+        @page { size: A4; margin: 12mm; }
+        {% else %}
+        @page { size: 58mm auto; margin: 3mm; }
+        {% endif %}
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #e5e7eb;
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* ---- Barra de ações (apenas na tela) ---- */
+        .toolbar {
+            position: sticky; top: 0; z-index: 10;
+            display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+            padding: .75rem 1rem;
+            background: #1b2a4e; color: #fff;
+        }
+        .toolbar .spacer { flex: 1 1 auto; }
+        .btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .45rem .8rem; border-radius: .5rem;
+            font-size: .85rem; font-weight: 600; text-decoration: none;
+            border: 1px solid transparent; cursor: pointer;
+            background: #2563eb; color: #fff;
+        }
+        .btn:hover { background: #1d4ed8; }
+        .btn-ghost { background: transparent; border-color: rgba(255,255,255,.35); color: #fff; }
+        .btn-ghost:hover { background: rgba(255,255,255,.12); }
+        .fmt-group { display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: .5rem; overflow: hidden; }
+        .fmt-group a {
+            padding: .45rem .8rem; font-size: .85rem; font-weight: 600;
+            text-decoration: none; color: #cbd5e1;
+        }
+        .fmt-group a.active { background: #2563eb; color: #fff; }
+
+        /* ---- Documento ---- */
+        .doc {
+            background: #fff; color: #000;
+            margin: 1.5rem auto; padding: 6mm;
+            box-shadow: 0 1px 6px rgba(0,0,0,.2);
+        }
+        .doc.fmt-58mm { width: 58mm; font-family: "Courier New", monospace; font-size: 11px; line-height: 1.35; }
+        .doc.fmt-a4   { width: 210mm; max-width: 100%; font-size: 12px; padding: 10mm; }
+
+        /* ===== Formato 58mm (cupom térmico) ===== */
+        .fmt-58mm .center { text-align: center; }
+        .fmt-58mm .company-name { font-size: 14px; font-weight: bold; }
+        .fmt-58mm .op { font-weight: bold; text-transform: uppercase; margin-top: 4px; }
+        .fmt-58mm hr { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+        .fmt-58mm .row { display: flex; justify-content: space-between; gap: 6px; }
+        .fmt-58mm .muted { color: #000; }
+        .fmt-58mm .sec-title { font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .fmt-58mm .item { margin-bottom: 4px; }
+        .fmt-58mm .item .name { font-weight: bold; }
+        .fmt-58mm .totals .row.grand { font-weight: bold; font-size: 12px; }
+
+        /* ===== Formato A4 (folha larga) ===== */
+        .fmt-a4 table { width: 100%; border-collapse: collapse; }
+        .fmt-a4 .head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+        .fmt-a4 .head .company { flex: 1; }
+        .fmt-a4 .company-name { font-size: 20px; font-weight: bold; }
+        .fmt-a4 .company-line { font-size: 11px; color: #333; }
+        .fmt-a4 .op-box { border: 1px solid #000; text-align: center; min-width: 150px; }
+        .fmt-a4 .op-box .lbl { font-size: 10px; padding: 2px 6px; border-bottom: 1px solid #000; background: #f3f4f6; text-transform: uppercase; }
+        .fmt-a4 .op-box .val { font-size: 14px; font-weight: bold; padding: 6px; }
+        .fmt-a4 .band { background: #111827; color: #fff; font-weight: bold; text-transform: uppercase; font-size: 11px; padding: 4px 8px; margin-top: 10px; }
+        .fmt-a4 .fields {
+            display: grid; grid-template-columns: repeat(6, 1fr);
+            gap: 1px; background: #d1d5db;
+            border: 1px solid #000; border-top: none;
+        }
+        .fmt-a4 .fields .fld { background: #fff; padding: 4px 8px; }
+        .fmt-a4 .fld.span2 { grid-column: span 2; }
+        .fmt-a4 .fld.span3 { grid-column: span 3; }
+        .fmt-a4 .fld.span4 { grid-column: span 4; }
+        .fmt-a4 .fld .k { font-size: 9px; text-transform: uppercase; color: #6b7280; display: block; }
+        .fmt-a4 .fld .v { font-size: 12px; min-height: 16px; }
+        .fmt-a4 .items { margin-top: 4px; }
+        .fmt-a4 .items th { background: #f3f4f6; border: 1px solid #000; padding: 4px 6px; font-size: 10px; text-transform: uppercase; text-align: left; }
+        .fmt-a4 .items td { border: 1px solid #d1d5db; padding: 4px 6px; font-size: 11px; }
+        .fmt-a4 .items td.num, .fmt-a4 .items th.num { text-align: right; }
+        .fmt-a4 .bottom { display: flex; gap: 12px; margin-top: 10px; }
+        .fmt-a4 .bottom .col { flex: 1; }
+        .fmt-a4 .totals td { padding: 4px 8px; border: 1px solid #000; font-size: 12px; }
+        .fmt-a4 .totals td.lbl { background: #f3f4f6; font-weight: 600; }
+        .fmt-a4 .totals td.num { text-align: right; }
+        .fmt-a4 .totals tr.grand td { font-size: 14px; font-weight: bold; }
+        .fmt-a4 .pay td { border: 1px solid #d1d5db; padding: 4px 8px; font-size: 11px; }
+        .fmt-a4 .pay td.num { text-align: right; }
+        .fmt-a4 .obs { border: 1px solid #000; border-top: none; padding: 6px 8px; min-height: 40px; font-size: 11px; white-space: pre-line; }
+
+        /* ---- Regras de impressão ---- */
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .doc { margin: 0 auto; padding: 0; box-shadow: none; }
+            .doc.fmt-a4 { width: auto; }
+            .doc.fmt-58mm { width: 58mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a href="{% url 'sign:sale_detail' sale.pk %}" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+        <div class="fmt-group" role="group" aria-label="Formato do comprovante">
+            <a href="{% url 'sign:sale_receipt' sale.pk %}?format=58mm" class="{% if fmt != 'a4' %}active{% endif %}">58mm</a>
+            <a href="{% url 'sign:sale_receipt' sale.pk %}?format=a4" class="{% if fmt == 'a4' %}active{% endif %}">A4</a>
+        </div>
+        <span class="spacer"></span>
+        <button type="button" class="btn" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Imprimir
+        </button>
+    </div>
+
+    {% if fmt == 'a4' %}
+    {# ============================ FORMATO A4 ============================ #}
+    <div class="doc fmt-a4">
+        <div class="head">
+            <div class="company">
+                <div class="company-name">{{ company.name }}</div>
+                {% if company.legal_name %}<div class="company-line">{{ company.legal_name }}</div>{% endif %}
+                {% if company.cnpj %}<div class="company-line">CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
+                {% if company.street %}<div class="company-line">{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}{% if company.complement %} - {{ company.complement }}{% endif %}</div>{% endif %}
+                {% if company.district or company.city %}<div class="company-line">{{ company.district }}{% if company.district and company.city %} - {% endif %}{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}{% if company.postal_code %} - CEP {{ company.postal_code|cep }}{% endif %}</div>{% endif %}
+                {% if company.phone_primary %}<div class="company-line">Fone: {{ company.phone_primary|phone }}{% if company.phone_secondary %} / {{ company.phone_secondary|phone }}{% endif %}</div>{% endif %}
+                {% if company.email %}<div class="company-line">{{ company.email }}</div>{% endif %}
+            </div>
+            <div class="op-box">
+                <div class="lbl">Natureza da operação</div>
+                <div class="val">Venda</div>
+                <div class="lbl">Nº do pedido</div>
+                <div class="val">{{ sale.pk }}</div>
+                <div class="lbl">Data de emissão</div>
+                <div class="val">{{ sale.created_at|date:"d/m/Y H:i" }}</div>
+            </div>
+        </div>
+
+        <div class="band">Cliente</div>
+        <div class="fields">
+            <div class="fld span4"><span class="k">Nome / Razão social</span><span class="v">{% if sale.client %}{{ sale.client.name }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">CPF / CNPJ</span><span class="v">{% if sale.client %}{{ sale.client.cpf_cnpj|cpf_cnpj }}{% endif %}</span></div>
+            <div class="fld span4"><span class="k">Endereço</span><span class="v">{% if sale.client %}{{ sale.client.street }}{% if sale.client.number %}, {{ sale.client.number }}{% endif %}{% if sale.client.complement %} - {{ sale.client.complement }}{% endif %}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Bairro</span><span class="v">{% if sale.client %}{{ sale.client.district }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Município</span><span class="v">{% if sale.client %}{{ sale.client.city }}{% endif %}</span></div>
+            <div class="fld"><span class="k">UF</span><span class="v">{% if sale.client %}{{ sale.client.state }}{% endif %}</span></div>
+            <div class="fld"><span class="k">CEP</span><span class="v">{% if sale.client and sale.client.postal_code %}{{ sale.client.postal_code|cep }}{% endif %}</span></div>
+            <div class="fld span2"><span class="k">Telefone</span><span class="v">{% if sale.client %}{{ sale.client.phone_primary|phone }}{% endif %}</span></div>
+        </div>
+
+        <div class="band">Dados do produto / serviço</div>
+        <table class="items">
+            <thead>
+                <tr>
+                    <th>Cód. barras</th>
+                    <th>Descrição</th>
+                    <th>Marca</th>
+                    <th class="num">Quant.</th>
+                    <th>Unid.</th>
+                    <th class="num">Valor unit.</th>
+                    <th class="num">Valor total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in sale.items.all %}
+                <tr>
+                    <td>{{ item.product_snapshot.barcode|default:"—" }}</td>
+                    <td>{% if item.product_snapshot.manufacturer_code %}[{{ item.product_snapshot.manufacturer_code }}] {% endif %}{{ item.product_snapshot.name }}</td>
+                    <td>{{ item.product_snapshot.manufacturer_name }}</td>
+                    <td class="num">{{ item.quantity }}</td>
+                    <td>{{ item.product_snapshot.unit_type }}</td>
+                    <td class="num">R$ {{ item.unit_price|floatformat:2 }}</td>
+                    <td class="num">R$ {{ item.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="bottom">
+            <div class="col">
+                <div class="band">Formas de pagamento</div>
+                <table class="pay">
+                    <tbody>
+                        {% for payment in sale.payments.all %}
+                        <tr>
+                            <td>{{ payment.get_payment_type_display }}{% if payment.installments > 1 %} ({{ payment.installments }}x){% endif %}</td>
+                            <td class="num">R$ {{ payment.value|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2">—</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col">
+                <div class="band">Totais</div>
+                <table class="totals">
+                    <tbody>
+                        <tr><td class="lbl">Subtotal</td><td class="num">R$ {{ sale.subtotal|floatformat:2 }}</td></tr>
+                        <tr><td class="lbl">Desconto{% if sale.has_perc_discount %} ({{ sale.perc_discount|floatformat:2 }}%){% endif %}</td><td class="num">R$ {{ sale.discount|floatformat:2 }}</td></tr>
+                        <tr class="grand"><td class="lbl">Total</td><td class="num">R$ {{ sale.total|floatformat:2 }}</td></tr>
+                        <tr><td class="lbl">Troco</td><td class="num">R$ {{ sale.change|floatformat:2 }}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="band">Observações</div>
+        <div class="obs">{{ sale.obs }}</div>
+    </div>
+
+    {% else %}
+    {# ============================ FORMATO 58mm ============================ #}
+    <div class="doc fmt-58mm">
+        <div class="center">
+            <div class="company-name">{{ company.name }}</div>
+            {% if company.cnpj %}<div>CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
+            {% if company.street %}<div>{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}</div>{% endif %}
+            {% if company.city %}<div>{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}</div>{% endif %}
+            {% if company.phone_primary %}<div>Fone: {{ company.phone_primary|phone }}</div>{% endif %}
+            <div class="op">Venda</div>
+        </div>
+        <hr>
+        <div class="row"><span>Comprovante</span><span>Nº {{ sale.pk }}</span></div>
+        <div class="row"><span>Data</span><span>{{ sale.created_at|date:"d/m/Y H:i" }}</span></div>
+        <hr>
+        <div class="sec-title">Cliente</div>
+        <div>Nome: {% if sale.client %}{{ sale.client.name }}{% endif %}</div>
+        <div>CPF/CNPJ: {% if sale.client %}{{ sale.client.cpf_cnpj|cpf_cnpj }}{% endif %}</div>
+        <div>Fone: {% if sale.client %}{{ sale.client.phone_primary|phone }}{% endif %}</div>
+        <div>E-mail: {% if sale.client %}{{ sale.client.email }}{% endif %}</div>
+        <hr>
+        <div class="sec-title">Itens</div>
+        {% for item in sale.items.all %}
+        <div class="item">
+            <div class="name">{% if item.product_snapshot.barcode %}{{ item.product_snapshot.barcode }} · {% endif %}{% if item.product_snapshot.manufacturer_code %}[{{ item.product_snapshot.manufacturer_code }}] {% endif %}{{ item.product_snapshot.name }}</div>
+            <div class="row">
+                <span>{{ item.quantity }} {{ item.product_snapshot.unit_type }} x R$ {{ item.unit_price|floatformat:2 }}</span>
+                <span>R$ {{ item.total|floatformat:2 }}</span>
+            </div>
+        </div>
+        {% endfor %}
+        <hr>
+        <div class="totals">
+            <div class="row"><span>Subtotal</span><span>R$ {{ sale.subtotal|floatformat:2 }}</span></div>
+            <div class="row"><span>Desconto{% if sale.has_perc_discount %} ({{ sale.perc_discount|floatformat:2 }}%){% endif %}</span><span>R$ {{ sale.discount|floatformat:2 }}</span></div>
+            <div class="row grand"><span>TOTAL</span><span>R$ {{ sale.total|floatformat:2 }}</span></div>
+            <div class="row"><span>Troco</span><span>R$ {{ sale.change|floatformat:2 }}</span></div>
+        </div>
+        <hr>
+        <div class="sec-title">Formas de pagamento</div>
+        {% for payment in sale.payments.all %}
+        <div class="row">
+            <span>{{ payment.get_payment_type_display }}{% if payment.installments > 1 %} ({{ payment.installments }}x){% endif %}</span>
+            <span>R$ {{ payment.value|floatformat:2 }}</span>
+        </div>
+        {% empty %}
+        <div>—</div>
+        {% endfor %}
+        {% if sale.obs %}
+        <hr>
+        <div class="sec-title">Observações</div>
+        <div>{{ sale.obs }}</div>
+        {% endif %}
+        <hr>
+        <div class="center">Documento sem valor fiscal</div>
+    </div>
+    {% endif %}
+</body>
+</html>

@@ -22,6 +22,7 @@ urlpatterns = [
     path("sales/checkout/", views.checkout, name="checkout"),
     path("sales/", views.SaleListView.as_view(), name="sale_list"),
     path("sales/<int:pk>/", views.SaleDetailView.as_view(), name="sale_detail"),
+    path("sales/<int:pk>/receipt/", views.sale_receipt, name="sale_receipt"),
     # Clientes
     path("clients/", views.ClientListView.as_view(), name="client_list"),
     path("clients/new/", views.ClientCreateView.as_view(), name="client_create"),

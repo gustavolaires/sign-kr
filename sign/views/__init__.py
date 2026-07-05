@@ -39,6 +39,7 @@ from .sales import (
     SaleDetailView,
     SaleListView,
     checkout,
+    sale_receipt,
 )
 
 __all__ = [
@@ -70,6 +71,7 @@ __all__ = [
     "ProductListView",
     "ProductUpdateView",
     "checkout",
+    "sale_receipt",
     "SaleDetailView",
     "SaleListView",
 ]
