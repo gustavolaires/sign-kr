@@ -65,7 +65,7 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
     (fabricante, código do fabricante) e *Estoque e preço* (quantidade, tipo de
     unidade, preço unitário). Campos via partial `products/_field.html`.
   - **Fabricante**: seção única *Dados básicos* (nome).
-- **Telas de form e exclusão**: o conteúdo ocupa o espaço inteiro disponível (`flex min-h-full`); cards menores ficam centralizados. As **ações de listagem** são ícones (`fa-eye`, `fa-pen-to-square`, `fa-trash`) com `title`/`aria-label`; os **botões** usam ícones: Salvar=`fa-check`, excluir=`fa-trash`, Cancelar=`fa-xmark`, Voltar=`fa-arrow-left`. A tela de **detalhes** mostra o `dl` num card branco e os botões Editar/Deletar/Voltar abaixo.
+- **Telas de form e exclusão**: o conteúdo ocupa o espaço inteiro disponível (`flex min-h-full`); cards menores ficam centralizados. As **ações de listagem** são ícones (`fa-eye`, `fa-pen-to-square`, `fa-trash`) com `title`/`aria-label`; os **botões** usam ícones: Salvar=`fa-check`, excluir=`fa-trash`, Cancelar=`fa-xmark`, Voltar=`fa-arrow-left`. Na tela de **detalhes**, o cabeçalho tem só o **Voltar**; os botões **Editar** (âmbar) e **Deletar** (vermelho) ficam no **topo do card branco**, alinhados à direita; as informações do produto ficam num grupo **Definição** (`dl`).
 - **Exibição da quantidade** (`products/list.html` e `products/detail.html`): `quantity` é inteiro, exibido como `{{ product.quantity }} {{ product.unit_type }}` (a sigla do tipo, não o label completo).
 - Preço é exibido com `R$ {{ product.unit_price|floatformat:2 }}`.
 

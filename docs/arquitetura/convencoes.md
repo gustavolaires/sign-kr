@@ -78,6 +78,32 @@ Não há validação de dígito verificador — apenas máscara. Detalhes em
   bordas dos campos) com fundo e borda **`navy`** e fonte **branca**:
   `rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white`.
 
+## Telas de detalhe
+
+Layout padrão das telas `detail.html` (Produtos, Clientes, Despesas). Replicar ao
+criar novas telas de detalhe.
+
+- **Cabeçalho da página**: título (`<h1>`) à esquerda e **apenas** o botão
+  **Voltar** à direita (`border border-gray-300 ... hover:bg-gray-50`, ícone
+  `fa-arrow-left`). Ações de edição/exclusão **não** ficam aqui.
+- **Card de informações** (fundo branco, `rounded-xl border border-gray-200 bg-white
+  p-6 shadow-sm`). Dentro dele, na ordem:
+  1. **Linha de ações**, alinhada à **direita** e **colada** no primeiro título
+     (sem espaçamento): `<div class="flex justify-end gap-3 text-sm">` com
+     - **Editar** — `inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 font-medium text-white shadow hover:bg-amber-600` (ícone `fa-pen-to-square`);
+     - **Deletar** — igual, mas `bg-red-600 hover:bg-red-700` (ícone `fa-trash`).
+  2. As **informações em `<section>`** (cada uma com `<h2>` de cabeçalho —
+     `mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700` — e um `dl`
+     em grade). Mesmo quando há um só grupo, use uma `<section>` com título
+     (ex.: Produtos → **Definição**).
+- **Espaçamento**: o card **não** usa `gap-6` (senão empurraria o primeiro título
+  para longe dos botões). Em vez disso, as `<section>` ficam num **wrapper**
+  `flex flex-col gap-6` — isso preserva o espaço **entre** as seções e mantém os
+  botões colados no primeiro título. Com uma única seção, o wrapper é dispensável.
+- Dados exibidos em `dl` de grade: `grid grid-cols-1 gap-px overflow-hidden
+  rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2`, cada item num
+  `div.bg-white px-4 py-3` com `dt` (rótulo) + `dd` (valor).
+
 ## App offline — Tailwind, paleta e ícones
 
 O app é empacotado para **desktop offline** (PyWebView/PyInstaller — ver
@@ -110,6 +136,10 @@ Cores customizadas definidas via `@theme` no `input.css`:
 
 O azul de **destaque/ação** (item ativo do menu, botões primários, link "Ver") é
 o **`blue-600`** nativo do Tailwind. **Não use `indigo`** na UI.
+
+Cores semânticas dos botões de ação (nativas do Tailwind): **Editar** → `amber-500`
+(hover `amber-600`); **Deletar/excluir** → `red-600` (hover `red-700`); **primário/
+confirmar** → `blue-600` (hover `blue-700`).
 
 ### Ícones — FontAwesome Free (local)
 

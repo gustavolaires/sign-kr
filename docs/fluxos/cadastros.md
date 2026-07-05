@@ -65,8 +65,16 @@ o processamento compartilhados; as particularidades de cada entidade estão em
 
 - Telas em subpastas por área (`products/`, `manufacturers/`, `clients/`), todas
   estendendo `base.html`. Formulários e detalhes podem ser **seccionados** (ex.:
-  Clientes em Dados básicos / Contato / Endereço), com um partial `_field.html`
-  para renderizar cada campo de forma uniforme.
+  Clientes em Dados básicos / Contato / Endereço; Produtos num único grupo
+  **Definição**), com um partial `_field.html` para renderizar cada campo de forma
+  uniforme.
+- **Telas de detalhe**: no cabeçalho fica só o **Voltar**; os botões de ação
+  **Editar** (`bg-amber-500`) e **Deletar** (`bg-red-600`) ficam no **topo do card
+  de informações** (fundo branco), alinhados à **direita** e **colados no primeiro
+  título** do grupo (sem espaçamento entre eles). Para isso o card **não** usa
+  `gap-6`; as **seções** ficam num wrapper próprio `flex flex-col gap-6` (preserva o
+  espaçamento entre seções sem empurrar o primeiro título). Padrão aplicado a
+  Produtos, Clientes e Despesas (Vendas não têm edição/exclusão).
 - Telas de form/exclusão centralizam um card; listagens usam tabela com ações em
   ícone. Shell e menu em [`navegacao.md`](navegacao.md).
 
