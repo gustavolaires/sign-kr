@@ -8,9 +8,11 @@ from .models import (
     Manufacturer,
     Product,
     ProductSnapshot,
+    Representative,
     Sale,
     SaleItem,
     SalePayment,
+    Supplier,
 )
 
 
@@ -96,6 +98,23 @@ class ExpenseAdmin(admin.ModelAdmin):
     search_fields = ["name", "description"]
     date_hierarchy = "created_at"
     inlines = [ExpenseInstallmentInline]
+
+
+class RepresentativeInline(admin.TabularInline):
+    model = Representative
+    extra = 0
+    fields = ["name", "email", "phone_primary", "phone_secondary"]
+
+
+@admin.register(Supplier)
+class SupplierAdmin(admin.ModelAdmin):
+    list_display = [
+        "name", "cnpj", "state_registration",
+        "multiple_brands", "manufacturer", "email", "phone_primary",
+    ]
+    list_filter = ["multiple_brands"]
+    search_fields = ["name", "cnpj", "email"]
+    inlines = [RepresentativeInline]
 
 
 @admin.register(ProductSnapshot)

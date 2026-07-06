@@ -1,0 +1,135 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar fornecedor{% else %}Novo fornecedor{% endif %} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">
+        {% if form.instance.pk %}Editar fornecedor{% else %}Novo fornecedor{% endif %}
+    </h1>
+    <a href="{% if form.instance.pk %}{% url 'sign:supplier_detail' form.instance.pk %}{% else %}{% url 'sign:supplier_list' %}{% endif %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="grow max-w-2xl">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <section>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Dados básicos</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.name %}
+                    {% include "sign/clients/_field.html" with field=form.cnpj %}
+                    {% include "sign/clients/_field.html" with field=form.state_registration %}
+                    {% include "sign/clients/_field.html" with field=form.multiple_brands %}
+                    <div id="manufacturer-field">
+                        {% include "sign/clients/_field.html" with field=form.manufacturer %}
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Contato</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.email %}
+                    {% include "sign/clients/_field.html" with field=form.phone_primary %}
+                    {% include "sign/clients/_field.html" with field=form.phone_secondary %}
+                </div>
+            </section>
+
+            {% if not form.instance.pk %}
+            <section>
+                <div class="mb-3 flex items-center justify-between rounded-lg border border-navy bg-navy px-3 py-2">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-white">Representantes</h2>
+                    <button type="button" id="add-representative"
+                            class="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20">
+                        <i class="fa-solid fa-plus"></i> Adicionar representante
+                    </button>
+                </div>
+                <p class="mb-3 text-xs text-gray-500">
+                    Opcional. Linhas sem nome preenchido são ignoradas. Você também pode adicionar
+                    representantes depois, pela tela de detalhes do fornecedor.
+                </p>
+                <div id="representatives-list" class="space-y-4"></div>
+            </section>
+
+            <template id="representative-row-template">
+                <div class="representative-row rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div class="mb-2 flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Representante</span>
+                        <button type="button" class="remove-representative text-red-600 hover:text-red-800" title="Remover" aria-label="Remover">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Nome <span class="text-red-500">*</span></label>
+                            <input type="text" name="rep_name"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">E-mail</label>
+                            <input type="email" name="rep_email"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Telefone principal</label>
+                            <input type="text" name="rep_phone_primary" data-mask="phone" inputmode="numeric" maxlength="15"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Telefone alternativo</label>
+                            <input type="text" name="rep_phone_secondary" data-mask="phone" inputmode="numeric" maxlength="15"
+                                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+            </template>
+            {% endif %}
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+                <a href="{% if form.instance.pk %}{% url 'sign:supplier_detail' form.instance.pk %}{% else %}{% url 'sign:supplier_list' %}{% endif %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+    // Mostra o campo de marca apenas quando o fornecedor NÃO trabalha com
+    // múltiplas marcas (checkbox desmarcado).
+    (function () {
+        var checkbox = document.getElementById("id_multiple_brands");
+        var field = document.getElementById("manufacturer-field");
+        if (!checkbox || !field) return;
+        function sync() {
+            field.classList.toggle("hidden", checkbox.checked);
+        }
+        checkbox.addEventListener("change", sync);
+        sync();
+    })();
+</script>
+<script src="{% static 'sign/js/masks.js' %}" defer></script>
+{% if not form.instance.pk %}<script src="{% static 'sign/js/suppliers.js' %}" defer></script>{% endif %}
+{% endblock %}

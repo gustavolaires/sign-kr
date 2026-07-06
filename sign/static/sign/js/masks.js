@@ -43,13 +43,23 @@
         "cep": formatCep,
     };
 
-    document.querySelectorAll("[data-mask]").forEach(function (el) {
-        var format = formatters[el.getAttribute("data-mask")];
-        if (!format) return;
-        var apply = function () {
-            el.value = format(el.value);
-        };
-        apply(); // formata o valor pré-preenchido (edição)
-        el.addEventListener("input", apply);
-    });
+    // Liga as máscaras aos inputs [data-mask] dentro de `root` (default: document).
+    // Exposta em window para reaplicar em linhas adicionadas dinamicamente (ex.:
+    // representantes no form de fornecedor). Marca cada input para não religar.
+    function bindMasks(root) {
+        (root || document).querySelectorAll("[data-mask]").forEach(function (el) {
+            if (el.dataset.maskBound) return;
+            var format = formatters[el.getAttribute("data-mask")];
+            if (!format) return;
+            el.dataset.maskBound = "1";
+            var apply = function () {
+                el.value = format(el.value);
+            };
+            apply(); // formata o valor pré-preenchido (edição)
+            el.addEventListener("input", apply);
+        });
+    }
+
+    window.bindMasks = bindMasks;
+    bindMasks(document);
 })();

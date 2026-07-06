@@ -1,0 +1,53 @@
+{% extends "sign/base.html" %}
+{% load sign_format %}
+
+{% block title %}Excluir fornecedor · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Excluir fornecedor</h1>
+    <a href="{% url 'sign:supplier_detail' supplier.pk %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex justify-center">
+        <div class="grow max-w-xl">
+            <p class="flex flex-col gap-2 text-gray-700">
+                <span>Tem certeza que deseja excluir o fornecedor abaixo?</span>
+                <span>Os representantes vinculados também serão excluídos. Esta ação não pode ser desfeita.</span>
+            </p>
+
+            <dl class="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fornecedor</dt>
+                    <dd class="mt-1 text-base font-semibold text-gray-900">{{ supplier.name }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">CNPJ</dt>
+                    <dd class="mt-1 text-base font-semibold text-gray-900">{{ supplier.cnpj|cpf_cnpj|default:"—" }}</dd>
+                </div>
+            </dl>
+
+            <form method="post" class="mt-6 flex justify-end gap-3">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
+                    <i class="fa-solid fa-trash"></i> Sim, excluir
+                </button>
+                <a href="{% url 'sign:supplier_detail' supplier.pk %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

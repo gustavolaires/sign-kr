@@ -44,6 +44,7 @@ PyInstaller). Está organizada em **três categorias**, cada uma numa pasta:
 - [`produtos.md`](recursos/produtos.md) — Produtos e Fabricantes.
 - [`carrinho.md`](recursos/carrinho.md) — Carrinho em cookie + AJAX.
 - [`clientes.md`](recursos/clientes.md) — Cadastro de Clientes (máscaras, seções).
+- [`fornecedores.md`](recursos/fornecedores.md) — Fornecedores + Representantes.
 - [`vendas.md`](recursos/vendas.md) — Vendas/Checkout (snapshot, pagamentos).
 - [`despesas.md`](recursos/despesas.md) — Despesas/contas a pagar.
 

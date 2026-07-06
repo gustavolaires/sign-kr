@@ -10,7 +10,9 @@ from .models import (
     ExpenseInstallment,
     Manufacturer,
     Product,
+    Representative,
     Sale,
+    Supplier,
 )
 from .services import reais_to_cents
 
@@ -222,6 +224,76 @@ class CompanyForm(StyledModelForm):
 
     def clean_postal_code(self):
         return _only_digits(self.cleaned_data.get("postal_code"))
+
+
+class SupplierForm(StyledModelForm):
+    class Meta:
+        model = Supplier
+        fields = [
+            "name",
+            "cnpj",
+            "state_registration",
+            "multiple_brands",
+            "manufacturer",
+            "email",
+            "phone_primary",
+            "phone_secondary",
+        ]
+        widgets = {
+            # Máscaras aplicadas só visualmente no front (ver static/sign/js/masks.js).
+            # O `clean_*` correspondente grava apenas os dígitos no banco.
+            # `state_registration` é texto livre (pode ser "ISENTO"), sem máscara.
+            "cnpj": forms.TextInput(
+                attrs={"data-mask": "cpf-cnpj", "inputmode": "numeric", "maxlength": "18"}
+            ),
+            "phone_primary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+            "phone_secondary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["manufacturer"].empty_label = "Selecione uma marca"
+
+    # Grava sem formatação: tira a máscara e persiste apenas os dígitos.
+    def clean_cnpj(self):
+        return _only_digits(self.cleaned_data.get("cnpj"))
+
+    def clean_phone_primary(self):
+        return _only_digits(self.cleaned_data.get("phone_primary"))
+
+    def clean_phone_secondary(self):
+        return _only_digits(self.cleaned_data.get("phone_secondary"))
+
+    def clean(self):
+        cleaned = super().clean()
+        # Se trabalha com múltiplas marcas, a marca específica não se aplica.
+        if cleaned.get("multiple_brands"):
+            cleaned["manufacturer"] = None
+        return cleaned
+
+
+class RepresentativeForm(StyledModelForm):
+    class Meta:
+        model = Representative
+        fields = ["name", "email", "phone_primary", "phone_secondary"]
+        widgets = {
+            "phone_primary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+            "phone_secondary": forms.TextInput(
+                attrs={"data-mask": "phone", "inputmode": "numeric", "maxlength": "15"}
+            ),
+        }
+
+    def clean_phone_primary(self):
+        return _only_digits(self.cleaned_data.get("phone_primary"))
+
+    def clean_phone_secondary(self):
+        return _only_digits(self.cleaned_data.get("phone_secondary"))
 
 
 class ExpenseForm(StyledModelForm):

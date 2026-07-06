@@ -1,0 +1,129 @@
+{% extends "sign/base.html" %}
+{% load sign_format %}
+
+{% block title %}Fornecedores · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Fornecedores</h1>
+    <div class="flex items-center gap-3">
+        <button type="button" id="toggle-filters" aria-controls="supplier-filters"
+                aria-expanded="true"
+                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+            <i class="fa-solid fa-filter w-5"></i>
+            Filtros
+        </button>
+        <a href="{% url 'sign:supplier_create' %}"
+           class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+            <i class="fa-solid fa-plus w-5"></i>
+            Novo fornecedor
+        </a>
+    </div>
+</div>
+
+<form method="get" id="supplier-filters" class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+            <label for="filter-name" class="mb-1 block text-xs font-medium text-gray-600">Nome</label>
+            <input id="filter-name" type="text" name="name" value="{{ filters.name }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-cnpj" class="mb-1 block text-xs font-medium text-gray-600">CNPJ</label>
+            <input id="filter-cnpj" type="text" name="cnpj" value="{{ filters.cnpj }}" inputmode="numeric"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-email" class="mb-1 block text-xs font-medium text-gray-600">E-mail</label>
+            <input id="filter-email" type="text" name="email" value="{{ filters.email }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-manufacturer" class="mb-1 block text-xs font-medium text-gray-600">Marca</label>
+            <select id="filter-manufacturer" name="manufacturer"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="">Todas</option>
+                {% for m in manufacturers %}
+                    <option value="{{ m.pk }}" {% if filters.manufacturer == m.pk|stringformat:"s" %}selected{% endif %}>{{ m.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <input type="hidden" name="sort" value="{{ current_sort }}">
+    <div class="mt-3 flex gap-2 justify-end">
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        {% if has_filters %}
+            <a href="{% url 'sign:supplier_list' %}"
+               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i> Limpar
+            </a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <tr>
+                <th class="px-4 py-3">
+                    <a href="{{ sort_links.name }}" class="inline-flex items-center gap-1 hover:text-gray-700">
+                        Nome
+                        {% if sort_state.name == 'asc' %}<i class="fa-solid fa-sort-up"></i>
+                        {% elif sort_state.name == 'desc' %}<i class="fa-solid fa-sort-down"></i>
+                        {% else %}<i class="fa-solid fa-sort text-gray-300"></i>{% endif %}
+                    </a>
+                </th>
+                <th class="px-4 py-3">
+                    <a href="{{ sort_links.cnpj }}" class="inline-flex items-center gap-1 hover:text-gray-700">
+                        CNPJ
+                        {% if sort_state.cnpj == 'asc' %}<i class="fa-solid fa-sort-up"></i>
+                        {% elif sort_state.cnpj == 'desc' %}<i class="fa-solid fa-sort-down"></i>
+                        {% else %}<i class="fa-solid fa-sort text-gray-300"></i>{% endif %}
+                    </a>
+                </th>
+                <th class="px-4 py-3">E-mail</th>
+                <th class="px-4 py-3">Telefone principal</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for supplier in suppliers %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ supplier.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ supplier.cnpj|cpf_cnpj }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ supplier.email }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ supplier.phone_primary|phone }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-4 text-base">
+                            <a href="{% url 'sign:supplier_detail' supplier.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
+                            <a href="{% url 'sign:supplier_update' supplier.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
+                            <a href="{% url 'sign:supplier_delete' supplier.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                        {% if has_filters %}Nenhum fornecedor encontrado.{% else %}Nenhum fornecedor cadastrado.{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    (function () {
+        var btn = document.getElementById("toggle-filters");
+        var panel = document.getElementById("supplier-filters");
+        if (!btn || !panel) return;
+        btn.addEventListener("click", function () {
+            var open = panel.classList.toggle("hidden") === false;
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    })();
+</script>
+{% endblock %}

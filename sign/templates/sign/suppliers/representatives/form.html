@@ -1,0 +1,54 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar representante{% else %}Novo representante{% endif %} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">
+        {% if form.instance.pk %}Editar representante{% else %}Novo representante{% endif %}
+        <span class="text-base font-normal text-gray-500">— {{ supplier.name }}</span>
+    </h1>
+    <a href="{% url 'sign:supplier_detail' supplier.pk %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="grow max-w-2xl">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            {% include "sign/clients/_field.html" with field=form.name %}
+            {% include "sign/clients/_field.html" with field=form.email %}
+            {% include "sign/clients/_field.html" with field=form.phone_primary %}
+            {% include "sign/clients/_field.html" with field=form.phone_secondary %}
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-check"></i> Salvar
+                </button>
+                <a href="{% url 'sign:supplier_detail' supplier.pk %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+<script src="{% static 'sign/js/masks.js' %}" defer></script>
+{% endblock %}

@@ -45,6 +45,16 @@ from .sales import (
     sale_quote,
     sale_receipt,
 )
+from .suppliers import (
+    RepresentativeCreateView,
+    RepresentativeDeleteView,
+    RepresentativeUpdateView,
+    SupplierCreateView,
+    SupplierDeleteView,
+    SupplierDetailView,
+    SupplierListView,
+    SupplierUpdateView,
+)
 
 __all__ = [
     "cart_add",
@@ -80,4 +90,12 @@ __all__ = [
     "sale_receipt",
     "SaleDetailView",
     "SaleListView",
+    "RepresentativeCreateView",
+    "RepresentativeDeleteView",
+    "RepresentativeUpdateView",
+    "SupplierCreateView",
+    "SupplierDeleteView",
+    "SupplierDetailView",
+    "SupplierListView",
+    "SupplierUpdateView",
 ]

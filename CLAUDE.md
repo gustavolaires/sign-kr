@@ -26,6 +26,7 @@ Consulte e mantenha esses documentos ao alterar as áreas correspondentes.
 - [`produtos.md`](docs/recursos/produtos.md) — Produtos e Fabricantes: models, forms, views, URLs, templates.
 - [`carrinho.md`](docs/recursos/carrinho.md) — Carrinho em cookie, fluxo AJAX/fetch + CSRF, validação de estoque, UI e nota sobre PyWebView.
 - [`clientes.md`](docs/recursos/clientes.md) — Cadastro de Clientes: model `Client` + `PersonType`, máscaras, seções, filtros.
+- [`fornecedores.md`](docs/recursos/fornecedores.md) — Fornecedores + Representantes: models `Supplier`/`Representative`, criação inline vs páginas separadas, máscaras.
 - [`vendas.md`](docs/recursos/vendas.md) — Vendas/Checkout: `Sale`/`ProductSnapshot`/`SaleItem`/`SalePayment`, serviço `create_sale`, telas e `checkout.js`.
 - [`despesas.md`](docs/recursos/despesas.md) — Despesas: `Expense`/`ExpenseInstallment` (status derivado), `create_expense`/`register_payment`, CRUD + parcelas.
 

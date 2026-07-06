@@ -555,3 +555,69 @@ class Company(models.Model):
         """Retorna a única instância da empresa, criando-a se necessário."""
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class Supplier(models.Model):
+    """Fornecedor: responsável por vender e entregar os produtos.
+
+    Os campos mascarados (``cnpj``, telefones) armazenam apenas dígitos; a
+    formatação é aplicada na exibição pelos filtros de ``sign_format``. A
+    ``state_registration`` (inscrição estadual) é texto livre (pode ser
+    alfanumérica ou "ISENTO"), portanto não é mascarada.
+    """
+
+    name = models.CharField("Nome", max_length=200)
+    cnpj = models.CharField("CNPJ", max_length=18, blank=True)
+    state_registration = models.CharField(
+        "Inscrição estadual", max_length=20, blank=True
+    )
+    multiple_brands = models.BooleanField(
+        "Trabalha com múltiplas marcas", default=True
+    )
+    manufacturer = models.ForeignKey(
+        Manufacturer,
+        on_delete=models.SET_NULL,
+        related_name="suppliers",
+        null=True,
+        blank=True,
+        verbose_name="Marca",
+        help_text="Usado quando o fornecedor não trabalha com múltiplas marcas.",
+    )
+    email = models.EmailField("E-mail", blank=True)
+    phone_primary = models.CharField("Telefone principal", max_length=20, blank=True)
+    phone_secondary = models.CharField(
+        "Telefone alternativo", max_length=20, blank=True
+    )
+
+    class Meta:
+        verbose_name = "Fornecedor"
+        verbose_name_plural = "Fornecedores"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Representative(models.Model):
+    """Representante (contato) de um fornecedor."""
+
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.CASCADE,
+        related_name="representatives",
+        verbose_name="Fornecedor",
+    )
+    name = models.CharField("Nome", max_length=200)
+    email = models.EmailField("E-mail", blank=True)
+    phone_primary = models.CharField("Telefone principal", max_length=20, blank=True)
+    phone_secondary = models.CharField(
+        "Telefone alternativo", max_length=20, blank=True
+    )
+
+    class Meta:
+        verbose_name = "Representante"
+        verbose_name_plural = "Representantes"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
