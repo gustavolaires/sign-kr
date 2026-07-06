@@ -2,7 +2,8 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import get_object_or_404
+from django.db.models import ProtectedError
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -144,9 +145,18 @@ class SupplierDeleteView(DeleteView):
     context_object_name = "supplier"
 
     def form_valid(self, form):
-        # CASCADE remove os representantes vinculados.
+        # CASCADE remove os representantes vinculados; mas notas fiscais de
+        # entrada apontam com PROTECT, então a exclusão pode ser bloqueada.
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            messages.error(
+                self.request,
+                "Não é possível excluir: há notas fiscais vinculadas a este fornecedor.",
+            )
+            return redirect("sign:supplier_detail", pk=self.object.pk)
         messages.success(self.request, "Fornecedor excluído com sucesso.")
-        return super().form_valid(form)
+        return response
 
 
 class RepresentativeCreateView(SuccessMessageMixin, CreateView):

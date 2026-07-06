@@ -43,6 +43,12 @@
                     <i class="fa-solid fa-money-bill-wave w-5 text-center"></i>
                     Despesas
                 </a>
+                <a href="{% url 'sign:invoice_list' %}"
+                   class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                   {% if 'invoice' in url_name %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                    <i class="fa-solid fa-dolly w-5 text-center"></i>
+                    NF Entrada
+                </a>
             </div>
 
             <div>

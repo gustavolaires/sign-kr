@@ -8,6 +8,9 @@ from .models import (
     Company,
     Expense,
     ExpenseInstallment,
+    InboundInvoice,
+    InvoiceDuplicate,
+    InvoiceItem,
     Manufacturer,
     Product,
     Representative,
@@ -421,3 +424,157 @@ class InstallmentPaymentForm(forms.Form):
         for field in self.fields.values():
             existing = field.widget.attrs.get("class", "")
             field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()
+
+
+def _reais_field(label, required=False):
+    """DecimalField em reais (2 casas), usado nos forms como campo virtual."""
+    return forms.DecimalField(
+        label=label,
+        max_digits=12,
+        decimal_places=2,
+        min_value=0,
+        required=required,
+    )
+
+
+class InboundInvoiceForm(StyledModelForm):
+    """Cabeçalho da NF de entrada. Os valores em reais são campos virtuais.
+
+    No **create**, a persistência (com faturas/produtos inline) é feita pela
+    view via ``services.create_inbound_invoice``; no **update**, o ``save()``
+    converte os reais para centavos e grava o cabeçalho.
+    """
+
+    # Mapa campo-virtual (reais) → campo do model (centavos).
+    MONEY_FIELDS = {
+        "products_total": "products_total_cents",
+        "total": "total_cents",
+        "icms_base": "icms_base_cents",
+        "icms": "icms_cents",
+        "ipi": "ipi_cents",
+        "taxes_total": "taxes_total_cents",
+        "freight": "freight_cents",
+        "insurance": "insurance_cents",
+        "discount": "discount_cents",
+        "other_costs": "other_costs_cents",
+    }
+
+    products_total = _reais_field("Valor total dos produtos (R$)")
+    total = _reais_field("Valor total (R$)", required=True)
+    icms_base = _reais_field("Base de cálculo do ICMS (R$)")
+    icms = _reais_field("Valor do ICMS (R$)")
+    ipi = _reais_field("Valor do IPI (R$)")
+    taxes_total = _reais_field("Valor total dos tributos (R$)")
+    freight = _reais_field("Valor do frete (R$)")
+    insurance = _reais_field("Valor do seguro (R$)")
+    discount = _reais_field("Valor do desconto (R$)")
+    other_costs = _reais_field("Outras despesas acessórias (R$)")
+
+    class Meta:
+        model = InboundInvoice
+        fields = ["number", "issue_date", "delivery_date", "supplier"]
+        widgets = {
+            "issue_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "delivery_date": forms.DateInput(
+                attrs={"type": "date"}, format="%Y-%m-%d"
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["supplier"].empty_label = "Selecione o fornecedor"
+        # Ao editar, preenche os campos em reais a partir dos centavos gravados.
+        if self.instance and self.instance.pk:
+            for reais_field, cents_field in self.MONEY_FIELDS.items():
+                self.fields[reais_field].initial = (
+                    Decimal(getattr(self.instance, cents_field)) / 100
+                )
+
+    def save(self, commit=True):
+        invoice = super().save(commit=False)
+        for reais_field, cents_field in self.MONEY_FIELDS.items():
+            setattr(
+                invoice,
+                cents_field,
+                reais_to_cents(self.cleaned_data.get(reais_field) or 0),
+            )
+        if commit:
+            invoice.save()
+        return invoice
+
+
+class InvoiceDuplicateForm(StyledModelForm):
+    """Criação/edição de uma fatura (duplicata) de NF, em página separada."""
+
+    value = forms.DecimalField(
+        label="Valor da fatura (R$)", max_digits=12, decimal_places=2, min_value=0
+    )
+
+    class Meta:
+        model = InvoiceDuplicate
+        fields = ["due_date"]
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["value"].initial = Decimal(self.instance.value_cents) / 100
+
+    def save(self, commit=True):
+        duplicate = super().save(commit=False)
+        duplicate.value_cents = reais_to_cents(self.cleaned_data["value"])
+        if commit:
+            duplicate.save()
+        return duplicate
+
+
+class InvoiceItemForm(StyledModelForm):
+    """Criação/edição de um produto de NF, em página separada."""
+
+    MONEY_FIELDS = {
+        "unit_price": "unit_price_cents",
+        "total": "total_cents",
+        "icms_base": "icms_base_cents",
+        "icms": "icms_cents",
+        "ipi": "ipi_cents",
+    }
+
+    unit_price = _reais_field("Valor unitário (R$)", required=True)
+    total = _reais_field("Valor total (R$)")
+    icms_base = _reais_field("Base de cálculo do ICMS (R$)")
+    icms = _reais_field("Valor ICMS (R$)")
+    ipi = _reais_field("Valor IPI (R$)")
+
+    class Meta:
+        model = InvoiceItem
+        fields = ["code", "description", "unit_type", "quantity"]
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"step": "any", "min": "0"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Exibe a sigla (valor) no <select> de tipo de unidade, como no ProductForm.
+        self.fields["unit_type"].choices = [
+            (value, value if value else label)
+            for value, label in self.fields["unit_type"].choices
+        ]
+        if self.instance and self.instance.pk:
+            for reais_field, cents_field in self.MONEY_FIELDS.items():
+                self.fields[reais_field].initial = (
+                    Decimal(getattr(self.instance, cents_field)) / 100
+                )
+
+    def save(self, commit=True):
+        item = super().save(commit=False)
+        for reais_field, cents_field in self.MONEY_FIELDS.items():
+            setattr(
+                item,
+                cents_field,
+                reais_to_cents(self.cleaned_data.get(reais_field) or 0),
+            )
+        if commit:
+            item.save()
+        return item

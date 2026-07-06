@@ -622,3 +622,199 @@ class Representative(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class InboundInvoice(models.Model):
+    """Nota Fiscal de Entrada (NF): recebimento de mercadorias de um fornecedor.
+
+    Registra o cabeçalho da nota (número, datas, fornecedor e os valores
+    monetários totais, digitados manualmente conforme o documento físico). As
+    Faturas/Duplicatas (``InvoiceDuplicate``) e os Produtos (``InvoiceItem``)
+    são filhos ``CASCADE``, gerenciados apenas dentro da NF. Todos os valores
+    ficam em centavos (inteiro); cada um expõe uma ``@property`` em reais.
+    """
+
+    number = models.CharField("Número da nota", max_length=64)
+    issue_date = models.DateField("Data de emissão", null=True, blank=True)
+    delivery_date = models.DateField("Data de entrega", null=True, blank=True)
+    supplier = models.ForeignKey(
+        Supplier,
+        on_delete=models.PROTECT,
+        related_name="invoices",
+        verbose_name="Fornecedor",
+    )
+    products_total_cents = models.PositiveIntegerField(
+        "Valor total dos produtos (centavos)", default=0
+    )
+    total_cents = models.PositiveIntegerField("Valor total (centavos)", default=0)
+    icms_base_cents = models.PositiveIntegerField(
+        "Base de cálculo do ICMS (centavos)", default=0
+    )
+    icms_cents = models.PositiveIntegerField("Valor do ICMS (centavos)", default=0)
+    ipi_cents = models.PositiveIntegerField("Valor do IPI (centavos)", default=0)
+    taxes_total_cents = models.PositiveIntegerField(
+        "Valor total dos tributos (centavos)", default=0
+    )
+    freight_cents = models.PositiveIntegerField("Valor do frete (centavos)", default=0)
+    insurance_cents = models.PositiveIntegerField(
+        "Valor do seguro (centavos)", default=0
+    )
+    discount_cents = models.PositiveIntegerField(
+        "Valor do desconto (centavos)", default=0
+    )
+    other_costs_cents = models.PositiveIntegerField(
+        "Outras despesas acessórias (centavos)", default=0
+    )
+    created_at = models.DateTimeField("Criada em", auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Nota fiscal de entrada"
+        verbose_name_plural = "Notas fiscais de entrada"
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"NF {self.number}"
+
+    @property
+    def products_total(self):
+        """Valor total dos produtos em reais (somente leitura)."""
+        return self.products_total_cents / 100
+
+    @property
+    def total(self):
+        """Valor total da nota em reais (somente leitura)."""
+        return self.total_cents / 100
+
+    @property
+    def icms_base(self):
+        """Base de cálculo do ICMS em reais (somente leitura)."""
+        return self.icms_base_cents / 100
+
+    @property
+    def icms(self):
+        """Valor do ICMS em reais (somente leitura)."""
+        return self.icms_cents / 100
+
+    @property
+    def ipi(self):
+        """Valor do IPI em reais (somente leitura)."""
+        return self.ipi_cents / 100
+
+    @property
+    def taxes_total(self):
+        """Valor total dos tributos em reais (somente leitura)."""
+        return self.taxes_total_cents / 100
+
+    @property
+    def freight(self):
+        """Valor do frete em reais (somente leitura)."""
+        return self.freight_cents / 100
+
+    @property
+    def insurance(self):
+        """Valor do seguro em reais (somente leitura)."""
+        return self.insurance_cents / 100
+
+    @property
+    def discount(self):
+        """Valor do desconto em reais (somente leitura)."""
+        return self.discount_cents / 100
+
+    @property
+    def other_costs(self):
+        """Outras despesas acessórias em reais (somente leitura)."""
+        return self.other_costs_cents / 100
+
+
+class InvoiceDuplicate(models.Model):
+    """Fatura/Duplicata de uma NF de entrada (título a pagar)."""
+
+    invoice = models.ForeignKey(
+        InboundInvoice,
+        on_delete=models.CASCADE,
+        related_name="duplicates",
+        verbose_name="Nota fiscal",
+    )
+    due_date = models.DateField("Vencimento")
+    value_cents = models.PositiveIntegerField("Valor (centavos)", default=0)
+
+    class Meta:
+        verbose_name = "Fatura"
+        verbose_name_plural = "Faturas"
+        ordering = ["due_date", "id"]
+
+    def __str__(self):
+        return f"Fatura NF {self.invoice.number} — venc. {self.due_date}"
+
+    @property
+    def value(self):
+        """Valor da fatura em reais (somente leitura)."""
+        return self.value_cents / 100
+
+
+class InvoiceItem(models.Model):
+    """Produto listado numa NF de entrada.
+
+    Reaproveita o enum ``UnitType`` dos produtos. A quantidade é ``Decimal``
+    (suporta unidades fracionadas, ex.: kg/l). Os valores ficam em centavos.
+    """
+
+    invoice = models.ForeignKey(
+        InboundInvoice,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name="Nota fiscal",
+    )
+    code = models.CharField("Código do produto", max_length=64)
+    description = models.CharField("Descrição do produto", max_length=200)
+    unit_type = models.CharField(
+        "Tipo de unidade",
+        max_length=4,
+        choices=UnitType.choices,
+        default=UnitType.UNID,
+    )
+    quantity = models.DecimalField(
+        "Quantidade", max_digits=12, decimal_places=3, default=0
+    )
+    unit_price_cents = models.PositiveIntegerField(
+        "Valor unitário (centavos)", default=0
+    )
+    total_cents = models.PositiveIntegerField("Valor total (centavos)", default=0)
+    icms_base_cents = models.PositiveIntegerField(
+        "Base de cálculo do ICMS (centavos)", default=0
+    )
+    icms_cents = models.PositiveIntegerField("Valor ICMS (centavos)", default=0)
+    ipi_cents = models.PositiveIntegerField("Valor IPI (centavos)", default=0)
+
+    class Meta:
+        verbose_name = "Produto da nota"
+        verbose_name_plural = "Produtos da nota"
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"{self.code} — {self.description}"
+
+    @property
+    def unit_price(self):
+        """Valor unitário em reais (somente leitura)."""
+        return self.unit_price_cents / 100
+
+    @property
+    def total(self):
+        """Valor total do item em reais (somente leitura)."""
+        return self.total_cents / 100
+
+    @property
+    def icms_base(self):
+        """Base de cálculo do ICMS em reais (somente leitura)."""
+        return self.icms_base_cents / 100
+
+    @property
+    def icms(self):
+        """Valor do ICMS em reais (somente leitura)."""
+        return self.icms_cents / 100
+
+    @property
+    def ipi(self):
+        """Valor do IPI em reais (somente leitura)."""
+        return self.ipi_cents / 100

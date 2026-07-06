@@ -1,0 +1,187 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}Editar nota fiscal{% else %}Nova nota fiscal{% endif %} · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">
+        {% if form.instance.pk %}Editar nota fiscal{% else %}Nova nota fiscal{% endif %}
+    </h1>
+    <a href="{% if form.instance.pk %}{% url 'sign:invoice_detail' form.instance.pk %}{% else %}{% url 'sign:invoice_list' %}{% endif %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <section>
+            <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Dados da nota</h2>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {% include "sign/clients/_field.html" with field=form.number %}
+                {% include "sign/clients/_field.html" with field=form.supplier %}
+                {% include "sign/clients/_field.html" with field=form.issue_date %}
+                {% include "sign/clients/_field.html" with field=form.delivery_date %}
+            </div>
+        </section>
+
+        <section>
+            <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Valores</h2>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {% include "sign/clients/_field.html" with field=form.icms_base %}
+                {% include "sign/clients/_field.html" with field=form.icms %}
+                {% include "sign/clients/_field.html" with field=form.taxes_total %}
+                {% include "sign/clients/_field.html" with field=form.products_total %}
+                {% include "sign/clients/_field.html" with field=form.freight %}
+                {% include "sign/clients/_field.html" with field=form.insurance %}
+                {% include "sign/clients/_field.html" with field=form.discount %}
+                {% include "sign/clients/_field.html" with field=form.other_costs %}
+                {% include "sign/clients/_field.html" with field=form.ipi %}
+                {% include "sign/clients/_field.html" with field=form.total %}
+            </div>
+        </section>
+
+        {% if not form.instance.pk %}
+        <section>
+            <div class="mb-3 flex items-center justify-between rounded-lg border border-navy bg-navy px-3 py-2">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-white">Faturas</h2>
+                <button type="button" id="add-duplicate"
+                        class="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20">
+                    <i class="fa-solid fa-plus"></i> Adicionar fatura
+                </button>
+            </div>
+            <p class="mb-3 text-xs text-gray-500">
+                Opcional. Linhas sem vencimento e sem valor são ignoradas. Você também
+                pode adicionar faturas depois, pela tela de detalhes da nota.
+            </p>
+            <div id="duplicates-list" class="space-y-4"></div>
+        </section>
+
+        <template id="duplicate-row-template">
+            <div class="duplicate-row rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Fatura</span>
+                    <button type="button" class="remove-duplicate text-red-600 hover:text-red-800" title="Remover" aria-label="Remover">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Vencimento <span class="text-red-500">*</span></label>
+                        <input type="date" name="dup_due_date"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Valor (R$) <span class="text-red-500">*</span></label>
+                        <input type="number" name="dup_value" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <section>
+            <div class="mb-3 flex items-center justify-between rounded-lg border border-navy bg-navy px-3 py-2">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-white">Produtos</h2>
+                <button type="button" id="add-item"
+                        class="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1 text-xs font-medium text-white hover:bg-white/20">
+                    <i class="fa-solid fa-plus"></i> Adicionar produto
+                </button>
+            </div>
+            <p class="mb-3 text-xs text-gray-500">
+                Opcional. Linhas sem código preenchido são ignoradas. Você também pode
+                adicionar produtos depois, pela tela de detalhes da nota.
+            </p>
+            <div id="items-list" class="space-y-4"></div>
+        </section>
+
+        <template id="item-row-template">
+            <div class="item-row rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Produto</span>
+                    <button type="button" class="remove-item text-red-600 hover:text-red-800" title="Remover" aria-label="Remover">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Código <span class="text-red-500">*</span></label>
+                        <input type="text" name="item_code"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-1 lg:col-span-2">
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Descrição <span class="text-red-500">*</span></label>
+                        <input type="text" name="item_description"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Tipo de unidade <span class="text-red-500">*</span></label>
+                        <select name="item_unit_type"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                            {% for u in unit_types %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Quantidade <span class="text-red-500">*</span></label>
+                        <input type="number" name="item_quantity" min="0" step="any"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Valor unitário (R$) <span class="text-red-500">*</span></label>
+                        <input type="number" name="item_unit_price" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Valor total (R$)</label>
+                        <input type="number" name="item_total" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Base de cálculo do ICMS (R$)</label>
+                        <input type="number" name="item_icms_base" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Valor ICMS (R$)</label>
+                        <input type="number" name="item_icms" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-sm font-medium text-gray-700">Valor IPI (R$)</label>
+                        <input type="number" name="item_ipi" min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:outline-none">
+                    </div>
+                </div>
+            </div>
+        </template>
+        {% endif %}
+
+        <div class="flex justify-end gap-3 pt-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                <i class="fa-solid fa-check"></i> Salvar
+            </button>
+            <a href="{% if form.instance.pk %}{% url 'sign:invoice_detail' form.instance.pk %}{% else %}{% url 'sign:invoice_list' %}{% endif %}"
+               class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+
+{% if not form.instance.pk %}<script src="{% static 'sign/js/invoices.js' %}" defer></script>{% endif %}
+{% endblock %}

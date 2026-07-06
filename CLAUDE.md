@@ -29,6 +29,7 @@ Consulte e mantenha esses documentos ao alterar as áreas correspondentes.
 - [`fornecedores.md`](docs/recursos/fornecedores.md) — Fornecedores + Representantes: models `Supplier`/`Representative`, criação inline vs páginas separadas, máscaras.
 - [`vendas.md`](docs/recursos/vendas.md) — Vendas/Checkout: `Sale`/`ProductSnapshot`/`SaleItem`/`SalePayment`, serviço `create_sale`, telas e `checkout.js`.
 - [`despesas.md`](docs/recursos/despesas.md) — Despesas: `Expense`/`ExpenseInstallment` (status derivado), `create_expense`/`register_payment`, CRUD + parcelas.
+- [`notas-fiscais.md`](docs/recursos/notas-fiscais.md) — NF de Entrada: `InboundInvoice`/`InvoiceDuplicate`/`InvoiceItem`, serviço `create_inbound_invoice`, faturas/produtos inline e páginas separadas.
 
 ## Convenções e aprendizados importantes
 

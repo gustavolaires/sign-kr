@@ -17,12 +17,16 @@ from django.utils import timezone
 from .models import (
     Expense,
     ExpenseInstallment,
+    InboundInvoice,
+    InvoiceDuplicate,
+    InvoiceItem,
     PaymentType,
     Product,
     ProductSnapshot,
     Sale,
     SaleItem,
     SalePayment,
+    UnitType,
 )
 
 
@@ -374,3 +378,115 @@ def register_payment(installment, *, paid_value_cents, paid_at):
     installment.paid_at = paid_at
     installment.save(update_fields=["paid_value_cents", "paid_at", "updated_at"])
     return installment
+
+
+# --- Notas fiscais de entrada -------------------------------------------------
+
+
+def _reais_or_zero(value):
+    """Converte reais → centavos, tratando vazio/``None`` como zero."""
+    if value in (None, ""):
+        return 0
+    return reais_to_cents(value)
+
+
+@transaction.atomic
+def create_inbound_invoice(*, number, issue_date, delivery_date, supplier,
+                           products_total, total, icms_base, icms, ipi,
+                           taxes_total, freight, insurance, discount, other_costs,
+                           duplicates, items):
+    """Cria uma NF de entrada com suas faturas e produtos, de forma atômica.
+
+    Os valores do cabeçalho e os montantes de cada linha chegam **em reais** e
+    são convertidos para centavos aqui (via ``reais_to_cents``, ``HALF_UP``,
+    nunca float). ``duplicates``/``items`` são listas de dicts parseadas do POST;
+    linhas totalmente vazias (fatura sem número, produto sem código) são
+    ignoradas. Levanta ``ValidationError`` (PT-BR) em qualquer inconsistência;
+    nada é gravado nesse caso.
+    """
+    if not (number or "").strip():
+        raise ValidationError("Informe o número da nota.")
+    if supplier is None:
+        raise ValidationError("Selecione o fornecedor.")
+    if total in (None, ""):
+        raise ValidationError("Informe o valor total da nota.")
+
+    # 1) Faturas: valida linhas preenchidas (as vazias são puladas).
+    duplicate_objs = []
+    for index, row in enumerate(duplicates, start=1):
+        due_date = row.get("due_date")
+        value_raw = row.get("value")
+        # Linha vazia (sem vencimento e sem valor) é ignorada.
+        if due_date is None and value_raw in (None, ""):
+            continue
+        if due_date is None:
+            raise ValidationError(f"Informe o vencimento da fatura {index}.")
+        value_cents = _reais_or_zero(value_raw)
+        if value_cents <= 0:
+            raise ValidationError(f"Informe um valor válido para a fatura {index}.")
+        duplicate_objs.append(
+            InvoiceDuplicate(due_date=due_date, value_cents=value_cents)
+        )
+
+    # 2) Produtos: valida linhas preenchidas (as vazias são puladas).
+    item_objs = []
+    for row in items:
+        code = (row.get("code") or "").strip()
+        if not code:
+            continue
+        description = (row.get("description") or "").strip()
+        if not description:
+            raise ValidationError(f"Informe a descrição do produto {code}.")
+        unit_type = (row.get("unit_type") or "").strip()
+        if unit_type not in UnitType.values:
+            raise ValidationError(f"Tipo de unidade inválido no produto {code}.")
+        try:
+            quantity = Decimal(row.get("quantity") or 0)
+        except (ArithmeticError, TypeError, ValueError):
+            raise ValidationError(f"Quantidade inválida no produto {code}.")
+        if quantity <= 0:
+            raise ValidationError(f"Informe a quantidade do produto {code}.")
+        unit_price_cents = _reais_or_zero(row.get("unit_price"))
+        total_item_cents = _reais_or_zero(row.get("total"))  # opcional
+        if unit_price_cents <= 0:
+            raise ValidationError(f"Informe o valor unitário do produto {code}.")
+        item_objs.append(
+            InvoiceItem(
+                code=code,
+                description=description,
+                unit_type=unit_type,
+                quantity=quantity,
+                unit_price_cents=unit_price_cents,
+                total_cents=total_item_cents,
+                icms_base_cents=_reais_or_zero(row.get("icms_base")),
+                icms_cents=_reais_or_zero(row.get("icms")),
+                ipi_cents=_reais_or_zero(row.get("ipi")),
+            )
+        )
+
+    # 3) Persiste o cabeçalho e as linhas (atômico).
+    invoice = InboundInvoice.objects.create(
+        number=number.strip(),
+        issue_date=issue_date,
+        delivery_date=delivery_date,
+        supplier=supplier,
+        products_total_cents=_reais_or_zero(products_total),
+        total_cents=_reais_or_zero(total),
+        icms_base_cents=_reais_or_zero(icms_base),
+        icms_cents=_reais_or_zero(icms),
+        ipi_cents=_reais_or_zero(ipi),
+        taxes_total_cents=_reais_or_zero(taxes_total),
+        freight_cents=_reais_or_zero(freight),
+        insurance_cents=_reais_or_zero(insurance),
+        discount_cents=_reais_or_zero(discount),
+        other_costs_cents=_reais_or_zero(other_costs),
+    )
+    for dup in duplicate_objs:
+        dup.invoice = invoice
+    for item in item_objs:
+        item.invoice = invoice
+    if duplicate_objs:
+        InvoiceDuplicate.objects.bulk_create(duplicate_objs)
+    if item_objs:
+        InvoiceItem.objects.bulk_create(item_objs)
+    return invoice

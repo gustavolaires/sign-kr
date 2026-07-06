@@ -51,6 +51,20 @@ urlpatterns = [
     path("installments/<int:pk>/edit/", views.ExpenseInstallmentUpdateView.as_view(), name="installment_update"),
     path("installments/<int:pk>/delete/", views.ExpenseInstallmentDeleteView.as_view(), name="installment_delete"),
     path("installments/<int:pk>/pay/", views.installment_pay, name="installment_pay"),
+    # Notas fiscais de entrada
+    path("invoices/", views.InboundInvoiceListView.as_view(), name="invoice_list"),
+    path("invoices/new/", views.InboundInvoiceCreateView.as_view(), name="invoice_create"),
+    path("invoices/<int:pk>/", views.InboundInvoiceDetailView.as_view(), name="invoice_detail"),
+    path("invoices/<int:pk>/edit/", views.InboundInvoiceUpdateView.as_view(), name="invoice_update"),
+    path("invoices/<int:pk>/delete/", views.InboundInvoiceDeleteView.as_view(), name="invoice_delete"),
+    # Faturas da nota fiscal
+    path("invoices/<int:invoice_pk>/duplicates/new/", views.InvoiceDuplicateCreateView.as_view(), name="invoice_duplicate_create"),
+    path("duplicates/<int:pk>/edit/", views.InvoiceDuplicateUpdateView.as_view(), name="invoice_duplicate_update"),
+    path("duplicates/<int:pk>/delete/", views.InvoiceDuplicateDeleteView.as_view(), name="invoice_duplicate_delete"),
+    # Produtos da nota fiscal
+    path("invoices/<int:invoice_pk>/items/new/", views.InvoiceItemCreateView.as_view(), name="invoice_item_create"),
+    path("items/<int:pk>/edit/", views.InvoiceItemUpdateView.as_view(), name="invoice_item_update"),
+    path("items/<int:pk>/delete/", views.InvoiceItemDeleteView.as_view(), name="invoice_item_delete"),
     # Configurações
     path("settings/company/", views.CompanySettingsView.as_view(), name="company_settings"),
     # Fabricantes

@@ -1,0 +1,137 @@
+{% extends "sign/base.html" %}
+
+{% block title %}NF de Entrada · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Notas fiscais de entrada</h1>
+    <div class="flex items-center gap-3">
+        <button type="button" id="toggle-filters" aria-controls="invoice-filters"
+                aria-expanded="true"
+                class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+            <i class="fa-solid fa-filter w-5"></i>
+            Filtros
+        </button>
+        <a href="{% url 'sign:invoice_create' %}"
+           class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+            <i class="fa-solid fa-plus w-5"></i>
+            Nova nota fiscal
+        </a>
+    </div>
+</div>
+
+<form method="get" id="invoice-filters" class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+            <label for="filter-number" class="mb-1 block text-xs font-medium text-gray-600">Número da nota</label>
+            <input id="filter-number" type="text" name="number" value="{{ filters.number }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-supplier" class="mb-1 block text-xs font-medium text-gray-600">Fornecedor</label>
+            <select id="filter-supplier" name="supplier"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="">Todos</option>
+                {% for s in suppliers %}
+                    <option value="{{ s.pk }}" {% if filters.supplier == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter-issue-date" class="mb-1 block text-xs font-medium text-gray-600">Data de emissão</label>
+            <input id="filter-issue-date" type="date" name="issue_date" value="{{ filters.issue_date }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+        <div>
+            <label for="filter-delivery-date" class="mb-1 block text-xs font-medium text-gray-600">Data de recebimento</label>
+            <input id="filter-delivery-date" type="date" name="delivery_date" value="{{ filters.delivery_date }}"
+                   class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+        </div>
+    </div>
+    <input type="hidden" name="sort" value="{{ current_sort }}">
+    <div class="mt-3 flex gap-2 justify-end">
+        <button type="submit"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+        </button>
+        {% if has_filters %}
+            <a href="{% url 'sign:invoice_list' %}"
+               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i> Limpar
+            </a>
+        {% endif %}
+    </div>
+</form>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <tr>
+                <th class="px-4 py-3">
+                    <a href="{{ sort_links.number }}" class="inline-flex items-center gap-1 hover:text-gray-700">
+                        Número
+                        {% if sort_state.number == 'asc' %}<i class="fa-solid fa-sort-up"></i>
+                        {% elif sort_state.number == 'desc' %}<i class="fa-solid fa-sort-down"></i>
+                        {% else %}<i class="fa-solid fa-sort text-gray-300"></i>{% endif %}
+                    </a>
+                </th>
+                <th class="px-4 py-3">Fornecedor</th>
+                <th class="px-4 py-3">
+                    <a href="{{ sort_links.issue_date }}" class="inline-flex items-center gap-1 hover:text-gray-700">
+                        Emissão
+                        {% if sort_state.issue_date == 'asc' %}<i class="fa-solid fa-sort-up"></i>
+                        {% elif sort_state.issue_date == 'desc' %}<i class="fa-solid fa-sort-down"></i>
+                        {% else %}<i class="fa-solid fa-sort text-gray-300"></i>{% endif %}
+                    </a>
+                </th>
+                <th class="px-4 py-3">
+                    <a href="{{ sort_links.delivery_date }}" class="inline-flex items-center gap-1 hover:text-gray-700">
+                        Recebimento
+                        {% if sort_state.delivery_date == 'asc' %}<i class="fa-solid fa-sort-up"></i>
+                        {% elif sort_state.delivery_date == 'desc' %}<i class="fa-solid fa-sort-down"></i>
+                        {% else %}<i class="fa-solid fa-sort text-gray-300"></i>{% endif %}
+                    </a>
+                </th>
+                <th class="px-4 py-3 text-right">Valor total</th>
+                <th class="px-4 py-3 text-right">Ações</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            {% for invoice in invoices %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-medium">{{ invoice.number }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ invoice.supplier.name }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ invoice.issue_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ invoice.delivery_date|date:"d/m/Y"|default:"—" }}</td>
+                    <td class="px-4 py-3 text-right text-gray-600">R$ {{ invoice.total|floatformat:2 }}</td>
+                    <td class="px-4 py-3">
+                        <div class="flex justify-end gap-4 text-base">
+                            <a href="{% url 'sign:invoice_detail' invoice.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
+                            <a href="{% url 'sign:invoice_update' invoice.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
+                            <a href="{% url 'sign:invoice_delete' invoice.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                        {% if has_filters %}Nenhuma nota fiscal encontrada.{% else %}Nenhuma nota fiscal cadastrada.{% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    (function () {
+        var btn = document.getElementById("toggle-filters");
+        var panel = document.getElementById("invoice-filters");
+        if (!btn || !panel) return;
+        btn.addEventListener("click", function () {
+            var open = panel.classList.toggle("hidden") === false;
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+    })();
+</script>
+{% endblock %}

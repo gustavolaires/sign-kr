@@ -5,6 +5,9 @@ from .models import (
     Company,
     Expense,
     ExpenseInstallment,
+    InboundInvoice,
+    InvoiceDuplicate,
+    InvoiceItem,
     Manufacturer,
     Product,
     ProductSnapshot,
@@ -115,6 +118,37 @@ class SupplierAdmin(admin.ModelAdmin):
     list_filter = ["multiple_brands"]
     search_fields = ["name", "cnpj", "email"]
     inlines = [RepresentativeInline]
+
+
+class InvoiceDuplicateInline(admin.TabularInline):
+    model = InvoiceDuplicate
+    extra = 0
+    fields = ["due_date", "value_cents"]
+
+
+class InvoiceItemInline(admin.TabularInline):
+    model = InvoiceItem
+    extra = 0
+    fields = [
+        "code",
+        "description",
+        "unit_type",
+        "quantity",
+        "unit_price_cents",
+        "total_cents",
+        "icms_base_cents",
+        "icms_cents",
+        "ipi_cents",
+    ]
+
+
+@admin.register(InboundInvoice)
+class InboundInvoiceAdmin(admin.ModelAdmin):
+    list_display = ["number", "supplier", "issue_date", "delivery_date", "total_cents"]
+    list_filter = ["issue_date", "supplier"]
+    search_fields = ["number", "supplier__name"]
+    date_hierarchy = "created_at"
+    inlines = [InvoiceDuplicateInline, InvoiceItemInline]
 
 
 @admin.register(ProductSnapshot)
