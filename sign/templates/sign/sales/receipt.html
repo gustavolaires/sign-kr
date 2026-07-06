@@ -245,6 +245,11 @@
 
         <div class="band">Observações</div>
         <div class="obs">{{ obs }}</div>
+
+        {% if discount_obs %}
+        <div class="band">Observações do desconto</div>
+        <div class="obs">{{ discount_obs }}</div>
+        {% endif %}
     </div>
 
     {% else %}
@@ -299,6 +304,11 @@
         <hr>
         <div class="sec-title">Observações</div>
         <div>{{ obs }}</div>
+        {% endif %}
+        {% if discount_obs %}
+        <hr>
+        <div class="sec-title">Observações do desconto</div>
+        <div>{{ discount_obs }}</div>
         {% endif %}
         <hr>
         <div class="center">Documento sem valor fiscal</div>

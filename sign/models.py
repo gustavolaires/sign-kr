@@ -197,6 +197,7 @@ class Sale(models.Model):
         blank=True,
     )
     discount_cents = models.PositiveIntegerField("Desconto (centavos)", default=0)
+    discount_obs = models.TextField("Observações do desconto", blank=True)
     change_cents = models.PositiveIntegerField("Troco (centavos)", default=0)
     total_cents = models.PositiveIntegerField("Total (centavos)", default=0)
     obs = models.TextField("Observações", blank=True)

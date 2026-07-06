@@ -102,9 +102,10 @@ class SaleForm(StyledModelForm):
 
     class Meta:
         model = Sale
-        fields = ["client", "obs"]
+        fields = ["client", "obs", "discount_obs"]
         widgets = {
             "obs": forms.Textarea(attrs={"rows": 3}),
+            "discount_obs": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):

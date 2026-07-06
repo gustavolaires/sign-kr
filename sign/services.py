@@ -118,7 +118,8 @@ def compute_quote_amounts(*, items, has_perc_discount, discount_input, payments)
 
 
 @transaction.atomic
-def create_sale(*, cart, client, has_perc_discount, discount_input, payments, obs):
+def create_sale(*, cart, client, has_perc_discount, discount_input, payments, obs,
+                discount_obs=""):
     """Cria uma venda completa a partir do carrinho, de forma atômica.
 
     Parâmetros:
@@ -130,6 +131,7 @@ def create_sale(*, cart, client, has_perc_discount, discount_input, payments, ob
         payments: lista de dicts ``{"payment_type", "installments", "value"}``,
             com ``value`` em reais (``Decimal``).
         obs: observações (str).
+        discount_obs: observações do desconto (str) — texto livre, sem cálculo.
 
     Revalida o estoque, baixa ``Product.quantity`` e grava Sale/SaleItem/
     SalePayment. Retorna a ``Sale`` criada. Levanta ``ValidationError`` em
@@ -228,6 +230,7 @@ def create_sale(*, cart, client, has_perc_discount, discount_input, payments, ob
         has_perc_discount=has_perc_discount,
         perc_discount=perc_discount,
         discount_cents=discount_cents,
+        discount_obs=discount_obs,
         change_cents=change_cents,
         total_cents=total_cents,
         obs=obs,

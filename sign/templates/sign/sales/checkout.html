@@ -77,7 +77,15 @@
 
             {# Desconto da venda — oculto por padrão; alternado pelo botão "Desconto". #}
             <div id="discount-group" class="hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">Desconto</h2>
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">Desconto</h2>
+                    <button type="button" id="open-discount-calc" title="Calculadora de desconto"
+                            aria-label="Abrir calculadora de desconto"
+                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                        <i class="fa-solid fa-calculator"></i>
+                        Calculadora
+                    </button>
+                </div>
                 <div class="flex items-end gap-3">
                     <div>
                         <label for="discount-mode" class="mb-1 block text-sm font-medium text-gray-700">Tipo</label>
@@ -97,6 +105,11 @@
                     </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-500">Desconto aplicado pelo vendedor sobre o total da venda.</p>
+                <div class="mt-4">
+                    <label for="{{ form.discount_obs.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">Observações do desconto</label>
+                    {{ form.discount_obs }}
+                    {% for error in form.discount_obs.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
             </div>
         </div>
 
@@ -226,6 +239,99 @@
             </div>
         </div>
     </template>
+
+    {# Dados por produto (rótulo + subtotal em centavos) para a calculadora. #}
+    {{ calc_items|json_script:"calc-items-data" }}
+
+    {# Modal da calculadora de desconto (estilo ábaco com range sliders). #}
+    <div id="discount-calc-modal"
+         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-xl">
+            <div class="flex items-center justify-between border-b border-gray-200 px-8 py-5">
+                <h2 class="text-lg font-bold">
+                    <i class="fa-solid fa-calculator mr-1 text-gray-500"></i>
+                    Calculadora de desconto
+                </h2>
+                <button type="button" id="calc-close" class="p-1 text-gray-400 hover:text-gray-600" aria-label="Fechar">
+                    <i class="fa-solid fa-xmark fa-lg"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto px-8 py-6">
+                {# Toggle segmentado: tipo de desconto (mesmo padrão do seletor 58mm/A4). #}
+                <div class="mb-6">
+                    <span class="mb-1 block text-center text-sm font-medium text-gray-700">Tipo de desconto</span>
+                    <div class="flex justify-center">
+                        <div id="calc-type" class="inline-flex overflow-hidden rounded-lg border border-gray-300" role="group">
+                            <button type="button" data-mode="total"
+                                    class="calc-type-btn bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+                                Valor total
+                            </button>
+                            <button type="button" data-mode="product"
+                                    class="calc-type-btn border-l border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                Por produto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {# Desconto sobre o valor total da venda. #}
+                <div id="calc-total-section" class="mb-6">
+                    <div class="mb-1 flex items-baseline justify-between">
+                        <label for="calc-total-slider" class="text-sm font-medium text-gray-700">Total da venda</label>
+                        <span class="text-sm text-gray-500">
+                            <span id="calc-total-pct" class="font-semibold text-gray-700">0%</span>
+                            · <span id="calc-total-value">R$ 0,00</span>
+                        </span>
+                    </div>
+                    <input type="range" id="calc-total-slider" min="0" max="100" step="1" value="0"
+                           class="w-full accent-blue-600">
+                </div>
+
+                <hr class="mb-6 border-t border-gray-200">
+
+                {# Desconto por produto (um slider por item). #}
+                <div id="calc-product-section" class="mb-6">
+                    <span class="mb-2 block text-sm font-medium text-gray-700">Por produto</span>
+                    <div id="calc-product-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-gray-200 px-8 py-5">
+                <div class="text-sm text-gray-500">
+                    Desconto total:
+                    <span id="calc-total-discount" class="ml-1 text-base font-bold text-gray-900">R$ 0,00</span>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" id="calc-apply"
+                            class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                        <i class="fa-solid fa-check"></i>
+                        Aplicar
+                    </button>
+                    <button type="button" id="calc-cancel"
+                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <i class="fa-solid fa-xmark"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+
+            {# Modelo de linha de slider por produto. #}
+            <template id="calc-product-row-template">
+                <div class="calc-product-row">
+                    <div class="mb-1 flex items-baseline justify-between gap-4">
+                        <label class="calc-product-label truncate text-sm font-medium text-gray-700"></label>
+                        <span class="whitespace-nowrap text-sm text-gray-500">
+                            <span class="calc-product-pct font-semibold text-gray-700">0%</span>
+                            · <span class="calc-product-value">R$ 0,00</span>
+                        </span>
+                    </div>
+                    <input type="range" min="0" max="100" step="1" value="0"
+                           class="calc-product-slider w-full accent-blue-600">
+                </div>
+            </template>
+        </div>
+    </div>
 </div>
 
 <script src="{% static 'sign/js/checkout.js' %}" defer></script>

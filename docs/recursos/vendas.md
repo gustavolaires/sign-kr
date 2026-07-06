@@ -20,7 +20,9 @@ de alterar o checkout ou os relatórios de vendas.
 - **`Sale`** — documento imutável da venda. Campos monetários em **centavos**
   (`PositiveIntegerField`, sufixo `_cents`). Ordem dos campos: `client`,
   `subtotal_cents`, `has_perc_discount`, `perc_discount`, `discount_cents`,
-  `change_cents` (troco), `total_cents`, `obs`, `created_at`. `client` é
+  `discount_obs` (observações do desconto, texto livre — preenchido pela
+  calculadora, ver UI), `change_cents` (troco), `total_cents`, `obs`,
+  `created_at`. `client` é
   `PROTECT` + opcional (venda avulsa = `NULL`). `Meta.ordering = ["-id"]`;
   `created_at` tem `db_index=True` (relatórios). Propriedades em reais:
   `subtotal`, `discount`, `change`, `total`.
@@ -81,6 +83,16 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
   pagamento dinâmicas, alternância desconto %/R$, parcelas só no crédito,
   recálculo ao vivo de subtotal/desconto/total/pago/troco (**só exibição** — o
   backend é autoritativo) e bloqueio de duplo-submit.
+- **Calculadora de desconto** (modal `#discount-calc-modal`, aberto pelo ícone
+  `fa-calculator` no card "Desconto"): _range sliders_ (0–100%) num toggle
+  segmentado **Valor total** (um slider sobre o total) / **Por produto** (um
+  slider por item, sobre o subtotal de cada um). "Aplicar" resolve o desconto em
+  **R$ (valor)** no campo existente e escreve um resumo no campo **Observações do
+  desconto** (`discount_obs`). Os subtotais por produto chegam ao JS via
+  `{{ calc_items|json_script:"calc-items-data" }}` (helper `_calc_items` na view).
+  É **só exibição**: a venda continua gravando **um** desconto agregado em
+  `discount_cents`; os campos de desconto por item de `SaleItem` seguem 0.
+  `discount_obs` é impresso no comprovante e no orçamento (`receipt.html`).
 - **Tailwind**: ao mudar classes nos templates, rebuild do `output.css` (app
   offline, sem CDN — ver
   [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):

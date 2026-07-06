@@ -22,10 +22,30 @@ def _valid_format(raw):
     return raw if raw in RECEIPT_FORMATS else DEFAULT_RECEIPT_FORMAT
 
 
+def _calc_items(items):
+    """Itens (rótulo + subtotal em centavos) para a calculadora de desconto.
+
+    Serializável em JSON para o ``checkout.js`` montar um slider por produto.
+    """
+    calc = []
+    for item in items:
+        product = item["product"]
+        label = product.name
+        if product.manufacturer_code:
+            label = f"[{product.manufacturer_code}] {label}"
+        calc.append(
+            {
+                "label": label,
+                "subtotal_cents": product.unit_price_cents * item["quantity"],
+            }
+        )
+    return calc
+
+
 def _receipt_context(*, mode, op_label, doc_label, number, created_at, client,
                      items, payments, subtotal, discount, total, change,
                      has_perc_discount, perc_discount, obs, fmt,
-                     sale_pk=None, hidden_fields=None):
+                     discount_obs="", sale_pk=None, hidden_fields=None):
     """Empacota o contexto normalizado consumido por ``receipt.html``.
 
     Serve tanto o comprovante de venda (``mode="sale"``) quanto o orçamento
@@ -47,6 +67,7 @@ def _receipt_context(*, mode, op_label, doc_label, number, created_at, client,
         "has_perc_discount": has_perc_discount,
         "perc_discount": perc_discount,
         "obs": obs,
+        "discount_obs": discount_obs,
         "fmt": fmt,
         "sale_pk": sale_pk,
         "hidden_fields": hidden_fields or [],
@@ -104,6 +125,7 @@ def checkout(request):
             {
                 "form": SaleForm(),
                 "cart_items": items,
+                "calc_items": _calc_items(items),
                 "cart_total": cart.total_price(),
                 "cart_total_cents": cart.total_price_cents(),
                 "payment_types": PaymentType.choices,
@@ -125,6 +147,7 @@ def checkout(request):
             {
                 "form": form,
                 "cart_items": items,
+                "calc_items": _calc_items(items),
                 "cart_total": cart.total_price(),
                 "cart_total_cents": cart.total_price_cents(),
                 "payment_types": PaymentType.choices,
@@ -158,6 +181,7 @@ def checkout(request):
             discount_input=discount_input,
             payments=service_payments,
             obs=form.cleaned_data["obs"],
+            discount_obs=form.cleaned_data["discount_obs"],
         )
     except ValidationError as exc:
         for message in exc.messages:
@@ -267,6 +291,7 @@ def sale_receipt(request, pk):
         has_perc_discount=sale.has_perc_discount,
         perc_discount=sale.perc_discount,
         obs=sale.obs,
+        discount_obs=sale.discount_obs,
         fmt=_valid_format(request.GET.get("format", DEFAULT_RECEIPT_FORMAT)),
         sale_pk=sale.pk,
     )
@@ -309,6 +334,7 @@ def sale_quote(request):
     form = SaleForm(request.POST)
     client = form.cleaned_data.get("client") if form.is_valid() else None
     obs = request.POST.get("obs", "")
+    discount_obs = request.POST.get("discount_obs", "")
     discount_mode = request.POST.get("discount_mode", "value")
     has_perc_discount = discount_mode == "percent"
     try:
@@ -376,6 +402,7 @@ def sale_quote(request):
         has_perc_discount=has_perc_discount,
         perc_discount=perc_discount,
         obs=obs,
+        discount_obs=discount_obs,
         fmt=_valid_format(request.POST.get("format", DEFAULT_RECEIPT_FORMAT)),
         hidden_fields=_quote_hidden_fields(request.POST),
     )

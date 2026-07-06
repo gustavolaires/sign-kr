@@ -187,4 +187,177 @@
     list.querySelectorAll(".payment-row").forEach(syncInstallments);
   }
   recompute();
+
+  // ----- Calculadora de desconto (modal com range sliders, estilo ábaco) -----
+  var calcModal = document.getElementById("discount-calc-modal");
+  var calcData = document.getElementById("calc-items-data");
+  if (calcModal && calcData) {
+    var openCalcBtn = document.getElementById("open-discount-calc");
+    var calcClose = document.getElementById("calc-close");
+    var calcCancel = document.getElementById("calc-cancel");
+    var calcApply = document.getElementById("calc-apply");
+    var calcTypeBtns = calcModal.querySelectorAll(".calc-type-btn");
+    var calcTotalSection = document.getElementById("calc-total-section");
+    var calcProductSection = document.getElementById("calc-product-section");
+    var calcTotalSlider = document.getElementById("calc-total-slider");
+    var calcTotalPct = document.getElementById("calc-total-pct");
+    var calcTotalValue = document.getElementById("calc-total-value");
+    var calcProductList = document.getElementById("calc-product-list");
+    var calcRowTemplate = document.getElementById("calc-product-row-template");
+    var calcTotalDiscount = document.getElementById("calc-total-discount");
+    var discountObsEl = document.getElementById("id_discount_obs");
+
+    var calcItems = [];
+    try {
+      calcItems = JSON.parse(calcData.textContent) || [];
+    } catch (e) {
+      calcItems = [];
+    }
+
+    var calcMode = "total"; // "total" | "product"
+
+    // pt-BR: 123456 centavos -> "R$ 1.234,56".
+    function formatBRL(cents) {
+      return "R$ " + (cents / 100).toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    // Monta um slider por produto a partir dos dados do servidor.
+    var productRows = [];
+    calcItems.forEach(function (item) {
+      var frag = calcRowTemplate.content.cloneNode(true);
+      var row = frag.querySelector(".calc-product-row");
+      row.querySelector(".calc-product-label").textContent = item.label;
+      productRows.push({
+        item: item,
+        slider: row.querySelector(".calc-product-slider"),
+        pctEl: row.querySelector(".calc-product-pct"),
+        valueEl: row.querySelector(".calc-product-value"),
+      });
+      calcProductList.appendChild(frag);
+    });
+    if (calcItems.length === 0) {
+      calcProductList.innerHTML =
+        '<p class="text-sm text-gray-500">Nenhum produto no carrinho.</p>';
+    }
+
+    function totalModeDiscountCents() {
+      var pct = parseInt(calcTotalSlider.value, 10) || 0;
+      return Math.round((subtotalCents * pct) / 100);
+    }
+
+    function productRowDiscountCents(pr) {
+      var pct = parseInt(pr.slider.value, 10) || 0;
+      return Math.round((pr.item.subtotal_cents * pct) / 100);
+    }
+
+    function calcDiscountCents() {
+      if (calcMode === "product") {
+        var sum = 0;
+        productRows.forEach(function (pr) {
+          sum += productRowDiscountCents(pr);
+        });
+        return sum;
+      }
+      return totalModeDiscountCents();
+    }
+
+    // Atualiza os rótulos (% e R$) de cada slider e o total exibido.
+    function refreshCalc() {
+      calcTotalPct.textContent = (parseInt(calcTotalSlider.value, 10) || 0) + "%";
+      calcTotalValue.textContent = formatBRL(totalModeDiscountCents());
+      productRows.forEach(function (pr) {
+        pr.pctEl.textContent = (parseInt(pr.slider.value, 10) || 0) + "%";
+        pr.valueEl.textContent = formatBRL(productRowDiscountCents(pr));
+      });
+      calcTotalDiscount.textContent = formatBRL(calcDiscountCents());
+    }
+
+    // Alterna o tipo: destaca o botão ativo e habilita/esmaece cada seção.
+    function setMode(mode) {
+      calcMode = mode;
+      calcTypeBtns.forEach(function (btn) {
+        var active = btn.getAttribute("data-mode") === mode;
+        btn.classList.toggle("bg-blue-600", active);
+        btn.classList.toggle("text-white", active);
+        btn.classList.toggle("text-gray-700", !active);
+      });
+      var totalActive = mode === "total";
+      calcTotalSlider.disabled = !totalActive;
+      calcTotalSection.classList.toggle("opacity-40", !totalActive);
+      calcProductSection.classList.toggle("opacity-40", totalActive);
+      productRows.forEach(function (pr) {
+        pr.slider.disabled = totalActive;
+      });
+      refreshCalc();
+    }
+
+    function openCalc() {
+      calcModal.classList.remove("hidden");
+      calcModal.classList.add("flex");
+    }
+
+    function closeCalc() {
+      calcModal.classList.add("hidden");
+      calcModal.classList.remove("flex");
+    }
+
+    // Texto-resumo gravado nas "Observações do desconto".
+    function buildSummary(totalCents) {
+      if (calcMode === "product") {
+        var parts = [];
+        productRows.forEach(function (pr) {
+          var cents = productRowDiscountCents(pr);
+          if (cents > 0) {
+            var pct = parseInt(pr.slider.value, 10) || 0;
+            parts.push(pr.item.label + " - " + formatBRL(cents) + " (" + pct + "%)");
+          }
+        });
+        if (parts.length === 0) return "";
+        return "Desconto por produto: " + parts.join("; ") + ". Total " + formatBRL(totalCents) + ".";
+      }
+      var totalPct = parseInt(calcTotalSlider.value, 10) || 0;
+      return "Desconto por valor total: " + formatBRL(totalCents) + " (" + totalPct + "%).";
+    }
+
+    function applyCalc() {
+      var cents = calcDiscountCents();
+      if (cents > subtotalCents) cents = subtotalCents;
+      // Preenche o desconto como valor (R$) e sincroniza o modo do checkout.
+      modeEl.value = "value";
+      amountEl.value = (cents / 100).toFixed(2);
+      if (discountObsEl) discountObsEl.value = buildSummary(cents);
+      // Reusa os handlers existentes (sufixo + recálculo do resumo).
+      modeEl.dispatchEvent(new Event("change"));
+      amountEl.dispatchEvent(new Event("input"));
+      // Garante o grupo de desconto visível.
+      if (discountGroup) {
+        discountGroup.classList.remove("hidden");
+        if (discountToggle) discountToggle.setAttribute("aria-expanded", "true");
+      }
+      closeCalc();
+    }
+
+    if (openCalcBtn) openCalcBtn.addEventListener("click", openCalc);
+    if (calcClose) calcClose.addEventListener("click", closeCalc);
+    if (calcCancel) calcCancel.addEventListener("click", closeCalc);
+    if (calcApply) calcApply.addEventListener("click", applyCalc);
+    // Fecha ao clicar no backdrop (fora do card).
+    calcModal.addEventListener("click", function (event) {
+      if (event.target === calcModal) closeCalc();
+    });
+    calcTypeBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        setMode(btn.getAttribute("data-mode"));
+      });
+    });
+    calcTotalSlider.addEventListener("input", refreshCalc);
+    calcProductList.addEventListener("input", function (event) {
+      if (event.target.classList.contains("calc-product-slider")) refreshCalc();
+    });
+
+    setMode("total");
+  }
 })();
