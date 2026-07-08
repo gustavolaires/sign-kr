@@ -182,6 +182,15 @@ class ClientForm(StyledModelForm):
 
 
 class CompanyForm(StyledModelForm):
+    # Meta de venda diária digitada/exibida em reais; convertida de/para centavos.
+    daily_sales_goal = forms.DecimalField(
+        label="Meta de venda diária (R$)",
+        max_digits=12,
+        decimal_places=2,
+        min_value=0,
+        required=False,
+    )
+
     class Meta:
         model = Company
         fields = [
@@ -198,6 +207,10 @@ class CompanyForm(StyledModelForm):
             "city",
             "state",
             "postal_code",
+            "operating_days_per_week",
+            "low_stock_threshold",
+            "price_multiplier",
+            "rounding_type",
         ]
         widgets = {
             # Máscaras aplicadas só visualmente no front (ver static/sign/js/masks.js).
@@ -216,6 +229,14 @@ class CompanyForm(StyledModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ao editar, preenche a meta em reais a partir dos centavos armazenados.
+        if self.instance and self.instance.pk:
+            self.fields["daily_sales_goal"].initial = (
+                Decimal(self.instance.daily_sales_goal_cents) / 100
+            )
+
     # Grava sem formatação: tira a máscara e persiste apenas os dígitos.
     def clean_cnpj(self):
         return _only_digits(self.cleaned_data.get("cnpj"))
@@ -228,6 +249,14 @@ class CompanyForm(StyledModelForm):
 
     def clean_postal_code(self):
         return _only_digits(self.cleaned_data.get("postal_code"))
+
+    def save(self, commit=True):
+        company = super().save(commit=False)
+        reais = self.cleaned_data.get("daily_sales_goal") or Decimal("0")
+        company.daily_sales_goal_cents = reais_to_cents(reais)
+        if commit:
+            company.save()
+        return company
 
 
 class SupplierForm(StyledModelForm):

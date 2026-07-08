@@ -504,6 +504,17 @@ class ExpenseInstallment(models.Model):
         return self.STATUS_LABELS[self.status]
 
 
+class RoundingType(models.TextChoices):
+    """Estratégias de arredondamento de preço (usadas na precificação)."""
+
+    CENT = "cent", "Centavo"
+    CENT_10 = "cent_10", "Centavo (Múltiplo de 10)"
+    REAL = "real", "Real"
+    REAL_2 = "real_2", "Real (Múltiplo de 2)"
+    REAL_5 = "real_5", "Real (Múltiplo de 5)"
+    REAL_10 = "real_10", "Real (Múltiplo de 10)"
+
+
 class Company(models.Model):
     """Dados da empresa exibidos na UI e nos comprovantes (não fiscais).
 
@@ -534,6 +545,26 @@ class Company(models.Model):
     )
     postal_code = models.CharField("Código postal", max_length=12, blank=True)
 
+    # Operação e precificação (usados na dashboard e na precificação).
+    daily_sales_goal_cents = models.PositiveIntegerField(
+        "Meta de venda diária (centavos)", default=0
+    )
+    operating_days_per_week = models.PositiveSmallIntegerField(
+        "Dias de operação na semana",
+        default=6,
+        choices=[(i, str(i)) for i in range(0, 8)],
+    )
+    low_stock_threshold = models.PositiveIntegerField("Estoque baixo", default=5)
+    price_multiplier = models.FloatField(
+        "Fator multiplicativo de preço", default=1.0
+    )
+    rounding_type = models.CharField(
+        "Tipo de arredondamento",
+        max_length=8,
+        choices=RoundingType.choices,
+        default=RoundingType.CENT,
+    )
+
     class Meta:
         verbose_name = "Empresa"
         verbose_name_plural = "Empresa"
@@ -545,6 +576,11 @@ class Company(models.Model):
     def display_name(self):
         """Nome de exibição: razão social se preenchida, senão o nome."""
         return self.legal_name or self.name
+
+    @property
+    def daily_sales_goal(self):
+        """Meta de venda diária em reais (somente leitura)."""
+        return self.daily_sales_goal_cents / 100
 
     def save(self, *args, **kwargs):
         """Força o singleton: a empresa é sempre a linha ``pk=1``."""

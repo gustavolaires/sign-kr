@@ -46,6 +46,17 @@
                 </div>
             </section>
 
+            <section>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Operação e precificação</h2>
+                <div class="space-y-5">
+                    {% include "sign/clients/_field.html" with field=form.daily_sales_goal %}
+                    {% include "sign/clients/_field.html" with field=form.operating_days_per_week %}
+                    {% include "sign/clients/_field.html" with field=form.low_stock_threshold %}
+                    {% include "sign/clients/_field.html" with field=form.price_multiplier %}
+                    {% include "sign/clients/_field.html" with field=form.rounding_type %}
+                </div>
+            </section>
+
             <div class="flex justify-end gap-3 pt-2">
                 <button type="submit"
                         class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">

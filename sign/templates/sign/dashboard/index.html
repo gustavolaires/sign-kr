@@ -1,0 +1,118 @@
+{% extends "sign/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+</div>
+
+<div class="flex flex-col gap-10">
+    <!-- ============================ VENDAS ============================ -->
+    <section>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Vendas</h2>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {% include "sign/dashboard/_sale_card.html" with label="Vendas hoje" stat=sales.today %}
+            {% include "sign/dashboard/_sale_card.html" with label="Vendas na semana" stat=sales.week %}
+            {% include "sign/dashboard/_sale_card.html" with label="Vendas no mês" stat=sales.month %}
+            {% include "sign/dashboard/_sale_card.html" with label="Vendas (total)" stat=sales.total %}
+
+            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos hoje" value=units.today %}
+            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos na semana" value=units.week %}
+            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos no mês" value=units.month %}
+            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos (total)" value=units.total %}
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Vendas da semana por dia</p>
+                <div class="relative h-72">
+                    <canvas id="chart-weekly"></canvas>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <p class="mb-2 text-sm font-semibold text-gray-700">Meta semanal</p>
+                    <div class="relative mx-auto h-44 max-w-[16rem]">
+                        <canvas id="chart-week-goal"></canvas>
+                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="week-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
+                            <span class="text-xs text-gray-500">da meta</span>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-center text-xs text-gray-500">
+                        R$ {{ sales.week.revenue|floatformat:2 }} de R$ {{ goals.weekly|floatformat:2 }}
+                    </p>
+                </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <p class="mb-2 text-sm font-semibold text-gray-700">Meta mensal</p>
+                    <div class="relative mx-auto h-44 max-w-[16rem]">
+                        <canvas id="chart-month-goal"></canvas>
+                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="month-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
+                            <span class="text-xs text-gray-500">da meta</span>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-center text-xs text-gray-500">
+                        R$ {{ sales.month.revenue|floatformat:2 }} de R$ {{ goals.monthly|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================ PRODUTOS =========================== -->
+    <section>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Produtos</h2>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                {% include "sign/dashboard/_num_card.html" with label="Cadastrados" value=products.total %}
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Estoque baixo</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ products.low }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ products.low_pct|floatformat:1 }}% do total</p>
+                </div>
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Estoque zerado</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ products.zero }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ products.zero_pct|floatformat:1 }}% do total</p>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Saúde do estoque</p>
+                <div class="relative h-56">
+                    <canvas id="chart-stock"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================ DESPESAS =========================== -->
+    <section>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Despesas</h2>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {% include "sign/dashboard/_money_card.html" with label="Totais do mês" value=expenses.due col_class="sm:col-span-2" %}
+                {% include "sign/dashboard/_money_card.html" with label="Pendentes" value=expenses.unpaid %}
+                {% include "sign/dashboard/_money_card.html" with label="Pagas" value=expenses.paid %}
+                {% include "sign/dashboard/_money_card.html" with label="Recorrentes" value=expenses.recurrent %}
+                {% include "sign/dashboard/_money_card.html" with label="Isoladas" value=expenses.isolated %}
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Situação das despesas</p>
+                <div class="relative h-56">
+                    <canvas id="chart-expenses"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+{{ chart_data|json_script:"dashboard-data" }}
+<script src="{% static 'sign/js/vendor/chart.umd.min.js' %}" defer></script>
+<script src="{% static 'sign/js/dashboard.js' %}" defer></script>
+{% endblock %}

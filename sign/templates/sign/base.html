@@ -19,6 +19,13 @@
         </div>
 
         <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-6">
+            <a href="{% url 'sign:dashboard' %}"
+               class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+               {% if url_name == 'dashboard' %}bg-blue-600 text-white{% else %}hover:bg-navy-hover{% endif %}">
+                <i class="fa-solid fa-chart-column w-5 text-center"></i>
+                Dashboard
+            </a>
+
             <div>
                 <p class="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Comercial</p>
                 <a href="{% url 'sign:product_list' %}"

@@ -7,6 +7,8 @@ app_name = "sign"
 
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="sign:product_list"), name="home"),
+    # Dashboard
+    path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
     # Produtos
     path("products/", views.ProductListView.as_view(), name="product_list"),
     path("products/new/", views.ProductCreateView.as_view(), name="product_create"),
