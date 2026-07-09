@@ -138,23 +138,25 @@ def dashboard_metrics(*, company=None, today=None):
     monthly_goal_pct = pct(month_revenue_cents, monthly_goal_cents)
 
     # --- Produtos (estoque) ---
+    # Estoque baixo/zerado consideram só produtos ativos e usam o estoque
+    # mínimo de cada produto (o limite da empresa é apenas o default de cadastro).
+    active_products = Product.objects.filter(is_active=True)
     total_products = Product.objects.count()
-    low_stock = Product.objects.filter(
-        quantity__lte=company.low_stock_threshold
-    ).count()
-    zero_stock = Product.objects.filter(quantity=0).count()
+    active_count = active_products.count()
+    low_stock = active_products.filter(quantity__lte=F("min_stock")).count()
+    zero_stock = active_products.filter(quantity=0).count()
 
-    def share(n):
-        if not total_products:
-            return 0.0
-        return round(n / total_products * 100, 1)
+    def share(n, base):
+        return round(n / base * 100, 1) if base else 0.0
 
     products_metrics = {
         "total": total_products,
+        "active": active_count,
+        "active_pct": share(active_count, total_products),
         "low": low_stock,
-        "low_pct": share(low_stock),
+        "low_pct": share(low_stock, active_count),
         "zero": zero_stock,
-        "zero_pct": share(zero_stock),
+        "zero_pct": share(zero_stock, active_count),
     }
 
     # --- Despesas do mês (por saldo: pagas + não pagas = a pagar) ---
@@ -206,7 +208,7 @@ def dashboard_metrics(*, company=None, today=None):
             "pct": monthly_goal_pct,
         },
         "stock": {
-            "ok": max(0, total_products - low_stock),
+            "ok": max(0, active_count - low_stock),
             "low": max(0, low_stock - zero_stock),
             "zero": zero_stock,
         },
@@ -337,6 +339,10 @@ def create_sale(*, cart, client, has_perc_discount, discount_input, payments, ob
     for item in items:
         product = item["product"]
         quantity = item["quantity"]
+        if not product.is_active:
+            raise ValidationError(
+                f"{product.name} está inativo e não pode ser vendido."
+            )
         if quantity < 1:
             raise ValidationError(f"Quantidade inválida para {product.name}.")
         if quantity > product.quantity:

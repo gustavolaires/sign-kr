@@ -61,6 +61,13 @@ class Product(models.Model):
     unit_price_cents = models.PositiveIntegerField(
         "Preço unitário (centavos)", default=0
     )
+    is_active = models.BooleanField("Ativo", default=True)
+    min_stock = models.PositiveIntegerField("Estoque mínimo", default=0)
+    nf_search_id = models.TextField(
+        "IDs de busca para NF",
+        blank=True,
+        help_text="IDs de referência usados por fornecedores, separados por ';'.",
+    )
 
     class Meta:
         verbose_name = "Produto"

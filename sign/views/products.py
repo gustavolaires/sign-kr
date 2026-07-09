@@ -2,7 +2,9 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -41,6 +43,14 @@ class ProductListView(ListView):
         prefix = "-" if sort.startswith("-") else ""
         return prefix + self.SORT_EXPRESSIONS[key]
 
+    # Filtro de status: padrão mostra só os ativos; valores fora da allowlist
+    # caem no padrão "active".
+    STATUS_CHOICES = ("active", "inactive", "all")
+
+    def _current_status(self):
+        status = self.request.GET.get("status", "active").strip()
+        return status if status in self.STATUS_CHOICES else "active"
+
     def get_queryset(self):
         qs = Product.objects.select_related("manufacturer")
         params = self.request.GET
@@ -48,6 +58,7 @@ class ProductListView(ListView):
         barcode = params.get("barcode", "").strip()
         manufacturer = params.get("manufacturer", "").strip()
         manufacturer_code = params.get("manufacturer_code", "").strip()
+        status = self._current_status()
 
         if name:
             qs = qs.filter(name__icontains=name)
@@ -57,20 +68,34 @@ class ProductListView(ListView):
             qs = qs.filter(manufacturer__name__icontains=manufacturer)
         if manufacturer_code:
             qs = qs.filter(manufacturer_code__icontains=manufacturer_code)
+        if status == "active":
+            qs = qs.filter(is_active=True)
+        elif status == "inactive":
+            qs = qs.filter(is_active=False)
 
         return qs.order_by(self._order_by(self._current_sort()))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         params = self.request.GET
+        status = self._current_status()
         filters = {
             "name": params.get("name", "").strip(),
             "barcode": params.get("barcode", "").strip(),
             "manufacturer": params.get("manufacturer", "").strip(),
             "manufacturer_code": params.get("manufacturer_code", "").strip(),
+            "status": status,
         }
         current = self._current_sort()
-        active = {key: value for key, value in filters.items() if value}
+        # Filtros de texto vazios são omitidos da query string; o status só é
+        # preservado quando difere do padrão ("active").
+        active = {
+            key: value
+            for key, value in filters.items()
+            if key != "status" and value
+        }
+        if status != "active":
+            active["status"] = status
 
         # Links de ordenação por coluna (preservam os filtros ativos e alternam asc/desc).
         sort_links = {}
@@ -97,6 +122,20 @@ class ProductDetailView(DetailView):
     model = Product
     template_name = "sign/products/detail.html"
     context_object_name = "product"
+
+
+class ProductToggleActiveView(View):
+    """Alterna o status ativo/inativo do produto (POST) e volta ao detalhe."""
+
+    def post(self, request, pk):
+        product = get_object_or_404(Product, pk=pk)
+        product.is_active = not product.is_active
+        product.save(update_fields=["is_active"])
+        messages.success(
+            request,
+            "Produto ativado." if product.is_active else "Produto desativado.",
+        )
+        return redirect("sign:product_detail", pk=pk)
 
 
 class ProductCreateView(SuccessMessageMixin, CreateView):

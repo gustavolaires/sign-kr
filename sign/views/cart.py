@@ -46,6 +46,11 @@ def cart_add(request):
     product, quantity, error = _parse_request(request)
     if error:
         return JsonResponse({"ok": False, "error": error}, status=400)
+    if not product.is_active:
+        return JsonResponse(
+            {"ok": False, "error": "Produto inativo não pode ser vendido."},
+            status=400,
+        )
     if quantity < 1:
         return JsonResponse(
             {"ok": False, "error": "Informe uma quantidade maior que zero."},

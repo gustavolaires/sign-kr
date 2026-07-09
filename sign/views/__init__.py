@@ -52,6 +52,7 @@ from .products import (
     ProductDeleteView,
     ProductDetailView,
     ProductListView,
+    ProductToggleActiveView,
     ProductUpdateView,
 )
 from .sales import (
@@ -112,6 +113,7 @@ __all__ = [
     "ProductDeleteView",
     "ProductDetailView",
     "ProductListView",
+    "ProductToggleActiveView",
     "ProductUpdateView",
     "checkout",
     "sale_quote",

@@ -15,7 +15,9 @@ na tela de **Configurações** (seção *Operação e precificação*):
   em reais). No `CompanyForm` é um `DecimalField` **virtual** (`daily_sales_goal`, em R$),
   convertido com `reais_to_cents` no `save()`.
 - `operating_days_per_week` — dias de operação na semana (select 0–7).
-- `low_stock_threshold` — limite de "estoque baixo" (inteiro).
+- `low_stock_threshold` — valor **default** do estoque mínimo (`min_stock`) de novos
+  produtos (inteiro). A dashboard **não** usa mais este campo: o "estoque baixo" é
+  calculado pelo `min_stock` de cada produto.
 - `price_multiplier` (`FloatField`) e `rounding_type` (`RoundingType` TextChoices:
   Centavo / Centavo múltiplo de 10 / Real / Real múltiplo de 2/5/10) — **não** usados
   pela dashboard; são preparação para a precificação (feature futura).
@@ -39,10 +41,15 @@ Regras não óbvias:
   `max(0, dias_mês - (dias_mês % 7) * (7 - operating_days_per_week)) * daily_goal`
   (fórmula **aproximada**, assume múltiplos de 7; `max(0, …)` é guarda defensiva).
   `%` atingido tem **guarda para meta 0** (retorna `None` → UI mostra "—").
-- **Produtos**: total = `count()`; baixo = `quantity__lte=low_stock_threshold`
-  (**inclui zerados**); zerado = `quantity=0`; `%` sobre o total (guarda p/ total 0).
-  O doughnut "saúde do estoque" usa **buckets exclusivos** (ok / baixo / zerado) que
-  somam o total: `low` do doughnut = `low - zero`.
+- **Produtos**: `total` = `count()` (todos os cadastrados); `active` = ativos
+  (`is_active=True`) e `active_pct` sobre o total. **Estoque baixo/zerado consideram
+  só os ativos** e usam o **`min_stock` de cada produto** (não mais o
+  `low_stock_threshold` da empresa — que virou só o default de cadastro): baixo =
+  ativos com `quantity__lte=F("min_stock")` (**inclui zerados**); zerado = ativos com
+  `quantity=0`. `low_pct`/`zero_pct` são **sobre os ativos** (label "% dos ativos";
+  guarda p/ base 0). O doughnut "saúde do estoque" usa **buckets exclusivos** (ok /
+  baixo / zerado) que somam o total de **ativos**: `ok = active - low`,
+  `low` do doughnut = `low - zero`.
 - **Despesas do mês** (`ExpenseInstallment` por `due_date` no mês) — separadas **por
   saldo**: `paid = min(Σpago, Σdevido)`, `unpaid = max(0, Σdevido − Σpago)`, de modo
   que `paid + unpaid = due`. Recorrentes/isoladas via `Q(expense__recurrent=…)`.

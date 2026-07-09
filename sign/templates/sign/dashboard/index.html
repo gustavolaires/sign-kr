@@ -68,17 +68,22 @@
         <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Produtos</h2>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {% include "sign/dashboard/_num_card.html" with label="Cadastrados" value=products.total %}
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Ativos</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ products.active }}</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ products.active_pct|floatformat:1 }}% do total</p>
+                </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Estoque baixo</p>
                     <p class="mt-2 text-3xl font-bold text-gray-900">{{ products.low }}</p>
-                    <p class="mt-1 text-sm text-gray-500">{{ products.low_pct|floatformat:1 }}% do total</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ products.low_pct|floatformat:1 }}% dos ativos</p>
                 </div>
                 <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                     <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Estoque zerado</p>
                     <p class="mt-2 text-3xl font-bold text-gray-900">{{ products.zero }}</p>
-                    <p class="mt-1 text-sm text-gray-500">{{ products.zero_pct|floatformat:1 }}% do total</p>
+                    <p class="mt-1 text-sm text-gray-500">{{ products.zero_pct|floatformat:1 }}% dos ativos</p>
                 </div>
             </div>
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

@@ -58,11 +58,15 @@ class ProductForm(StyledModelForm):
             "manufacturer",
             "manufacturer_code",
             "quantity",
+            "min_stock",
+            "nf_search_id",
             "unit_type",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "quantity": forms.NumberInput(attrs={"step": "1", "min": "0"}),
+            "min_stock": forms.NumberInput(attrs={"step": "1", "min": "0"}),
+            "nf_search_id": forms.Textarea(attrs={"rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -73,11 +77,18 @@ class ProductForm(StyledModelForm):
             (value, value if value else label)
             for value, label in self.fields["unit_type"].choices
         ]
-        # Ao editar, preenche o campo em reais a partir dos centavos armazenados.
         if self.instance and self.instance.pk:
+            # Ao editar, preenche o campo em reais a partir dos centavos armazenados.
             self.fields["unit_price"].initial = (
                 Decimal(self.instance.unit_price_cents) / 100
             )
+        else:
+            # Na criação, o estoque mínimo já vem com o default da empresa.
+            self.fields["min_stock"].initial = (
+                Company.get_solo().low_stock_threshold or 0
+            )
+            # IDs de busca para NF só são editados na tela de edição.
+            self.fields.pop("nf_search_id")
 
     def save(self, commit=True):
         product = super().save(commit=False)

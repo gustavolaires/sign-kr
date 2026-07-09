@@ -22,7 +22,7 @@
 
 <form method="get" id="product-filters" class="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
+        <div class="lg:col-span-2">
             <label for="filter-name" class="mb-1 block text-xs font-medium text-gray-600">Nome</label>
             <input id="filter-name" type="text" name="name" value="{{ filters.name }}"
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
@@ -33,6 +33,15 @@
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
         </div>
         <div>
+            <label for="filter-status" class="mb-1 block text-xs font-medium text-gray-600">Status</label>
+            <select id="filter-status" name="status"
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Ativos</option>
+                <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>Inativos</option>
+                <option value="all" {% if filters.status == 'all' %}selected{% endif %}>Todos</option>
+            </select>
+        </div>
+        <div class="lg:col-span-2">
             <label for="filter-manufacturer" class="mb-1 block text-xs font-medium text-gray-600">Fabricante</label>
             <input id="filter-manufacturer" type="text" name="manufacturer" value="{{ filters.manufacturer }}"
                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none">
@@ -95,13 +104,13 @@
             {% for product in products %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 text-gray-600">{{ product.barcode|default:"—" }}</td>
-                    <td class="px-4 py-3 font-medium">{% if product.manufacturer_code %}[{{ product.manufacturer_code }}] {% endif %}{{ product.name }}</td>
+                    <td class="px-4 py-3 font-medium">{% if not product.is_active %}<i class="fa-solid fa-triangle-exclamation text-amber-500" title="Inativo" aria-label="Inativo"></i> {% endif %}{% if product.manufacturer_code %}[{{ product.manufacturer_code }}] {% endif %}{{ product.name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ product.manufacturer.name }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ product.quantity }} {{ product.unit_type }}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ product.unit_price|floatformat:2 }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-4 text-base">
-                            {% if product.quantity %}
+                            {% if product.is_active and product.quantity %}
                                 <button type="button"
                                         class="cart-add-btn text-green-600 hover:text-green-800"
                                         data-id="{{ product.pk }}" data-name="{{ product.name }}" data-max="{{ product.quantity }}"
@@ -110,6 +119,8 @@
                                         data-manufacturer-code="{{ product.manufacturer_code }}"
                                         data-barcode="{{ product.barcode }}"
                                         title="Adicionar ao carrinho" aria-label="Adicionar ao carrinho"><i class="fa-solid fa-cart-plus fa-lg"></i></button>
+                            {% elif not product.is_active %}
+                                <span class="text-gray-300" title="Produto inativo" aria-label="Produto inativo"><i class="fa-solid fa-cart-plus fa-lg"></i></span>
                             {% else %}
                                 <span class="text-gray-300" title="Sem estoque" aria-label="Sem estoque"><i class="fa-solid fa-cart-plus fa-lg"></i></span>
                             {% endif %}

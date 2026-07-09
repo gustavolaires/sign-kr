@@ -53,6 +53,16 @@
                 </div>
             </section>
 
+            <section>
+                <h2 class="mb-3 rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white">Controle</h2>
+                <div class="space-y-5">
+                    {% include "sign/products/_field.html" with field=form.min_stock %}
+                    {% if form.instance.pk %}
+                        {% include "sign/products/_field.html" with field=form.nf_search_id %}
+                    {% endif %}
+                </div>
+            </section>
+
             <div class="flex justify-end gap-3 pt-2">
                 <button type="submit"
                         class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">

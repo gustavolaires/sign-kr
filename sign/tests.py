@@ -107,21 +107,32 @@ class DashboardMetricsProductsTests(TestCase):
 
     def test_stock_counts_and_buckets(self):
         maker = Manufacturer.objects.create(name="ACME")
-        Product.objects.create(name="A", manufacturer=maker, quantity=100)
-        Product.objects.create(name="B", manufacturer=maker, quantity=3)  # baixo
-        Product.objects.create(name="C", manufacturer=maker, quantity=0)  # zerado
+        # Estoque baixo/zerado usam o min_stock do próprio produto e só ativos.
+        Product.objects.create(
+            name="A", manufacturer=maker, quantity=100, min_stock=10
+        )  # ok
+        Product.objects.create(
+            name="B", manufacturer=maker, quantity=3, min_stock=5
+        )  # baixo
+        Product.objects.create(
+            name="C", manufacturer=maker, quantity=0, min_stock=5
+        )  # zerado (e baixo)
+        Product.objects.create(
+            name="D", manufacturer=maker, quantity=0, min_stock=5, is_active=False
+        )  # inativo — não conta
 
-        company = Company.get_solo()
-        company.low_stock_threshold = 5
-        company.save()
-
-        result = dashboard_metrics(company=company, today=date(2026, 7, 15))
+        result = dashboard_metrics(
+            company=Company.get_solo(), today=date(2026, 7, 15)
+        )
         p = result["products"]
-        self.assertEqual(p["total"], 3)
-        self.assertEqual(p["low"], 2)  # quantidade <= 5 inclui o zerado
-        self.assertEqual(p["zero"], 1)
-        self.assertAlmostEqual(p["low_pct"], 66.7, places=1)
-        # Doughnut com buckets exclusivos (somam o total).
+        self.assertEqual(p["total"], 4)  # todos os cadastrados
+        self.assertEqual(p["active"], 3)
+        self.assertAlmostEqual(p["active_pct"], 75.0, places=1)
+        self.assertEqual(p["low"], 2)  # B e C (quantidade <= min_stock)
+        self.assertEqual(p["zero"], 1)  # só C (D é inativo)
+        self.assertAlmostEqual(p["low_pct"], 66.7, places=1)  # % dos ativos
+        self.assertAlmostEqual(p["zero_pct"], 33.3, places=1)
+        # Doughnut com buckets exclusivos (somam o total de ativos).
         stock = result["chart_data"]["stock"]
         self.assertEqual(stock, {"ok": 1, "low": 1, "zero": 1})
 

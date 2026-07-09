@@ -9,7 +9,7 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 | Model | Campos principais | Observações |
 |---|---|---|
 | `Manufacturer` | `name` (único) | Entidade separada; por enquanto só o nome. |
-| `Product` | `name`, `description`, `barcode`, `manufacturer` (FK), `manufacturer_code`, `quantity`, `unit_type`, `unit_price_cents` | Ver detalhes abaixo. |
+| `Product` | `name`, `description`, `barcode`, `manufacturer` (FK), `manufacturer_code`, `quantity`, `min_stock`, `unit_type`, `unit_price_cents`, `is_active`, `nf_search_id` | Ver detalhes abaixo. |
 | `UnitType` | `TextChoices` | unid, pct, kg, g, mg, km, m, cm, mm, l, ml. |
 
 ### Preço — armazenado em centavos
@@ -19,6 +19,11 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 
 ### Quantidade
 - `quantity` é `DecimalField(max_digits=12, decimal_places=3)` para suportar unidades fracionadas (kg, g, l, etc.).
+
+### Ativo, estoque mínimo e IDs de NF
+- **`is_active`** (`BooleanField`, default `True`): produto ativo/inativo. **Não** aparece nos forms de cadastro/edição — é alternado só pelo botão de toggle no detalhe. Inativo some da listagem por padrão (filtro Status) e é **bloqueado na venda** (carrinho e `create_sale`).
+- **`min_stock`** (`PositiveIntegerField`, default `0`): estoque mínimo **do próprio produto**. É o valor que a dashboard usa para "estoque baixo". No form de criação, o inicial vem de `Company.low_stock_threshold` (que passou a ser só o default de cadastro); na edição, vem do próprio produto.
+- **`nf_search_id`** (`TextField`, `blank`): guardará vários IDs de referência de fornecedores separados por `;`. Campo criado para uso **futuro** — ainda **não** exposto em forms/telas.
 
 ### Fabricante protegido
 - `Product.manufacturer` usa `on_delete=models.PROTECT`. Excluir um fabricante com produtos vinculados levanta `ProtectedError` (tratado na view).
@@ -39,6 +44,12 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 - Mensagens de sucesso via `SuccessMessageMixin` (create/update) e `messages.success` manual nas exclusões.
 - `ManufacturerDeleteView` captura `ProtectedError` e exibe mensagem de erro em vez de quebrar, redirecionando para a listagem.
 - `ProductListView` usa `select_related("manufacturer")` para evitar N+1.
+- **Filtro de status** (`ProductListView`): parâmetro `status` com allowlist
+  `active`/`inactive`/`all`; o **default é `active`** (a listagem abre só com ativos).
+  O status só é preservado nos `sort_links`/`has_filters` quando difere do default.
+- **Toggle ativo**: `ProductToggleActiveView` (CBV `View`, só `POST`) inverte
+  `is_active`, salva com `update_fields` e volta ao detalhe com `messages.success`.
+  Rota `sign:product_toggle_active` (`products/<pk>/toggle-active/`).
 - **Redirecionamentos de Produto (navegação):**
   - `ProductUpdateView` define `get_success_url()` → ao **salvar** uma edição, vai para os **detalhes** (`sign:product_detail`), não para a listagem. (Create continua indo para a listagem.)
   - Nos templates de Produto, os botões "Cancelar" de **edição** (quando `form.instance.pk`) e de **exclusão** voltam para os **detalhes**; já a exclusão **confirmada** redireciona para a listagem (o objeto deixou de existir).
@@ -62,8 +73,16 @@ não óbvios — leia antes de alterar models, forms ou templates desta área.
 - **Forms seccionados** (cabeçalho de seção navy — ver
   [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#forms)):
   - **Produto**: *Dados básicos* (nome, descrição, código de barras), *Fabricante*
-    (fabricante, código do fabricante) e *Estoque e preço* (quantidade, tipo de
-    unidade, preço unitário). Campos via partial `products/_field.html`.
+    (fabricante, código do fabricante), *Estoque e preço* (quantidade, tipo de
+    unidade, preço unitário) e *Controle* (estoque mínimo + **`nf_search_id` só na
+    edição**). Campos via partial `products/_field.html`. `nf_search_id` é removido
+    do form na criação (`__init__`) e o template só o inclui quando `form.instance.pk`.
+  - **Filtros da listagem** (`products/list.html`): grade `lg:grid-cols-4` com
+    **Nome** (col-span-2), **Código de barras**, **Status** (`<select>`
+    Ativos/Inativos/Todos), **Fabricante** (col-span-2) e **Código do fabricante**.
+  - **Detalhe**: na linha de ações, à esquerda de *Editar*, há o botão de toggle
+    (form `POST` + CSRF) — cinza *Desativar* quando ativo, verde *Ativar* quando
+    inativo. A `dl` Definição inclui *Estoque mínimo* e *Ativo* (Sim/Não).
   - **Fabricante**: seção única *Dados básicos* (nome).
 - **Telas de form e exclusão**: o conteúdo ocupa o espaço inteiro disponível (`flex min-h-full`); cards menores ficam centralizados. As **ações de listagem** são ícones (`fa-eye`, `fa-pen-to-square`, `fa-trash`) com `title`/`aria-label`; os **botões** usam ícones: Salvar=`fa-check`, excluir=`fa-trash`, Cancelar=`fa-xmark`, Voltar=`fa-arrow-left`. Na tela de **detalhes**, o cabeçalho tem só o **Voltar**; os botões **Editar** (âmbar) e **Deletar** (vermelho) ficam no **topo do card branco**, alinhados à direita; as informações do produto ficam num grupo **Definição** (`dl`).
 - **Exibição da quantidade** (`products/list.html` e `products/detail.html`): `quantity` é inteiro, exibido como `{{ product.quantity }} {{ product.unit_type }}` (a sigla do tipo, não o label completo).
