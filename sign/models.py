@@ -522,6 +522,7 @@ class RoundingType(models.TextChoices):
 
     CENT = "cent", "Centavo"
     CENT_10 = "cent_10", "Centavo (Múltiplo de 10)"
+    CENT_50 = "cent_50", "Centavo (Múltiplo de 50)"
     REAL = "real", "Real"
     REAL_2 = "real_2", "Real (Múltiplo de 2)"
     REAL_5 = "real_5", "Real (Múltiplo de 5)"

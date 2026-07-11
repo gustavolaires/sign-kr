@@ -713,6 +713,7 @@ def create_inbound_invoice(*, number, issue_date, delivery_date, supplier,
 _ROUNDING_STEP_CENTS = {
     RoundingType.CENT: 1,
     RoundingType.CENT_10: 10,
+    RoundingType.CENT_50: 50,
     RoundingType.REAL: 100,
     RoundingType.REAL_2: 200,
     RoundingType.REAL_5: 500,
