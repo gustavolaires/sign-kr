@@ -37,6 +37,9 @@ Regras não óbvias:
   `timezone.localdate()`.
 - **Vendas**: por período (hoje/semana/mês/geral) contam-se `Count("id")` e soma-se
   `Sum("total_cents")`. Produtos vendidos = `Sum(SaleItem.quantity)` nos mesmos períodos.
+- **Faturamento por dia**: duas séries com `TruncDate`, preenchendo dias sem venda
+  com 0 — `weekly` (7 dias, Seg→Dom) e `monthly` (todos os dias do mês, rótulos
+  `"1".."31"`). Ambas expostas em `chart_data` com `labels`/`revenue`/`daily_goal`.
 - **Metas**: semanal = `operating_days_per_week * daily_goal`; mensal =
   `max(0, dias_mês - (dias_mês % 7) * (7 - operating_days_per_week)) * daily_goal`
   (fórmula **aproximada**, assume múltiplos de 7; `max(0, …)` é guarda defensiva).
@@ -76,10 +79,14 @@ Regras não óbvias:
   (padrão do `checkout.html`).
 - **Chart.js v4 (UMD) vendorizado** em `sign/static/sign/js/vendor/chart.umd.min.js`
   (**commitado**, offline — primeira lib JS de terceiros do projeto, segue o precedente
-  do FontAwesome). `dashboard.js` instancia: combo semanal (barras de faturamento +
-  linha tracejada de meta diária, com % no tooltip), dois medidores doughnut (meta
-  semanal/mensal, `cutout:'75%'`, % renderizado em **HTML** no centro — sem plugin
-  datalabels) e dois doughnuts (saúde do estoque; situação das despesas).
+  do FontAwesome). `dashboard.js` instancia: dois combos de faturamento por dia
+  (função reutilizável `salesByDayChart`, chamada para `chart-weekly` e
+  `chart-monthly` — barras de faturamento + linha tracejada de meta diária, com %
+  no tooltip), dois medidores doughnut (meta semanal/mensal, `cutout:'75%'`, %
+  renderizado em **HTML** no centro — sem plugin datalabels) e dois doughnuts
+  (saúde do estoque; situação das despesas).
+- **Layout da seção Vendas** (grade `lg:grid-cols-2`, 2×2): linha 1 = "Vendas da
+  semana por dia" + "Meta semanal"; linha 2 = "Vendas do mês por dia" + "Meta mensal".
 - **Paleta triádica pop-art** (azul/amarelo/vermelho; definida no topo do `dashboard.js`):
   azul `#155AF0` (Ok / Pagas / faturamento / atingido), amarelo-ouro `#F6B717`
   (estoque baixo / pendentes / linha de meta), vermelho `#E42D28` (estoque zerado),

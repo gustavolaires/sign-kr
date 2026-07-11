@@ -25,22 +25,24 @@
     return "R$ " + (value || 0).toFixed(2).replace(".", ",");
   }
 
-  // ---- Combo semanal: barras (faturamento/dia) + linha de meta diária ----
-  var weekly = data.weekly || {};
-  var weeklyCanvas = document.getElementById("chart-weekly");
-  if (weeklyCanvas) {
-    var dailyGoal = weekly.daily_goal || 0;
-    var goalLine = (weekly.labels || []).map(function () {
+  // ---- Combo de faturamento por dia: barras + linha de meta diária ----
+  // Reaproveitado pelas séries "semana por dia" e "mês por dia".
+  function salesByDayChart(canvasId, series) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    var s = series || {};
+    var dailyGoal = s.daily_goal || 0;
+    var goalLine = (s.labels || []).map(function () {
       return dailyGoal;
     });
-    new Chart(weeklyCanvas, {
+    new Chart(canvas, {
       data: {
-        labels: weekly.labels || [],
+        labels: s.labels || [],
         datasets: [
           {
             type: "bar",
             label: "Faturamento",
-            data: weekly.revenue || [],
+            data: s.revenue || [],
             backgroundColor: BLUE,
             borderRadius: 4,
             borderSkipped: false,
@@ -88,6 +90,9 @@
       },
     });
   }
+
+  salesByDayChart("chart-weekly", data.weekly);
+  salesByDayChart("chart-monthly", data.monthly);
 
   // ---- Medidor (gauge) de meta: atingido vs. restante ----
   function gauge(canvasId, labelId, goalData) {

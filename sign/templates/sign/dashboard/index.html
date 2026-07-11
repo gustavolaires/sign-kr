@@ -26,39 +26,45 @@
         </div>
 
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <!-- Linha 1: Vendas da semana por dia + Meta semanal -->
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <p class="mb-4 text-sm font-semibold text-gray-700">Vendas da semana por dia</p>
                 <div class="relative h-72">
                     <canvas id="chart-weekly"></canvas>
                 </div>
             </div>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <p class="mb-2 text-sm font-semibold text-gray-700">Meta semanal</p>
-                    <div class="relative mx-auto h-44 max-w-[16rem]">
-                        <canvas id="chart-week-goal"></canvas>
-                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                            <span id="week-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
-                            <span class="text-xs text-gray-500">da meta</span>
-                        </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-2 text-sm font-semibold text-gray-700">Meta semanal</p>
+                <div class="relative mx-auto h-44 max-w-[16rem]">
+                    <canvas id="chart-week-goal"></canvas>
+                    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="week-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
+                        <span class="text-xs text-gray-500">da meta</span>
                     </div>
-                    <p class="mt-2 text-center text-xs text-gray-500">
-                        R$ {{ sales.week.revenue|floatformat:2 }} de R$ {{ goals.weekly|floatformat:2 }}
-                    </p>
                 </div>
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <p class="mb-2 text-sm font-semibold text-gray-700">Meta mensal</p>
-                    <div class="relative mx-auto h-44 max-w-[16rem]">
-                        <canvas id="chart-month-goal"></canvas>
-                        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                            <span id="month-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
-                            <span class="text-xs text-gray-500">da meta</span>
-                        </div>
+                <p class="mt-2 text-center text-xs text-gray-500">
+                    R$ {{ sales.week.revenue|floatformat:2 }} de R$ {{ goals.weekly|floatformat:2 }}
+                </p>
+            </div>
+            <!-- Linha 2: Vendas do mês por dia + Meta mensal -->
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Vendas do mês por dia</p>
+                <div class="relative h-72">
+                    <canvas id="chart-monthly"></canvas>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-2 text-sm font-semibold text-gray-700">Meta mensal</p>
+                <div class="relative mx-auto h-44 max-w-[16rem]">
+                    <canvas id="chart-month-goal"></canvas>
+                    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="month-goal-pct" class="text-2xl font-bold text-gray-900">—</span>
+                        <span class="text-xs text-gray-500">da meta</span>
                     </div>
-                    <p class="mt-2 text-center text-xs text-gray-500">
-                        R$ {{ sales.month.revenue|floatformat:2 }} de R$ {{ goals.monthly|floatformat:2 }}
-                    </p>
                 </div>
+                <p class="mt-2 text-center text-xs text-gray-500">
+                    R$ {{ sales.month.revenue|floatformat:2 }} de R$ {{ goals.monthly|floatformat:2 }}
+                </p>
             </div>
         </div>
     </section>

@@ -23,7 +23,6 @@ from .models import (
     InboundInvoice,
     InvoiceDuplicate,
     InvoiceItem,
-    Manufacturer,
     PaymentType,
     Product,
     ProductSnapshot,
@@ -122,6 +121,19 @@ def dashboard_metrics(*, company=None, today=None):
     week_days = [week_start + timedelta(days=i) for i in range(7)]
     weekly_revenue = [_cents_to_reais(by_day_cents.get(d, 0)) for d in week_days]
 
+    # --- Faturamento do mês por dia (1→último dia), preenchendo dias vazios ---
+    month_by_day = (
+        sales.filter(created_at__date__range=(month_start, month_end))
+        .annotate(day=TruncDate("created_at"))
+        .values("day")
+        .annotate(revenue=Sum("total_cents"))
+    )
+    month_by_day_cents = {row["day"]: row["revenue"] or 0 for row in month_by_day}
+    month_days = [month_start + timedelta(days=i) for i in range(days_in_month)]
+    monthly_revenue = [
+        _cents_to_reais(month_by_day_cents.get(d, 0)) for d in month_days
+    ]
+
     # --- Metas (em centavos; % com guarda para meta 0) ---
     daily_goal_cents = company.daily_sales_goal_cents
     weekly_goal_cents = company.operating_days_per_week * daily_goal_cents
@@ -198,6 +210,11 @@ def dashboard_metrics(*, company=None, today=None):
         "weekly": {
             "labels": ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
             "revenue": weekly_revenue,
+            "daily_goal": _cents_to_reais(daily_goal_cents),
+        },
+        "monthly": {
+            "labels": [str(d.day) for d in month_days],
+            "revenue": monthly_revenue,
             "daily_goal": _cents_to_reais(daily_goal_cents),
         },
         "week_goal": {
