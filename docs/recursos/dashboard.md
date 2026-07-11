@@ -64,8 +64,9 @@ Regras não óbvias:
   `sign/views/__init__.py`. `template_name = "sign/dashboard/index.html"`; o
   `get_context_data` faz `context.update(dashboard_metrics())`.
 - **Rota** `sign:dashboard` → `dashboard/` (`sign/urls.py`).
-- **Menu**: primeiro item do `base.html`, **fora dos grupos** (ícone
-  `fa-chart-column`); ativo quando `url_name == 'dashboard'`.
+- **Menu**: primeiro item da seção **Análise** do `base.html` (ícone
+  `fa-chart-column`, ao lado de **Relatórios**); ativo quando
+  `url_name == 'dashboard'`. Ver [`relatorios.md`](relatorios.md).
 
 ## Template e gráficos (`sign/templates/sign/dashboard/`)
 

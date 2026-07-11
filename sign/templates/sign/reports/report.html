@@ -1,0 +1,147 @@
+{% load static %}{% load sign_format %}<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} · SIGN-KR</title>
+    <link rel="stylesheet" href="{% static 'sign/fontawesome/css/all.min.css' %}">
+    <style>
+        /* ---- Impressão: A4 na orientação escolhida ---- */
+        @page { size: A4 {{ orientation }}; margin: 12mm; }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #e5e7eb;
+            color: #111827;
+            font-family: Arial, Helvetica, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* ---- Barra de ações (apenas na tela) ---- */
+        .toolbar {
+            position: sticky; top: 0; z-index: 10;
+            display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+            padding: .75rem 1rem;
+            background: #1b2a4e; color: #fff;
+        }
+        .toolbar .spacer { flex: 1 1 auto; }
+        .btn {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .45rem .8rem; border-radius: .5rem;
+            font-size: .85rem; font-weight: 600; text-decoration: none;
+            border: 1px solid transparent; cursor: pointer;
+            background: #2563eb; color: #fff;
+        }
+        .btn:hover { background: #1d4ed8; }
+        .btn-ghost { background: transparent; border-color: rgba(255,255,255,.35); color: #fff; }
+        .btn-ghost:hover { background: rgba(255,255,255,.12); }
+        .fmt-group { display: inline-flex; border: 1px solid rgba(255,255,255,.35); border-radius: .5rem; overflow: hidden; }
+        .fmt-group a {
+            padding: .45rem .8rem; font: inherit; font-size: .85rem; font-weight: 600;
+            text-decoration: none; color: #cbd5e1;
+        }
+        .fmt-group a.active { background: #2563eb; color: #fff; }
+
+        /* ---- Documento ---- */
+        .doc {
+            background: #fff; color: #000;
+            margin: 1.5rem auto; padding: 10mm;
+            width: {% if orientation == 'landscape' %}297mm{% else %}210mm{% endif %};
+            max-width: 100%;
+            box-shadow: 0 1px 6px rgba(0,0,0,.2);
+            font-size: 12px;
+        }
+        .head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+        .head .company { flex: 1; }
+        .company-name { font-size: 18px; font-weight: bold; }
+        .company-line { font-size: 11px; color: #333; }
+        .head .meta { text-align: right; font-size: 11px; color: #333; }
+        .report-title { font-size: 16px; font-weight: bold; margin: 8px 0 2px; }
+        .report-sub { font-size: 12px; color: #333; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        thead th {
+            background: #111827; color: #fff; text-transform: uppercase;
+            font-size: 10px; text-align: left; padding: 5px 8px; border: 1px solid #111827;
+        }
+        tbody td { border: 1px solid #d1d5db; padding: 4px 8px; font-size: 11px; }
+        tbody tr:nth-child(even) td { background: #f9fafb; }
+        th.num, td.num { text-align: right; }
+        .empty { padding: 16px; text-align: center; color: #6b7280; font-size: 12px; }
+        .count { margin-top: 8px; font-size: 11px; color: #6b7280; }
+
+        /* ---- Regras de impressão ---- */
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .doc { margin: 0 auto; padding: 0; box-shadow: none; width: auto; }
+            thead { display: table-header-group; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a href="{% url 'sign:report_index' %}" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-left"></i> Voltar
+        </a>
+        <div class="fmt-group" role="group" aria-label="Orientação da página">
+            <a href="{% url 'sign:report_render' %}?{{ base_query }}&orientation=portrait"
+               class="{% if orientation != 'landscape' %}active{% endif %}">Retrato</a>
+            <a href="{% url 'sign:report_render' %}?{{ base_query }}&orientation=landscape"
+               class="{% if orientation == 'landscape' %}active{% endif %}">Paisagem</a>
+        </div>
+        <span class="spacer"></span>
+        <button type="button" class="btn" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Imprimir
+        </button>
+    </div>
+
+    <div class="doc">
+        <div class="head">
+            <div class="company">
+                <div class="company-name">{{ company.display_name }}</div>
+                {% if company.cnpj %}<div class="company-line">CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
+            </div>
+            <div class="meta">
+                Gerado em {{ generated_at|date:"d/m/Y H:i" }}
+            </div>
+        </div>
+
+        <div class="report-title">{{ title }}</div>
+        {% if period_label %}<div class="report-sub">Período: {{ period_label }}</div>{% endif %}
+        {% if meta_label %}<div class="report-sub">{{ meta_label }}</div>{% endif %}
+
+        <table>
+            <thead>
+                <tr>
+                    {% for col in columns %}
+                        <th class="{% if col.type == 'money' or col.type == 'int' %}num{% endif %}">{{ col.label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        {% for cell in row %}
+                            <td class="{% if cell.type == 'money' or cell.type == 'int' %}num{% endif %}">
+                                {% if cell.type == 'money' %}R$ {{ cell.value|floatformat:2 }}
+                                {% elif cell.type == 'date' %}{{ cell.value|date:"d/m/Y" }}
+                                {% elif cell.type == 'bool' %}{{ cell.value|yesno:"Sim,Não" }}
+                                {% elif cell.type == 'cpf_cnpj' %}{{ cell.value|cpf_cnpj }}
+                                {% elif cell.type == 'phone' %}{{ cell.value|phone }}
+                                {% else %}{{ cell.value }}{% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% empty %}
+                    <tr><td class="empty" colspan="{{ columns|length }}">Sem dados para os filtros informados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if rows %}<div class="count">{{ rows|length }} registro{{ rows|length|pluralize }}.</div>{% endif %}
+    </div>
+</body>
+</html>

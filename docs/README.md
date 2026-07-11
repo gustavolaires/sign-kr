@@ -42,6 +42,7 @@ PyInstaller). Está organizada em **três categorias**, cada uma numa pasta:
 ## Recursos (referência por feature)
 
 - [`dashboard.md`](recursos/dashboard.md) — Dashboard (KPIs + gráficos) e config em `Company`.
+- [`relatorios.md`](recursos/relatorios.md) — Relatórios imprimíveis em A4 (config + tela de impressão).
 - [`produtos.md`](recursos/produtos.md) — Produtos e Fabricantes.
 - [`carrinho.md`](recursos/carrinho.md) — Carrinho em cookie + AJAX.
 - [`clientes.md`](recursos/clientes.md) — Cadastro de Clientes (máscaras, seções).

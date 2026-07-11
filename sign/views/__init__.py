@@ -60,6 +60,10 @@ from .products import (
     ProductToggleActiveView,
     ProductUpdateView,
 )
+from .reports import (
+    report_index,
+    report_render,
+)
 from .sales import (
     SaleDetailView,
     SaleListView,
@@ -122,6 +126,8 @@ __all__ = [
     "ProductUpdateView",
     "product_import_upload",
     "product_import_mapping",
+    "report_index",
+    "report_render",
     "checkout",
     "sale_quote",
     "sale_receipt",

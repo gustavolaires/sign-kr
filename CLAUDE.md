@@ -24,6 +24,7 @@ Consulte e mantenha esses documentos ao alterar as áreas correspondentes.
 
 **Recursos** ([`docs/recursos/`](docs/recursos/)) — referência detalhada por feature:
 - [`dashboard.md`](docs/recursos/dashboard.md) — Dashboard: campos de config em `Company`, serviço `dashboard_metrics`, KPIs e gráficos (Chart.js vendorizado).
+- [`relatorios.md`](docs/recursos/relatorios.md) — Relatórios: `REPORT_SPECS`/`build_report`, tela de config + tela standalone imprimível em A4 (`window.print`).
 - [`produtos.md`](docs/recursos/produtos.md) — Produtos e Fabricantes: models, forms, views, URLs, templates.
 - [`carrinho.md`](docs/recursos/carrinho.md) — Carrinho em cookie, fluxo AJAX/fetch + CSRF, validação de estoque, UI e nota sobre PyWebView.
 - [`clientes.md`](docs/recursos/clientes.md) — Cadastro de Clientes: model `Client` + `PersonType`, máscaras, seções, filtros.

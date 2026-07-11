@@ -35,6 +35,8 @@ uppercase), espelhando as áreas funcionais do sistema:
 
 | Seção | Item | Ícone | Rota |
 |---|---|---|---|
+| **Análise** | Dashboard | `fa-chart-column` | `sign:dashboard` |
+| | Relatórios | `fa-file-lines` | `sign:report_index` |
 | **Comercial** | Produtos | `fa-tag` | `sign:product_list` |
 | | Vendas | `fa-receipt` | `sign:sale_list` |
 | **Financeiro** | Despesas | `fa-money-bill-wave` | `sign:expense_list` |
@@ -54,6 +56,7 @@ produtos.
 O item da seção atual é destacado em **`bg-blue-600`**. A detecção é por
 `request.resolver_match.url_name` (capturado num `{% with url_name=... %}`):
 
+- `{% if url_name == 'dashboard' %}` → Dashboard; `{% if 'report' in url_name %}` → Relatórios (ambos na seção **Análise**)
 - `{% if 'product' in url_name %}` → Produtos
 - `{% if 'sale' in url_name or url_name == 'checkout' %}` → Vendas (inclui o checkout)
 - `{% if 'expense' in url_name or 'installment' in url_name %}` → Despesas (inclui parcelas)
@@ -91,6 +94,8 @@ Barra branca no topo da área de conteúdo, com:
 
 ```
 /                      → redireciona p/ sign:product_list
+
+Análise      dashboard/ · reports/ · reports/render/
 
 Produtos     products/ · products/new/ · products/<pk>/ · .../edit/ · .../delete/
 Fabricantes  manufacturers/ · .../new/ · .../<pk>/edit/ · .../<pk>/delete/

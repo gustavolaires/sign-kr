@@ -9,6 +9,9 @@ urlpatterns = [
     path("", RedirectView.as_view(pattern_name="sign:product_list"), name="home"),
     # Dashboard
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
+    # Relatórios
+    path("reports/", views.report_index, name="report_index"),
+    path("reports/render/", views.report_render, name="report_render"),
     # Produtos
     path("products/", views.ProductListView.as_view(), name="product_list"),
     path("products/new/", views.ProductCreateView.as_view(), name="product_create"),
