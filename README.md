@@ -109,11 +109,39 @@ python manage.py collectstatic --noinput
 
 3. Executar: `dist/SIGN-KR/SIGN-KR.exe`. Na 1ª execução aparecem, em `_internal/`:
    - `db.sqlite3` — criado/atualizado pelo `migrate` (editável, faça backup dele);
-   - `.env` — gerado com `DJANGO_DEBUG=0` (edite para configurar; ex.: `DJANGO_DEBUG=1`).
+   - `.env` — gerado com `DJANGO_DEBUG=0` (edite para configurar; ver abaixo).
 
 > **Permissão de escrita:** `_internal/` precisa ser gravável para criar o banco.
 > Instale o app numa pasta do usuário (ex.: em `%LOCALAPPDATA%`), **não** em
 > `C:\Program Files` (protegido para escrita por usuários comuns).
+
+### Variáveis do `.env`
+
+O `.env` (na raiz em dev; em `_internal/` no executável) é carregado no boot. Chaves
+suportadas:
+
+- `DJANGO_DEBUG` — `1` liga o modo debug; qualquer outro valor (ou ausente) = produção.
+- `DJANGO_SECRET_KEY` — chave secreta do Django. Em produção **defina uma chave
+  própria** aqui; sem ela, o app usa uma chave de desenvolvimento insegura (o
+  `django-insecure-...` do `settings.py`), imprópria para produção.
+
+#### Gerando a `SECRET_KEY` em produção
+
+Gere uma chave aleatória e cole no `.env` como `DJANGO_SECRET_KEY`:
+
+```
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+No `.env` (sem aspas):
+
+```
+DJANGO_SECRET_KEY=cole-a-chave-gerada-aqui
+DJANGO_DEBUG=0
+```
+
+> Trate a `SECRET_KEY` como segredo: não a versione (o `.env` é git-ignored) e use
+> uma chave distinta por instalação/ambiente.
 
 > **Rebuild:** após mudar Python, templates ou estáticos, refaça o `collectstatic`
 > e o `pyinstaller` (o `--noconfirm` sobrescreve `build/` e `dist/`). Para depurar

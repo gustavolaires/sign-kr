@@ -35,7 +35,12 @@ load_dotenv(DATA_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h=@r1sdykm953wo5s7b23v!6*)=*u1unmp$a071j$39bjozf7v'
+# Lida do .env (DJANGO_SECRET_KEY) em produção; o valor de fallback abaixo é
+# apenas para desenvolvimento. Ver README (como gerar uma chave em produção).
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-h=@r1sdykm953wo5s7b23v!6*)=*u1unmp$a071j$39bjozf7v',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Padrão False (modo app desktop). Para desenvolvimento com páginas de erro
