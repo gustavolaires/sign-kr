@@ -28,6 +28,10 @@ from .expenses import (
     ExpenseUpdateView,
     installment_pay,
 )
+from .imports import (
+    product_import_mapping,
+    product_import_upload,
+)
 from .invoices import (
     InboundInvoiceCreateView,
     InboundInvoiceDeleteView,
@@ -116,6 +120,8 @@ __all__ = [
     "ProductListView",
     "ProductToggleActiveView",
     "ProductUpdateView",
+    "product_import_upload",
+    "product_import_mapping",
     "checkout",
     "sale_quote",
     "sale_receipt",

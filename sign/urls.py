@@ -16,6 +16,9 @@ urlpatterns = [
     path("products/<int:pk>/edit/", views.ProductUpdateView.as_view(), name="product_update"),
     path("products/<int:pk>/toggle-active/", views.ProductToggleActiveView.as_view(), name="product_toggle_active"),
     path("products/<int:pk>/delete/", views.ProductDeleteView.as_view(), name="product_delete"),
+    # Importação (carga inicial — oculto, sem item de menu; acesso só via URL)
+    path("products/import/", views.product_import_upload, name="product_import_upload"),
+    path("products/import/mapping/", views.product_import_mapping, name="product_import_mapping"),
     # Carrinho
     path("cart/", views.cart_detail, name="cart_detail"),
     path("cart/add/", views.cart_add, name="cart_add"),

@@ -49,6 +49,7 @@ PyInstaller). Está organizada em **três categorias**, cada uma numa pasta:
 - [`vendas.md`](recursos/vendas.md) — Vendas/Checkout (snapshot, pagamentos).
 - [`despesas.md`](recursos/despesas.md) — Despesas/contas a pagar.
 - [`notas-fiscais.md`](recursos/notas-fiscais.md) — NF de Entrada + Faturas + Produtos.
+- [`carga-inicial.md`](recursos/carga-inicial.md) — Importação de Produtos/Fabricantes via CSV (oculto).
 
 ## Como manter
 

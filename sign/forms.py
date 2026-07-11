@@ -474,6 +474,38 @@ class InstallmentPaymentForm(forms.Form):
             field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()
 
 
+class CsvImportForm(forms.Form):
+    """Upload do CSV de carga inicial (produtos/fabricantes)."""
+
+    MAX_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
+
+    csv_file = forms.FileField(
+        label="Arquivo CSV",
+        help_text="Arquivo .csv com a listagem de produtos (1ª linha = cabeçalhos).",
+        # Input nativo escondido: um label estilizado dispara o seletor e um
+        # "chip" de status (JS no template) mostra o arquivo escolhido.
+        widget=forms.ClearableFileInput(attrs={"class": "hidden", "accept": ".csv"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Form simples (não-ModelForm): estiliza manualmente, pulando o input de
+        # arquivo (as classes de input de texto distorceriam o seletor de arquivo).
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.FileInput):
+                continue
+            existing = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()
+
+    def clean_csv_file(self):
+        upload = self.cleaned_data["csv_file"]
+        if not upload.name.lower().endswith(".csv"):
+            raise forms.ValidationError("Envie um arquivo com extensão .csv.")
+        if upload.size > self.MAX_SIZE_BYTES:
+            raise forms.ValidationError("Arquivo muito grande (máximo 5 MB).")
+        return upload
+
+
 def _reais_field(label, required=False):
     """DecimalField em reais (2 casas), usado nos forms como campo virtual."""
     return forms.DecimalField(

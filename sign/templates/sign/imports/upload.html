@@ -1,0 +1,101 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Carga inicial via CSV · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="grow w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Carga inicial — importar produtos via CSV</h1>
+    <a href="{% url 'sign:product_list' %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="grow max-w-2xl">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                Envie um arquivo <strong>.csv</strong> com a listagem de produtos. A
+                primeira linha deve conter os <strong>cabeçalhos</strong> das colunas.
+                Na próxima tela você associa cada coluna aos campos do sistema.
+            </div>
+
+            <div>
+                <label for="{{ form.csv_file.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">
+                    {{ form.csv_file.label }}{% if form.csv_file.field.required %} <span class="text-red-500">*</span>{% endif %}
+                </label>
+
+                {# Input nativo escondido; o label abaixo dispara o seletor. #}
+                {{ form.csv_file }}
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <label for="{{ form.csv_file.id_for_label }}"
+                           class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+                        <i class="fa-solid fa-folder-open"></i> Escolher arquivo
+                    </label>
+
+                    {# Chip de status: âmbar (nenhum) vs. verde (escolhido), trocado pelo JS. #}
+                    <span id="csv-file-status"
+                          class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium border-amber-300 bg-amber-50 text-amber-800">
+                        <i id="csv-file-icon" class="fa-solid fa-triangle-exclamation"></i>
+                        <span id="csv-file-name">Nenhum arquivo escolhido</span>
+                    </span>
+                </div>
+
+                {% if form.csv_file.help_text %}
+                    <p class="mt-2 text-xs text-gray-500">{{ form.csv_file.help_text }}</p>
+                {% endif %}
+                {% for error in form.csv_file.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-upload"></i> Enviar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+
+<script>
+    (function () {
+        const input = document.getElementById('{{ form.csv_file.id_for_label }}');
+        const chip = document.getElementById('csv-file-status');
+        const icon = document.getElementById('csv-file-icon');
+        const name = document.getElementById('csv-file-name');
+        if (!input || !chip || !icon || !name) return;
+
+        // Classes completas (literais) para o Tailwind detectar ambos os estados.
+        const EMPTY = 'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium border-amber-300 bg-amber-50 text-amber-800';
+        const FILLED = 'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium border-green-300 bg-green-50 text-green-800';
+
+        input.addEventListener('change', function () {
+            if (input.files && input.files.length) {
+                chip.className = FILLED;
+                icon.className = 'fa-solid fa-circle-check';
+                name.textContent = input.files[0].name;
+            } else {
+                chip.className = EMPTY;
+                icon.className = 'fa-solid fa-triangle-exclamation';
+                name.textContent = 'Nenhum arquivo escolhido';
+            }
+        });
+    })();
+</script>
+{% endblock %}
