@@ -114,6 +114,9 @@ def checkout(request):
     """
     cart = Cart(request)
     items = cart.items()
+    # Totais derivados dos itens já buscados, evitando novas queries de produto.
+    cart_total_cents = sum(item["total_cents"] for item in items)
+    cart_total = cart_total_cents / 100
 
     if request.method != "POST":
         if not items:
@@ -126,8 +129,8 @@ def checkout(request):
                 "form": SaleForm(),
                 "cart_items": items,
                 "calc_items": _calc_items(items),
-                "cart_total": cart.total_price(),
-                "cart_total_cents": cart.total_price_cents(),
+                "cart_total": cart_total,
+                "cart_total_cents": cart_total_cents,
                 "payment_types": PaymentType.choices,
                 "payments": [],
                 "discount_mode": "value",
@@ -148,8 +151,8 @@ def checkout(request):
                 "form": form,
                 "cart_items": items,
                 "calc_items": _calc_items(items),
-                "cart_total": cart.total_price(),
-                "cart_total_cents": cart.total_price_cents(),
+                "cart_total": cart_total,
+                "cart_total_cents": cart_total_cents,
                 "payment_types": PaymentType.choices,
                 "payments": payments,
                 "discount_mode": discount_mode,

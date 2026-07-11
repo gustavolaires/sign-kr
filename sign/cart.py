@@ -76,6 +76,7 @@ class Cart:
                     "product": product,
                     "quantity": quantity,
                     "unit_price": product.unit_price,
+                    "total_cents": total_cents,
                     "total_price": total_cents / 100,
                 }
             )

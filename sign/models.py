@@ -41,7 +41,9 @@ class Product(models.Model):
 
     name = models.CharField("Nome", max_length=200)
     description = models.TextField("Descrição", blank=True)
-    barcode = models.CharField("Código de barras", max_length=64, blank=True)
+    barcode = models.CharField(
+        "Código de barras", max_length=64, blank=True, db_index=True
+    )
     manufacturer = models.ForeignKey(
         Manufacturer,
         on_delete=models.PROTECT,
@@ -73,6 +75,10 @@ class Product(models.Model):
         verbose_name = "Produto"
         verbose_name_plural = "Produtos"
         ordering = ["name"]
+        indexes = [
+            # Apoia os filtros de estoque da dashboard (is_active=True + quantity).
+            models.Index(fields=["is_active", "quantity"]),
+        ]
 
     def __str__(self):
         return self.name
@@ -466,7 +472,7 @@ class ExpenseInstallment(models.Model):
     installment_current = models.PositiveIntegerField("Parcela", default=1)
     installment_total = models.PositiveIntegerField("Total de parcelas", default=1)
     value_cents = models.PositiveIntegerField("Valor (centavos)", default=0)
-    due_date = models.DateField("Data de vencimento")
+    due_date = models.DateField("Data de vencimento", db_index=True)
     paid_value_cents = models.PositiveIntegerField("Valor pago (centavos)", default=0)
     paid_at = models.DateField("Data de pagamento", null=True, blank=True)
     created_at = models.DateTimeField("Criada em", auto_now_add=True)

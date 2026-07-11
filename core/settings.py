@@ -105,6 +105,22 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': DATA_DIR / 'db.sqlite3',
+        # Ajustes de desempenho do SQLite (app desktop single-user). WAL melhora
+        # a escrita e permite ler durante uma escrita; os PRAGMAs são reaplicados
+        # a cada conexão (WAL/foreign_keys são persistentes/sessão, sem custo).
+        # transaction_mode=IMMEDIATE (Django 5.1+) evita latência de lock nas
+        # transações atômicas de escrita (checkout, importação, processamento NF).
+        'OPTIONS': {
+            'init_command': (
+                'PRAGMA journal_mode=WAL;'
+                'PRAGMA synchronous=NORMAL;'
+                'PRAGMA foreign_keys=ON;'
+                'PRAGMA busy_timeout=5000;'
+                'PRAGMA temp_store=MEMORY;'
+                'PRAGMA cache_size=-16000;'
+            ),
+            'transaction_mode': 'IMMEDIATE',
+        },
     }
 }
 

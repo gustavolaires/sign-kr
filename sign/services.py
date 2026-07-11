@@ -806,6 +806,8 @@ def process_inbound_invoice(invoice, *, decisions):
         raise ValidationError("Esta nota fiscal já foi processada.")
 
     supplier = invoice.supplier
+    # Estoque mínimo default (empresa) resolvido uma única vez, fora do loop.
+    default_min_stock = Company.get_solo().low_stock_threshold or 0
 
     for decision in decisions:
         item = decision["item"]
@@ -831,7 +833,7 @@ def process_inbound_invoice(invoice, *, decisions):
                 quantity=quantity,
                 unit_type=item.unit_type,
                 unit_price_cents=price_cents,
-                min_stock=Company.get_solo().low_stock_threshold or 0,
+                min_stock=default_min_stock,
                 nf_search_id=format_nf_search([code] if code else []),
             )
         else:
