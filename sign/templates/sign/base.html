@@ -151,11 +151,37 @@
     </div>
 
     <script>
-        document.getElementById('sidebarToggle').addEventListener('click', function () {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('content').classList.toggle('ml-64');
-            document.getElementById('content').classList.toggle('ml-0');
-        });
+        (function () {
+            const STORAGE_KEY = 'sidebarCollapsed';
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            const toggle = document.getElementById('sidebarToggle');
+
+            function applyState(collapsed, animate) {
+                if (!animate) {
+                    sidebar.style.transition = 'none';
+                    content.style.transition = 'none';
+                }
+                sidebar.classList.toggle('-translate-x-full', collapsed);
+                content.classList.toggle('ml-64', !collapsed);
+                content.classList.toggle('ml-0', collapsed);
+                if (!animate) {
+                    // Force reflow so the state applies before re-enabling transitions.
+                    void sidebar.offsetWidth;
+                    sidebar.style.transition = '';
+                    content.style.transition = '';
+                }
+            }
+
+            // Restore persisted state without animating on initial load.
+            applyState(localStorage.getItem(STORAGE_KEY) === 'true', false);
+
+            toggle.addEventListener('click', function () {
+                const collapsed = !sidebar.classList.contains('-translate-x-full');
+                localStorage.setItem(STORAGE_KEY, String(collapsed));
+                applyState(collapsed, true);
+            });
+        })();
 
         (function () {
             const toggle = document.getElementById('settingsToggle');

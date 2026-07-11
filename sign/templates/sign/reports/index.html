@@ -8,7 +8,7 @@
     <h1 class="text-2xl font-bold">Relatórios</h1>
 </div>
 
-<form method="get" action="{% url 'sign:report_render' %}" target="_blank"
+<form id="report-form" method="get" action="{% url 'sign:report_render' %}"
       class="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
     <div class="flex flex-col gap-6">
@@ -169,12 +169,75 @@
         syncPeriodInputs();
     }
 
+    // ---- Persistência do formulário (voltar da tela de impressão) ----
+    const STORAGE_KEY = 'reportFormState';
+    const form = document.getElementById('report-form');
+    const cutoffValue = document.getElementById('cutoff-value');
+
+    function activeColumnsBlock(type) {
+        return document.querySelector('.columns-block[data-report="' + type + '"]');
+    }
+
+    function saveState() {
+        const block = activeColumnsBlock(typeSelect.value);
+        const mode = cutoffBlock.querySelector('input[name="cutoff_mode"]:checked');
+        const state = {
+            type: typeSelect.value,
+            date_from: dateFrom.value,
+            date_to: dateTo.value,
+            all_sales: allSales.checked,
+            cutoff_mode: mode ? mode.value : null,
+            cutoff_value: cutoffValue.value,
+            cols: block
+                ? Array.from(block.querySelectorAll('input[name="col"]:checked')).map(function (i) { return i.value; })
+                : [],
+        };
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignora */ }
+    }
+
+    function restoreState() {
+        let state = null;
+        try { state = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) { /* ignora */ }
+        if (!state || !META[state.type]) return false;
+
+        // Seleciona o tipo antes de update() para exibir os blocos corretos e
+        // aplicar defaults; depois sobrescreve com os valores salvos.
+        typeSelect.value = state.type;
+        update();
+
+        if (state.date_from) dateFrom.value = state.date_from;
+        if (state.date_to) dateTo.value = state.date_to;
+        allSales.checked = !!state.all_sales;
+        if (state.cutoff_mode) {
+            const radio = cutoffBlock.querySelector('input[name="cutoff_mode"][value="' + state.cutoff_mode + '"]');
+            if (radio) radio.checked = true;
+        }
+        if (state.cutoff_value != null) cutoffValue.value = state.cutoff_value;
+
+        const block = activeColumnsBlock(state.type);
+        if (block && Array.isArray(state.cols)) {
+            const checked = new Set(state.cols);
+            block.querySelectorAll('input[name="col"]').forEach(function (cb) {
+                cb.checked = checked.has(cb.value);
+            });
+        }
+
+        cutoffValueLabel.textContent = cutoffLabel();
+        syncPeriodInputs();
+        return true;
+    }
+
     typeSelect.addEventListener('change', update);
     cutoffBlock.addEventListener('change', function () {
         cutoffValueLabel.textContent = cutoffLabel();
     });
     allSales.addEventListener('change', syncPeriodInputs);
-    update();
+    if (form) form.addEventListener('submit', saveState);
+
+    // Estado é de uso único: restaura ao voltar da impressão e já limpa, para
+    // que reabrir a página pelo menu lateral mostre os defaults.
+    if (!restoreState()) update();
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignora */ }
 })();
 </script>
 {% endblock %}

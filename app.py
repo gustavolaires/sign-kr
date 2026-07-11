@@ -9,6 +9,7 @@ funciona offline com DEBUG=False, sem depender do dev-server do Django.
 
 import os
 import socket
+import sys
 import threading
 import time
 
@@ -60,6 +61,16 @@ def wait_until_ready(port, timeout=15.0):
     return False
 
 
+def resource_path(*parts):
+    """Resolve um recurso empacotado tanto em dev quanto no PyInstaller.
+
+    Quando congelado, o PyInstaller extrai os dados para ``sys._MEIPASS``; em
+    execução a partir do fonte, usa-se o diretório deste arquivo.
+    """
+    base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, *parts)
+
+
 def webview_storage_path():
     """Perfil persistente do webview para o cookie do carrinho sobreviver.
 
@@ -84,7 +95,14 @@ def main():
         f'http://127.0.0.1:{port}/',
         maximized=True,
     )
-    webview.start(private_mode=False, storage_path=webview_storage_path())
+    # Ícone da janela (barra de títulos + barra de tarefas). Requer .ico no
+    # backend EdgeChromium do Windows (System.Drawing.Icon não lê PNG).
+    icon = resource_path('sign', 'static', 'sign', 'img', 'page_icon.ico')
+    webview.start(
+        private_mode=False,
+        storage_path=webview_storage_path(),
+        icon=icon,
+    )
 
 
 if __name__ == '__main__':
