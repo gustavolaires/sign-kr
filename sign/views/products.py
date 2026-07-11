@@ -23,10 +23,11 @@ class ProductListView(ListView):
     context_object_name = "products"
 
     # Campos permitidos para ordenação (asc/desc) e a expressão real de ordenação.
-    SORT_FIELDS = ("name", "barcode", "manufacturer")
+    SORT_FIELDS = ("name", "barcode", "manufacturer_code", "manufacturer")
     SORT_EXPRESSIONS = {
         "name": "name",
         "barcode": "barcode",
+        "manufacturer_code": "manufacturer_code",
         "manufacturer": "manufacturer__name",
     }
 

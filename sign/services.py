@@ -720,12 +720,12 @@ def suggested_price_cents(item, company):
     return round_price_cents(raw, company.rounding_type)
 
 
-def _nf_search_tokens(value):
+def nf_search_tokens(value):
     """Tokens (não vazios) de um ``nf_search_id`` (separados por ``;``)."""
     return [tok.strip() for tok in (value or "").split(";") if tok.strip()]
 
 
-def _format_nf_search(tokens):
+def format_nf_search(tokens):
     """Serializa os tokens de ``nf_search_id`` com ``;`` **ao final de cada um**.
 
     Ex.: ``["ABC", "ZZZ"]`` → ``"ABC;ZZZ;"``. O ``;`` terminador deixa o campo
@@ -747,7 +747,7 @@ def suggest_product_match(item):
     # 1) nf_search_id — token exato (o __icontains é só um pré-filtro).
     if code:
         for product in Product.objects.filter(nf_search_id__icontains=code):
-            if code in _nf_search_tokens(product.nf_search_id):
+            if code in nf_search_tokens(product.nf_search_id):
                 return product, "nf_search_id"
 
     # 2) Descrição do item igual ao nome ou à descrição de um produto
@@ -813,7 +813,7 @@ def process_inbound_invoice(invoice, *, decisions):
                 unit_type=item.unit_type,
                 unit_price_cents=price_cents,
                 min_stock=Company.get_solo().low_stock_threshold or 0,
-                nf_search_id=_format_nf_search([code] if code else []),
+                nf_search_id=format_nf_search([code] if code else []),
             )
         else:
             product = decision.get("product")
@@ -822,13 +822,13 @@ def process_inbound_invoice(invoice, *, decisions):
                     f"Selecione o produto associado ao item {code}."
                 )
             # Garante o código do item entre os IDs de busca para futuras NFs.
-            tokens = _nf_search_tokens(product.nf_search_id)
+            tokens = nf_search_tokens(product.nf_search_id)
             if code and code not in tokens:
                 tokens.append(code)
             Product.objects.filter(pk=product.pk).update(
                 quantity=F("quantity") + quantity,
                 unit_price_cents=price_cents,
-                nf_search_id=_format_nf_search(tokens),
+                nf_search_id=format_nf_search(tokens),
             )
 
     # Faturas → uma única despesa por NF, com uma parcela por fatura. As parcelas

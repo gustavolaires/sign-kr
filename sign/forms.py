@@ -17,7 +17,7 @@ from .models import (
     Sale,
     Supplier,
 )
-from .services import reais_to_cents
+from .services import format_nf_search, nf_search_tokens, reais_to_cents
 
 # Classe base aplicada aos inputs para padronizar o estilo Tailwind.
 INPUT_CLASSES = (
@@ -96,6 +96,14 @@ class ProductForm(StyledModelForm):
         product.unit_price_cents = int(
             (reais * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         )
+        # Código de barras e código do fabricante, quando preenchidos, entram nos
+        # IDs de busca para NF (com ';' ao final) para casar itens de notas futuras.
+        tokens = nf_search_tokens(product.nf_search_id)
+        for extra in (product.barcode, product.manufacturer_code):
+            extra = (extra or "").strip()
+            if extra and extra not in tokens:
+                tokens.append(extra)
+        product.nf_search_id = format_nf_search(tokens)
         if commit:
             product.save()
         return product
