@@ -11,10 +11,24 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Diretório de dados persistente/gravável. Congelado (PyInstaller onedir):
+# _MEIPASS == pasta _internal/, real e persistente no disco. Em dev: raiz do
+# projeto. Aqui ficam db.sqlite3, .env e os staticfiles embutidos — acessíveis.
+if getattr(sys, 'frozen', False):
+    DATA_DIR = Path(sys._MEIPASS)
+else:
+    DATA_DIR = BASE_DIR
+
+# .env carregado automaticamente (não sobrescreve variáveis já no ambiente do SO).
+load_dotenv(DATA_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -85,7 +99,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DATA_DIR / 'db.sqlite3',
     }
 }
 
@@ -127,7 +141,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Destino do `collectstatic`; é daqui que o WhiteNoise serve os arquivos.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# No app congelado aponta para os estáticos embutidos em _internal/staticfiles.
+STATIC_ROOT = DATA_DIR / 'staticfiles'
 
 # WhiteNoise sem manifest: comprime os estáticos, mas não usa hashing/manifest
 # (evita erros de lookup caso algum arquivo referenciado esteja ausente).

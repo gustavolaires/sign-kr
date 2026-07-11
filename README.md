@@ -80,3 +80,42 @@ python app.py
 
 > Mudanças em Python e em templates HTML aparecem ao reiniciar o `app.py` — só os
 > **estáticos** (CSS/JS/imagens) dependem do `collectstatic`.
+
+## Empacotamento com PyInstaller (executável desktop)
+
+Gera um executável distribuível a partir do `app.py`. Usa-se o **modo onedir**
+(pasta, **não** arquivo único), configurado em `SIGN-KR.spec` (versionado). O build
+resulta em `dist/SIGN-KR/` contendo `SIGN-KR.exe` + a pasta `_internal/`.
+
+O `db.sqlite3` e o `.env` ficam **acessíveis/graváveis** em `_internal/` (que é o
+`sys._MEIPASS` do onedir — um diretório real e persistente no disco): o `.env` é
+**carregado automaticamente** no boot (via `python-dotenv`) e o `db.sqlite3` é criado
+pelo `migrate` na primeira execução. Os `staticfiles` vão embutidos (read-only) e são
+servidos pelo WhiteNoise.
+
+**Passos:**
+
+1. Coletar os estáticos (embutidos no bundle):
+
+```
+python manage.py collectstatic --noinput
+```
+
+2. Gerar o executável a partir do spec versionado:
+
+```
+./venv/Scripts/pyinstaller.exe SIGN-KR.spec --noconfirm
+```
+
+3. Executar: `dist/SIGN-KR/SIGN-KR.exe`. Na 1ª execução aparecem, em `_internal/`:
+   - `db.sqlite3` — criado/atualizado pelo `migrate` (editável, faça backup dele);
+   - `.env` — gerado com `DJANGO_DEBUG=0` (edite para configurar; ex.: `DJANGO_DEBUG=1`).
+
+> **Permissão de escrita:** `_internal/` precisa ser gravável para criar o banco.
+> Instale o app numa pasta do usuário (ex.: em `%LOCALAPPDATA%`), **não** em
+> `C:\Program Files` (protegido para escrita por usuários comuns).
+
+> **Rebuild:** após mudar Python, templates ou estáticos, refaça o `collectstatic`
+> e o `pyinstaller` (o `--noconfirm` sobrescreve `build/` e `dist/`). Para depurar
+> falhas de runtime do executável, troque `console=False` → `console=True` no
+> `SIGN-KR.spec`, rebuilde e rode pelo terminal para ver o traceback.

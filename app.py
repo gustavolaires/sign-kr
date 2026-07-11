@@ -71,6 +71,21 @@ def resource_path(*parts):
     return os.path.join(base, *parts)
 
 
+def ensure_env_file():
+    """Cria um .env padrão gravável (editável) na 1ª execução do app congelado.
+
+    Assim o .env fica acessível em _internal/ sem embutir segredos no bundle e
+    funciona a partir de um checkout limpo (o .env de dev é gitignored). É lido
+    pelo load_dotenv em core/settings.py já nesta mesma execução.
+    """
+    if not getattr(sys, 'frozen', False):
+        return
+    env_path = os.path.join(sys._MEIPASS, '.env')
+    if not os.path.exists(env_path):
+        with open(env_path, 'w', encoding='utf-8') as fh:
+            fh.write('DJANGO_DEBUG=0\n')
+
+
 def webview_storage_path():
     """Perfil persistente do webview para o cookie do carrinho sobreviver.
 
@@ -84,6 +99,7 @@ def webview_storage_path():
 
 
 def main():
+    ensure_env_file()
     prepare_django()
 
     port = pick_free_port()

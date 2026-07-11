@@ -5,6 +5,8 @@ clr_loader==0.3.1
 Django==5.2
 proxy_tools==0.1.0
 pycparser==3.0
+pyinstaller==6.21.0
+python-dotenv==1.2.2
 pythonnet==3.1.0
 pywebview==6.2.1
 sqlparse==0.5.5
