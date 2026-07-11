@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,9 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-h=@r1sdykm953wo5s7b23v!6*)=*u1unmp$a071j$39bjozf7v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Padrão False (modo app desktop). Para desenvolvimento com páginas de erro
+# detalhadas, defina a env var DJANGO_DEBUG=1 antes de rodar o runserver.
+DEBUG = os.environ.get('DJANGO_DEBUG', '') == '1'
 
-ALLOWED_HOSTS = []
+# O app roda em localhost dentro da janela PyWebView (ver app.py).
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -42,6 +46,9 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Serve os estáticos (a partir do STATIC_ROOT) sem depender do dev-server,
+    # permitindo DEBUG=False no app desktop offline.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -118,6 +125,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Destino do `collectstatic`; é daqui que o WhiteNoise serve os arquivos.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise sem manifest: comprime os estáticos, mas não usa hashing/manifest
+# (evita erros de lookup caso algum arquivo referenciado esteja ausente).
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

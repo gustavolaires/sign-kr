@@ -78,15 +78,15 @@ offline) — ver
 ./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify
 ```
 
-## Nota — PyWebView (persistência futura)
+## Nota — PyWebView (persistência do cookie)
 
 O carrinho deve **persistir ao fechar/reabrir** o app, o que depende do cookie
-sobreviver entre execuções. O PyWebView **ainda não foi adicionado** ao projeto
-(hoje roda via `runserver`). **Quando o empacotamento com PyWebView for
-implementado**, configurar o webview com **perfil persistente** (ex.:
-`webview.start(private_mode=False, storage_path=...)`), caso contrário o webview
-roda em modo privado e descarta os cookies a cada fechamento — e o carrinho não
-persistirá.
+sobreviver entre execuções. O launcher desktop **`app.py`** (raiz) já resolve
+isso: inicia o webview com **perfil persistente** —
+`webview.start(private_mode=False, storage_path=<%LOCALAPPDATA%\SIGN-KR\webview>)`.
+Sem esse par (`private_mode=False` + `storage_path`), o webview roda em modo
+privado e descarta o cookie `cart` a cada fechamento, quebrando a persistência do
+carrinho. Ao mexer no launcher, **não remova** essa configuração.
 
 ## Verificação rápida
 

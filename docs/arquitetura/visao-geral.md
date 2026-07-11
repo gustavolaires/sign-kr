@@ -18,10 +18,10 @@ modelo de dados e convenções.
 | Empacotamento alvo | **Desktop** via PyWebView + PyInstaller |
 
 > **Desktop offline é a restrição que molda o projeto.** Como o app roda numa
-> janela PyWebView empacotada (sem internet garantida), **não há CDN**: CSS, JS e
-> fontes são servidos localmente. Hoje o app ainda roda via `runserver`; o
-> empacotamento PyWebView/PyInstaller é um alvo planejado (ver
-> [Estado atual](#estado-atual-e-roadmap)).
+> janela PyWebView (sem internet garantida), **não há CDN**: CSS, JS e fontes são
+> servidos localmente. O app já abre em **janela nativa** via `python app.py`
+> (PyWebView + waitress + WhiteNoise); o empacotamento final em `.exe` com
+> PyInstaller é o próximo alvo (ver [Estado atual](#estado-atual-e-roadmap)).
 
 ## Organização em apps
 
@@ -126,13 +126,23 @@ A app `sign` cobre cinco áreas, agrupadas no menu por seção:
 
 ## Estado atual e roadmap
 
-- **Hoje**: roda via `manage.py runserver`; `DEBUG=True`, SQLite, sem
-  autenticação de usuário na UI (só o admin do Django existe). `TIME_ZONE=UTC`,
-  `USE_TZ=True`.
+- **Hoje**:
+  - Abre como **app desktop** via `python app.py` — o launcher na raiz sobe o
+    Django atrás do **waitress** (WSGI) numa thread local em `127.0.0.1` (porta
+    livre) e aponta a janela **PyWebView** (maximizada) para ela. Os estáticos são
+    servidos pelo **WhiteNoise** a partir do `STATIC_ROOT` (`collectstatic`),
+    então funciona com **`DEBUG=False`** e offline. O webview usa **perfil
+    persistente** (`private_mode=False, storage_path=...`) para o cookie do
+    carrinho sobreviver entre execuções (ver
+    [`recursos/carrinho.md`](../recursos/carrinho.md)). O `app.py` roda
+    `migrate` (e `collectstatic` na 1ª execução) automaticamente no startup.
+  - `DEBUG` é controlado pela env var `DJANGO_DEBUG` (default `False`; use
+    `DJANGO_DEBUG=1` com `runserver` para páginas de erro no desenvolvimento).
+  - SQLite; sem autenticação de usuário na UI (só o admin do Django existe).
+    `TIME_ZONE=UTC`, `USE_TZ=True`.
 - **Planejado / deixado para depois**:
-  - Empacotamento **PyWebView + PyInstaller** (com perfil persistente para o
-    cookie do carrinho sobreviver entre execuções — ver
-    [`recursos/carrinho.md`](../recursos/carrinho.md)).
+  - Empacotamento final em `.exe` com **PyInstaller** (o launcher `app.py` e o
+    serving offline já estão prontos para isso).
   - **Status/estorno** de venda (não há fluxo de cancelamento ainda).
   - **Descontos por item** (promoções) — campos já existem em `SaleItem`, sem UI.
   - **Relatórios** integrados.
