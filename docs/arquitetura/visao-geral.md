@@ -35,7 +35,7 @@ sign-kr/
 │   ├── wsgi.py / asgi.py
 ├── sign/                 # ÚNICA app de domínio — todo o negócio vive aqui
 │   ├── models.py         # todas as entidades
-│   ├── services.py       # regras de negócio (vendas, despesas, conversões)
+│   ├── services/         # pacote de regras de negócio, um módulo por domínio
 │   ├── forms.py          # forms + estilização + conversões reais↔centavos
 │   ├── cart.py           # carrinho em cookie (sem banco)
 │   ├── views/            # pacote de views, uma por área
@@ -71,7 +71,7 @@ O fluxo de uma requisição atravessa camadas com responsabilidades bem definida
         │              ▼
         │        sign/forms.py         (valida entrada, estiliza widgets, converte 1 campo)
         ▼              ▼
-  sign/services.py                     (REGRAS DE NEGÓCIO: matemática, transações atômicas)
+  sign/services/*.py                   (REGRAS DE NEGÓCIO: matemática, transações atômicas)
         ▼
   sign/models.py  ◄──► db.sqlite3      (persistência; properties de exibição; status derivado)
         ▲
@@ -85,7 +85,7 @@ O fluxo de uma requisição atravessa camadas com responsabilidades bem definida
 - **View** — orquestração fina: parse do request, decide o template/redirect,
   trata `ValidationError`/`ProtectedError`, emite `messages`. Não contém
   matemática monetária nem escrita multi-tabela.
-- **Service** (`services.py`) — toda regra de negócio com **transação atômica**,
+- **Service** (`services/`) — toda regra de negócio com **transação atômica**,
   **matemática em centavos** ou **escrita em várias tabelas** (ex.: `create_sale`,
   `create_expense`). Levanta `ValidationError` (PT-BR); a view captura.
 - **Form** — validação de entrada e conversão simples de um campo (reais→centavos

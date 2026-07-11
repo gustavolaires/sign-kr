@@ -50,7 +50,7 @@ de alterar o checkout ou os relatórios de vendas.
   demais). `UniqueConstraint(sale, payment_type)` ⇒ **no máximo 1 pagamento por
   tipo por venda**.
 
-## Matemática e regras (`sign/services.py`)
+## Matemática e regras (`sign/services/sales.py`)
 
 Toda a conversão reais↔centavos usa `Decimal` + `ROUND_HALF_UP` (helper
 `reais_to_cents`, mesma fórmula de `ProductForm.save`) — **nunca float**.

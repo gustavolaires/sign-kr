@@ -34,7 +34,7 @@ no dia previsto; a isolada gera `installment_total` parcelas mensais a partir do
     `paid` (pago ≥ devido) > `partial` (pago > 0) > `overdue` (venceu em aberto) >
     `pending`. `status_label` traduz para PT-BR (Pago/Parcial/Atrasado/Pendente).
 
-## Serviço (`sign/services.py`)
+## Serviço (`sign/services/expenses.py`)
 
 Toda a geração e matemática fica na camada de serviço. Reusa `reais_to_cents`.
 

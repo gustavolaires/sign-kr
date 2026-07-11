@@ -25,7 +25,7 @@ serviço; as views são finas. Valores em centavos conforme
    `localStorage` é limpo, então reabrir a página pelo menu lateral mostra os
    defaults.
 
-## Serviço (`sign/services.py`)
+## Serviço (`sign/services/reports.py`)
 
 - **`REPORT_SPECS`** — lista ordenada que descreve cada relatório para a UI e para
   o builder: `key`, `label` (PT-BR), `period` (janela default: `prev_month` /

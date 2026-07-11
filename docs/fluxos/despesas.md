@@ -38,7 +38,7 @@ O `ExpenseForm` reúne a definição (`name`, `description`, `recurrent`,
 (`ExpenseCreateView.form_valid`) chama o service — e **não** chama `super()`,
 para não criar uma `Expense` duplicada.
 
-**`create_expense`** (`sign/services.py`, `@transaction.atomic`) gera as parcelas
+**`create_expense`** (`sign/services/expenses.py`, `@transaction.atomic`) gera as parcelas
 **por horizonte** no momento do cadastro — **não há job em background** (o app é
 desktop PyWebView):
 

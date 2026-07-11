@@ -23,7 +23,7 @@ Regra central do projeto, motivada por evitar erros de ponto flutuante:
 - A **UI trabalha em reais**: o usuário sempre digita e vê reais.
 - A **conversão reais ↔ centavos acontece no backend**, nunca em float:
   - **reais → centavos** (ao gravar): helper `reais_to_cents` em
-    `sign/services.py` — `Decimal(value) * 100`, arredondado com `ROUND_HALF_UP`.
+    `sign/services/money.py` — `Decimal(value) * 100`, arredondado com `ROUND_HALF_UP`.
     A mesma fórmula está em `ProductForm.save`.
   - **centavos → reais** (ao exibir): cada model expõe uma **property somente
     leitura** sem o sufixo (ex.: `Product.unit_price = unit_price_cents / 100`);
@@ -38,7 +38,7 @@ Regra central do projeto, motivada por evitar erros de ponto flutuante:
 
 A precificação a partir de um custo usa dois campos de `Company`:
 `price_multiplier` (fator) e `rounding_type` (`RoundingType`). A lógica canônica
-é **`round_price_cents(cents, rounding_type)`** em `sign/services.py`: arredonda
+é **`round_price_cents(cents, rounding_type)`** em `sign/services/invoices.py`: arredonda
 o preço **sempre para cima** ao próximo múltiplo do passo do tipo (`cent`=1,
 `cent_10`=10, `real`=100, `real_2`=200, `real_5`=500, `real_10`=1000 centavos),
 usando `Decimal`/`math.ceil` (nunca float). O preço sugerido de um produto é
@@ -74,7 +74,7 @@ Não há validação de dígito verificador — apenas máscara. Detalhes em
 - Convenção de navegação: ao **salvar uma edição**, `get_success_url()` leva ao
   **detalhe** do objeto; o **create** leva à **listagem**.
 - Regras de negócio com escrita multi-tabela ou matemática ficam num **service**
-  (`sign/services.py`), chamado pela view — não na view nem no model. Ver
+  (`sign/services/`), chamado pela view — não na view nem no model. Ver
   [`camadas.md`](camadas.md).
 
 ## Forms

@@ -43,9 +43,14 @@ Responsabilidade da view: **orquestração fina**.
 > `Expense` e suas parcelas são criadas inteiramente por `create_expense`, para
 > não gravar uma `Expense` duplicada.
 
-## Services (`sign/services.py`)
+## Services (`sign/services/`)
 
-A camada de **regras de negócio**. Aqui mora tudo que é crítico:
+A camada de **regras de negócio**, organizada como **pacote com um módulo por
+domínio** (mesmo padrão de `sign/views/`): `money.py` (primitivos monetários
+compartilhados — base), `dashboard.py`, `sales.py`, `expenses.py`, `invoices.py`
+(NF de entrada + precificação), `imports.py` (carga CSV) e `reports.py`. O
+`__init__.py` **reexporta** a API pública de forma plana, então
+`from sign.services import ...` continua funcionando. Aqui mora tudo que é crítico:
 
 - **Matemática monetária** em centavos (`reais_to_cents`, `Decimal`,
   `ROUND_HALF_UP`) — ver `convencoes.md`.

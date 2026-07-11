@@ -22,7 +22,7 @@ na tela de **Configurações** (seção *Operação e precificação*):
   Centavo / Centavo múltiplo de 10 / Real / Real múltiplo de 2/5/10) — **não** usados
   pela dashboard; são preparação para a precificação (feature futura).
 
-## Serviço (`sign/services.py`)
+## Serviço (`sign/services/dashboard.py`)
 
 `dashboard_metrics(*, company=None, today=None)` — sem escrita no banco. `company`/
 `today` são **injetáveis** (testes); por padrão usam `Company.get_solo()` e

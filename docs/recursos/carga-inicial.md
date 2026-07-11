@@ -23,7 +23,7 @@ centavos no banco).
    `{campo_alvo: valor}` e chama `import_products_csv`; limpa a sessão e renderiza
    o **resultado** (contadores + linhas puladas).
 
-## Serviço (`sign/services.py`)
+## Serviço (`sign/services/imports.py`)
 
 - **`import_products_csv(*, rows)`** — `@transaction.atomic`. `rows` é a lista de
   dicts já resolvida pela view. Dois passos, espelhando `create_inbound_invoice`:

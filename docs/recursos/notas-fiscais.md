@@ -33,7 +33,7 @@ seção [Processamento](#processamento).
   (suporta unidades fracionadas — kg/l), diferente de `Product.quantity` (inteiro).
 - `Meta.ordering`: NF `["-id"]`; faturas `["due_date", "id"]`; itens `["id"]`.
 
-## Serviço (`sign/services.py`)
+## Serviço (`sign/services/invoices.py`)
 
 - **`create_inbound_invoice(*, number, issue_date, delivery_date, supplier,
   products_total, total, icms_base, icms, ipi, taxes_total, freight, insurance,
