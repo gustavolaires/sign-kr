@@ -60,6 +60,7 @@ urlpatterns = [
     path("invoices/<int:pk>/", views.InboundInvoiceDetailView.as_view(), name="invoice_detail"),
     path("invoices/<int:pk>/edit/", views.InboundInvoiceUpdateView.as_view(), name="invoice_update"),
     path("invoices/<int:pk>/delete/", views.InboundInvoiceDeleteView.as_view(), name="invoice_delete"),
+    path("invoices/<int:pk>/process/", views.invoice_process, name="invoice_process"),
     # Faturas da nota fiscal
     path("invoices/<int:invoice_pk>/duplicates/new/", views.InvoiceDuplicateCreateView.as_view(), name="invoice_duplicate_create"),
     path("duplicates/<int:pk>/edit/", views.InvoiceDuplicateUpdateView.as_view(), name="invoice_duplicate_update"),

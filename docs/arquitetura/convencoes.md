@@ -34,6 +34,18 @@ Regra central do projeto, motivada por evitar erros de ponto flutuante:
 > A camada que **decide** a matemática monetária é o **service** (ou o `save()`
 > do form, para conversão simples de 1 campo) — nunca a view nem o template.
 
+### Precificação (multiplicador + arredondamento)
+
+A precificação a partir de um custo usa dois campos de `Company`:
+`price_multiplier` (fator) e `rounding_type` (`RoundingType`). A lógica canônica
+é **`round_price_cents(cents, rounding_type)`** em `sign/services.py`: arredonda
+o preço **sempre para cima** ao próximo múltiplo do passo do tipo (`cent`=1,
+`cent_10`=10, `real`=100, `real_2`=200, `real_5`=500, `real_10`=1000 centavos),
+usando `Decimal`/`math.ceil` (nunca float). O preço sugerido de um produto é
+`custo × price_multiplier` passado por essa função — hoje consumido pelo
+processamento de NF de entrada (ver
+[`recursos/notas-fiscais.md`](../recursos/notas-fiscais.md#processamento)).
+
 ## Formatação visual (CPF/CNPJ, telefone, CEP)
 
 Mesma filosofia do dinheiro: **o banco guarda só os dígitos**; a máscara é
@@ -77,6 +89,13 @@ Não há validação de dígito verificador — apenas máscara. Detalhes em
   um `<h2>` de cabeçalho. O cabeçalho é uma faixa de largura total (alinhada às
   bordas dos campos) com fundo e borda **`navy`** e fonte **branca**:
   `rounded-lg border border-navy bg-navy px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white`.
+- **Barra de ações do form** (ex.: `installments/pay.html`, `invoices/process.html`):
+  alinhada à **direita** (`flex justify-end gap-3`), com a **ação primária
+  primeiro (à esquerda)** e o **Cancelar depois (à direita)**. A ação primária é
+  um `<button type="submit">` (`bg-blue-600 ... hover:bg-blue-700`, ou `bg-green-600`
+  para "pagar") e o Cancelar é um `<a>` de contorno
+  (`border border-gray-300 bg-white ... hover:bg-gray-50`, ícone `fa-xmark`) para o
+  detalhe/lista de origem.
 
 ## Telas de detalhe
 

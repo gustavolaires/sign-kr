@@ -40,6 +40,7 @@ from .invoices import (
     InvoiceItemCreateView,
     InvoiceItemDeleteView,
     InvoiceItemUpdateView,
+    invoice_process,
 )
 from .manufacturers import (
     ManufacturerCreateView,

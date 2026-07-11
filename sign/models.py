@@ -709,6 +709,10 @@ class InboundInvoice(models.Model):
         "Outras despesas acessórias (centavos)", default=0
     )
     created_at = models.DateTimeField("Criada em", auto_now_add=True, db_index=True)
+    # Processamento: efetiva a NF (entrada de estoque, preços e despesas). É uma
+    # ação única e irreversível — depois disso a nota fica imutável.
+    processed = models.BooleanField("Processada", default=False)
+    processed_at = models.DateTimeField("Processada em", null=True, blank=True)
 
     class Meta:
         verbose_name = "Nota fiscal de entrada"

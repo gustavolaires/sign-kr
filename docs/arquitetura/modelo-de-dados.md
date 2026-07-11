@@ -92,6 +92,17 @@ reflete a data atual sem job de atualização. Detalhes em
 [`recursos/despesas.md`](../recursos/despesas.md) e
 [`fluxos/despesas.md`](../fluxos/despesas.md).
 
+## Estado terminal (NF de entrada processada)
+
+`InboundInvoice.processed` (bool, default `False`) + `processed_at` marcam um
+**estado terminal e imutável**: o "Processar" (ver
+[`recursos/notas-fiscais.md`](../recursos/notas-fiscais.md#processamento)) dá
+entrada de estoque, precifica os produtos e gera as despesas das faturas — uma
+única vez. Depois disso, o serviço recusa reprocessar e as views bloqueiam
+edição/exclusão da NF e de seus filhos (faturas/itens). Diferente do *estado
+derivado* das despesas, aqui o estado **é persistido** porque marca um efeito
+colateral irreversível já aplicado.
+
 ## Convenções de campo
 
 - **Dinheiro**: sempre `PositiveIntegerField` com sufixo `_cents`; property em
@@ -112,5 +123,7 @@ Histórico em `sign/migrations/`:
 | `0003_client` | `Client` |
 | `0004_productsnapshot_sale_saleitem_salepayment` | vendas (4 tabelas) |
 | `0005_expense_expenseinstallment` | despesas (pai/filho) |
+| `0011_inboundinvoice_invoiceduplicate_invoiceitem` | NF de entrada (pai/filhos) |
+| `0014_inboundinvoice_processed_inboundinvoice_processed_at` | estado de processamento da NF |
 
 Gerar/aplicar com o Python do venv (ver `convencoes.md`).
