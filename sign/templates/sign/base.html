@@ -15,7 +15,7 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 flex w-64 flex-col bg-navy text-slate-300 transition-transform duration-200">
         <div class="border-b border-white/10 px-6 py-6">
             <a href="{% url 'sign:product_list' %}" class="text-lg font-bold tracking-tight text-white">
-                {{ company.display_name }}
+                {{ company.name }}
             </a>
         </div>
 
@@ -88,15 +88,15 @@
     {% endwith %}
 
     <div id="content" class="ml-64 flex min-h-screen flex-col transition-all duration-200">
-        <header class="flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6">
+        <header class="flex h-16 items-center gap-4 border-b border-black/20 bg-header px-6 text-white">
             <button id="sidebarToggle" type="button" aria-label="Exibir/ocultar menu"
-                    class="rounded-md p-2 text-gray-600 hover:bg-gray-100">
+                    class="rounded-md p-2 text-white hover:bg-header-hover">
                 <i class="fa-solid fa-bars"></i>
             </button>
             {% block header %}{% endblock %}
             <div class="ml-auto flex items-center gap-3">
                 <a href="{% url 'sign:cart_detail' %}"
-                   class="relative rounded-md p-2 text-gray-600 hover:bg-gray-100"
+                   class="relative rounded-md p-2 text-white hover:bg-header-hover"
                    title="Carrinho" aria-label="Carrinho">
                     <i class="fa-solid fa-cart-shopping fa-lg"></i>
                     <span id="cart-count"
@@ -105,7 +105,7 @@
                 </a>
                 <div class="relative">
                     <button id="settingsToggle" type="button"
-                            class="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+                            class="rounded-md p-2 text-white hover:bg-header-hover"
                             title="Configurações" aria-label="Configurações"
                             aria-haspopup="true" aria-expanded="false">
                         <i class="fa-solid fa-gear fa-lg"></i>

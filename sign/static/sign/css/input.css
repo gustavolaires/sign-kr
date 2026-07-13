@@ -5,6 +5,9 @@
   --color-navy: #1b2a4e;
   --color-navy-hover: #25365e;
   --color-canvas: #eef1f6;
+  /* Cinza escuro derivado do navy (dessaturado) para a header. */
+  --color-header: #4b5769;
+  --color-header-hover: #59657a;
 }
 
 /* Fontes de classes a serem escaneadas (templates do app sign). */
