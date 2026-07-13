@@ -53,6 +53,9 @@ Toda a geração e matemática fica na camada de serviço. Reusa `reais_to_cents
   ou o próximo).
 - **`register_payment(installment, *, paid_value_cents, paid_at)`** — grava/limpa
   o pagamento (`update_fields`).
+- **`cancel_payment(installment)`** — reverte o pagamento de uma parcela **paga**
+  (zera `paid_value_cents`/`paid_at`, volta a em aberto). Levanta `ValidationError`
+  se a parcela não estiver quitada (`status != PAID`).
 
 ## Forms (`sign/forms.py`)
 
@@ -83,6 +86,7 @@ CBVs genéricas + `SuccessMessageMixin` (padrão `clients.py`). Paths em inglês
 | `installment_update` | `installments/<pk>/edit/` | `ExpenseInstallmentUpdateView` |
 | `installment_delete` | `installments/<pk>/delete/` | `ExpenseInstallmentDeleteView` |
 | `installment_pay` | `installments/<pk>/pay/` | `installment_pay` (FBV) |
+| `installment_cancel_payment` | `installments/<pk>/cancel-payment/` | `installment_cancel_payment` (FBV, confirmação; só para parcelas pagas) |
 
 > `ExpenseCreateView.form_valid` **não** chama `super()` (evita criar uma `Expense`
 > duplicada); a criação é toda do serviço. Erros do serviço viram
@@ -91,7 +95,11 @@ CBVs genéricas + `SuccessMessageMixin` (padrão `clients.py`). Paths em inglês
 ## Templates (`sign/templates/sign/expenses/`)
 
 - `list.html`, `form.html`, `detail.html`, `confirm_delete.html`, `_field.html`
-  (partial de campo, checkbox inline vs label) e `installments/{form,pay,confirm_delete}.html`.
+  (partial de campo, checkbox inline vs label) e
+  `installments/{form,pay,cancel_payment,confirm_delete}.html`.
+- No `detail.html`, parcelas **pagas** têm o botão de pagamento desabilitado
+  (ícone cinza) e ganham o botão **Cancelar pagamento** (`fa-rotate-left`,
+  laranja) que leva à tela de confirmação.
 - `form.html` alterna os blocos **Parcelamento** (isolada) e **Recorrência** via
   `<script>` no `change` do checkbox `#id_recurrent`.
 - Badge de status no `detail.html` (cores condicionais): pago=green, parcial=amber,

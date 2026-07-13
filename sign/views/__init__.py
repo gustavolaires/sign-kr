@@ -26,6 +26,7 @@ from .expenses import (
     ExpenseInstallmentUpdateView,
     ExpenseListView,
     ExpenseUpdateView,
+    installment_cancel_payment,
     installment_pay,
 )
 from .imports import (
@@ -103,6 +104,7 @@ __all__ = [
     "ExpenseListView",
     "ExpenseUpdateView",
     "installment_pay",
+    "installment_cancel_payment",
     "InboundInvoiceCreateView",
     "InboundInvoiceDeleteView",
     "InboundInvoiceDetailView",

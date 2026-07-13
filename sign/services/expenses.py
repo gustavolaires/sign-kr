@@ -121,3 +121,19 @@ def register_payment(installment, *, paid_value_cents, paid_at):
     installment.paid_at = paid_at
     installment.save(update_fields=["paid_value_cents", "paid_at", "updated_at"])
     return installment
+
+
+def cancel_payment(installment):
+    """Cancela o pagamento de uma parcela paga, revertendo-a para em aberto.
+
+    Zera o valor pago e a data de pagamento; o ``status`` derivado volta a
+    pendente/atrasada. Só é permitido para parcelas quitadas (``PAID``).
+    """
+    if installment.status != ExpenseInstallment.PAID:
+        raise ValidationError(
+            "Só é possível cancelar o pagamento de parcelas pagas."
+        )
+    installment.paid_value_cents = 0
+    installment.paid_at = None
+    installment.save(update_fields=["paid_value_cents", "paid_at", "updated_at"])
+    return installment

@@ -60,6 +60,7 @@ urlpatterns = [
     path("installments/<int:pk>/edit/", views.ExpenseInstallmentUpdateView.as_view(), name="installment_update"),
     path("installments/<int:pk>/delete/", views.ExpenseInstallmentDeleteView.as_view(), name="installment_delete"),
     path("installments/<int:pk>/pay/", views.installment_pay, name="installment_pay"),
+    path("installments/<int:pk>/cancel-payment/", views.installment_cancel_payment, name="installment_cancel_payment"),
     # Notas fiscais de entrada
     path("invoices/", views.InboundInvoiceListView.as_view(), name="invoice_list"),
     path("invoices/new/", views.InboundInvoiceCreateView.as_view(), name="invoice_create"),

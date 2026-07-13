@@ -24,7 +24,12 @@ from ..forms import (
 )
 from ..models import Expense, ExpenseInstallment
 from ..search import filter_unaccent
-from ..services import create_expense, register_payment, reais_to_cents
+from ..services import (
+    cancel_payment,
+    create_expense,
+    register_payment,
+    reais_to_cents,
+)
 
 
 class ExpenseListView(ListView):
@@ -291,4 +296,22 @@ def installment_pay(request, pk):
         request,
         "sign/expenses/installments/pay.html",
         {"form": form, "installment": installment, "expense": installment.expense},
+    )
+
+
+def installment_cancel_payment(request, pk):
+    """Cancela (reverte) o pagamento de uma parcela paga, após confirmação."""
+    installment = get_object_or_404(ExpenseInstallment, pk=pk)
+    if request.method == "POST":
+        try:
+            cancel_payment(installment)
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+        else:
+            messages.success(request, "Pagamento cancelado com sucesso.")
+        return redirect("sign:expense_detail", pk=installment.expense.pk)
+    return render(
+        request,
+        "sign/expenses/installments/cancel_payment.html",
+        {"installment": installment, "expense": installment.expense},
     )

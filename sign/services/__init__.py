@@ -10,7 +10,7 @@ atributo ``services.<nome>``) continue funcionando como quando era um único mó
 from .money import _cents_to_reais, _parse_reais, reais_to_cents
 from .dashboard import dashboard_metrics
 from .sales import compute_quote_amounts, create_sale
-from .expenses import create_expense, register_payment
+from .expenses import cancel_payment, create_expense, register_payment
 from .invoices import (
     create_inbound_invoice,
     format_nf_search,
@@ -42,6 +42,7 @@ __all__ = [
     # expenses
     "create_expense",
     "register_payment",
+    "cancel_payment",
     # invoices
     "create_inbound_invoice",
     "process_inbound_invoice",

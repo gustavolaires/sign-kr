@@ -98,7 +98,12 @@
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex justify-end gap-4 text-base">
-                                        <a href="{% url 'sign:installment_pay' inst.pk %}" class="text-green-600 hover:text-green-800" title="Registrar pagamento" aria-label="Registrar pagamento"><i class="fa-solid fa-money-bill-wave fa-lg"></i></a>
+                                        {% if inst.status == 'paid' %}
+                                            <span class="cursor-not-allowed text-gray-300" title="Parcela já paga" aria-label="Parcela já paga"><i class="fa-solid fa-money-bill-wave fa-lg"></i></span>
+                                            <a href="{% url 'sign:installment_cancel_payment' inst.pk %}" class="text-orange-600 hover:text-orange-800" title="Cancelar pagamento" aria-label="Cancelar pagamento"><i class="fa-solid fa-rotate-left fa-lg"></i></a>
+                                        {% else %}
+                                            <a href="{% url 'sign:installment_pay' inst.pk %}" class="text-green-600 hover:text-green-800" title="Registrar pagamento" aria-label="Registrar pagamento"><i class="fa-solid fa-money-bill-wave fa-lg"></i></a>
+                                        {% endif %}
                                         <a href="{% url 'sign:installment_update' inst.pk %}" class="text-amber-600 hover:text-amber-800" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen-to-square fa-lg"></i></a>
                                         <a href="{% url 'sign:installment_delete' inst.pk %}" class="text-red-600 hover:text-red-800" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash fa-lg"></i></a>
                                     </div>

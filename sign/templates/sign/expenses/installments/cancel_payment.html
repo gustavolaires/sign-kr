@@ -1,0 +1,56 @@
+{% extends "sign/base.html" %}
+
+{% block title %}Cancelar pagamento · SIGN-KR{% endblock %}
+
+{% block content %}
+<div class="flex min-h-full items-center">
+<div class="w-full">
+<div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Cancelar pagamento</h1>
+    <a href="{% url 'sign:expense_detail' expense.pk %}"
+       class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <i class="fa-solid fa-arrow-left w-5"></i>
+        Voltar
+    </a>
+</div>
+
+<div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="flex justify-center">
+        <div class="grow max-w-xl">
+            <p class="flex flex-col gap-2 text-gray-700">
+                <span>Tem certeza que deseja cancelar o pagamento da parcela abaixo?</span>
+                <span>O valor pago e a data de pagamento serão removidos e a parcela voltará a ficar em aberto.</span>
+            </p>
+
+            <dl class="mt-4 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-3">
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Despesa</dt>
+                    <dd class="mt-1 text-base font-semibold text-gray-900">{{ expense.name }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Parcela</dt>
+                    <dd class="mt-1 text-base font-semibold text-gray-900">{{ installment.installment_current }}/{{ installment.installment_total }}</dd>
+                </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Valor pago</dt>
+                    <dd class="mt-1 text-base font-semibold text-gray-900">R$ {{ installment.paid_value|floatformat:2 }}</dd>
+                </div>
+            </dl>
+
+            <form method="post" class="mt-6 flex justify-end gap-3">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
+                    <i class="fa-solid fa-rotate-left"></i> Sim, cancelar pagamento
+                </button>
+                <a href="{% url 'sign:expense_detail' expense.pk %}"
+                   class="inline-flex items-baseline gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i> Voltar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

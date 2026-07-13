@@ -26,7 +26,8 @@ negócio se combinam nas parcelas filhas:
   Detalhe: tabela de parcelas com badge de status (derivado)
         ├── editar parcela (valor variável)  → installments/<pk>/edit/
         ├── adicionar parcela manual         → expenses/<pk>/installments/new/
-        └── registrar pagamento              → installments/<pk>/pay/
+        ├── registrar pagamento              → installments/<pk>/pay/
+        └── cancelar pagamento (se paga)     → installments/<pk>/cancel-payment/
 ```
 
 ## 1. Cadastro → geração das parcelas (`create_expense`)
@@ -83,6 +84,11 @@ quando a data chega, sem nenhuma rotina de atualização. No `detail.html` o bad
 - `register_payment` grava `paid_value_cents` + `paid_at` (`update_fields`).
   Pagar o total → "Pago"; pagar parte → "Parcial"; gravar 0/sem data → volta a
   pendente/atrasada. O status reavalia sozinho (derivado).
+- **Cancelar pagamento** (`installment_cancel_payment` + `cancel_payment`): só
+  para parcelas **pagas**. Página de confirmação (GET) → POST zera
+  `paid_value_cents`/`paid_at`, revertendo a parcela para em aberto. No
+  `detail.html`, o botão de pagar fica desabilitado em parcelas pagas e o de
+  cancelar pagamento aparece só nelas.
 
 ## 4. Listagem — filtros, situação agregada e ordenação
 
