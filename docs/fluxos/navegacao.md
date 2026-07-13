@@ -47,9 +47,8 @@ uppercase), espelhando as áreas funcionais do sistema:
 
 As seções e os itens dentro de cada seção seguem **ordem alfabética**.
 
-No topo, a marca (`{{ company.display_name }}` — razão social se preenchida, senão o
-nome; vinda do modelo `Company` singleton via context processor) linka para a lista de
-produtos.
+No topo, a marca (`{{ company.name }}` — nome da empresa, vindo do modelo `Company`
+singleton via context processor) linka para a lista de produtos.
 
 ### Item ativo
 
@@ -67,7 +66,8 @@ O item da seção atual é destacado em **`bg-blue-600`**. A detecção é por
 
 ## Header
 
-Barra branca no topo da área de conteúdo, com:
+Barra cinza escuro no topo da área de conteúdo (fundo `bg-header`, texto branco;
+ver paleta em [`convencoes.md`](../arquitetura/convencoes.md)), com:
 
 - **Toggle do menu** (`#sidebarToggle`, `fa-bars`): um `<script>` no fim do
   `<body>` alterna `-translate-x-full` na sidebar e `ml-64`/`ml-0` no `#content`

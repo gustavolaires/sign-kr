@@ -62,6 +62,23 @@ Mesma filosofia do dinheiro: **o banco guarda só os dígitos**; a máscara é
 Não há validação de dígito verificador — apenas máscara. Detalhes em
 [`recursos/clientes.md`](../recursos/clientes.md).
 
+## Busca textual — insensível a caixa **e a acentos**
+
+Filtros de listagem por campos de texto (nome de produto/fabricante, cliente na
+venda, nome de despesa etc.) **não usam `__icontains` direto**. O SQLite (banco
+da app desktop) só dobra maiúsculas de caracteres ASCII, então "joão" não casaria
+com "JOÃO" nem "ação" com "AÇÃO".
+
+- **`sign/search.py`** define `filter_unaccent(queryset, field, term)` — normaliza
+  o campo (no banco) e o termo (no Python) removendo acentos e passando a
+  minúsculas antes de comparar com `__contains`.
+- A normalização usa a função SQLite determinística **`unaccent_lower`**,
+  registrada em cada conexão por `SignConfig.ready` (`sign/apps.py`); o ORM a
+  acessa via a expressão `UnaccentLower`.
+- **Ao adicionar um filtro de texto**, use `filter_unaccent(qs, "campo", termo)`
+  em vez de `qs.filter(campo__icontains=termo)`. Campos que não são nomes (código
+  de barras, código do fabricante) podem seguir com `__icontains`.
+
 ## Padrão CRUD
 
 - **Class-Based Views genéricas** (`ListView`, `DetailView`, `CreateView`,
@@ -152,6 +169,8 @@ Cores customizadas definidas via `@theme` no `input.css`:
 | `navy` | `#1b2a4e` | fundo do side menu; fundo/borda dos cabeçalhos de seção nos forms |
 | `navy-hover` | `#25365e` | hover dos itens do menu |
 | `canvas` | `#eef1f6` | fundo da área de conteúdo (`<body>`) |
+| `header` | `#4b5769` | fundo da barra de header (cinza escuro dessaturado, derivado do `navy`) |
+| `header-hover` | `#59657a` | hover dos botões (toggle, carrinho, config) no header |
 
 O azul de **destaque/ação** (item ativo do menu, botões primários, link "Ver") é
 o **`blue-600`** nativo do Tailwind. **Não use `indigo`** na UI.
