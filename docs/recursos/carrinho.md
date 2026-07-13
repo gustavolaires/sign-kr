@@ -58,6 +58,12 @@ leia antes de alterar o carrinho.
   de quantidade (`min=1`/`max=estoque`) + botão atualizar (`fa-check`), subtotal,
   remover (`fa-trash`), total geral e estado vazio. O contêiner `#cart-app` carrega
   as URLs de update/remove em `data-*`.
+  - **Colunas de código condicionais**: as colunas "Cód. barras" e "Cód." (código do
+    fabricante) só aparecem quando `company.sales_show_barcode` /
+    `company.sales_show_manufacturer_code` estão ativas (config da empresa — ver
+    [`vendas.md`](vendas.md#personalização-de-exibição)). O `tfoot` "Total geral" tem
+    `colspan` **variável** (`7`/`6`/`5`) que acompanha quantas dessas duas colunas
+    estão visíveis — ao mexer nas colunas do carrinho, ajuste também esse `colspan`.
 
 ## Validações (no backend — fonte de verdade)
 

@@ -83,6 +83,15 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
   pagamento dinâmicas, alternância desconto %/R$, parcelas só no crédito,
   recálculo ao vivo de subtotal/desconto/total/pago/troco (**só exibição** — o
   backend é autoritativo) e bloqueio de duplo-submit.
+- **Indicativo de prestador de serviço**: quando o cliente escolhido é prestador de
+  serviço (`Client.service_provider`), exibe-se um badge âmbar (ícone `fa-wrench`,
+  mesma convenção da listagem de clientes) ao lado do rótulo **Cliente**. O widget
+  **`ClientSelect`** (`sign/forms.py`) marca cada `<option>` de prestador com
+  `data-service-provider="1"`; o `checkout.js` liga/desliga o badge (`#client-service-badge`)
+  ao trocar de cliente e no load (reflete o cliente já selecionado após re-render).
+  O mesmo indicativo aparece como ícone `fa-wrench` ao lado do nome do cliente na
+  **listagem de vendas** (`sales/list.html`) e nos **detalhes da venda**
+  (`sales/detail.html`), condicionado a `sale.client.service_provider`.
 - **Calculadora de desconto** (modal `#discount-calc-modal`, aberto pelo ícone
   `fa-calculator` no card "Desconto"): _range sliders_ (0–100%) num toggle
   segmentado **Valor total** (um slider sobre o total) / **Por produto** (um
@@ -126,7 +135,7 @@ view `sale_receipt` em `sign/views/sales.py`).
 ## Orçamento (a partir do checkout)
 
 Mesmo comprovante, montado a partir dos dados **ainda não salvos** da tela de
-`Finalização` (checkout) — usado como **orçamento**. Botão **"Orçamento"** (ícone
+`Pagamento` (checkout) — usado como **orçamento**. Botão **"Orçamento"** (ícone
 `fa-scroll`) no rodapé do checkout: submete o próprio formulário (mesma aba, via
 `formaction`) a `sign:sale_quote` (`sales/quote/`, só POST).
 
@@ -141,6 +150,31 @@ Mesmo comprovante, montado a partir dos dados **ainda não salvos** da tela de
   (`_quote_hidden_fields`); trocar formato re-posta a `sale_quote` e o botão **"Voltar"**
   re-posta ao `checkout` com `intent=edit`, que apenas re-renderiza o formulário
   preenchido (reusa o `rerender()`), sem finalizar a venda.
+
+## Personalização de exibição
+
+Quatro campos do singleton `Company` controlam **o que** aparece nos comprovantes/
+orçamentos e nas telas de venda. Chegam a todos os templates pelo context processor
+`company`, então **nenhuma view precisa mudar** — a lógica é toda no template. Editáveis
+na seção **"Exibição em comprovantes e telas de venda"** das Configurações da empresa
+(`sign/templates/sign/company/form.html`).
+
+- **`receipt_store_name`** (`ReceiptStoreName`: `name`/`legal_name`/`blank`, default
+  `name`) — qual nome imprimir no topo do comprovante/orçamento **e dos relatórios**
+  (`sign/templates/sign/reports/report.html` — ver [`relatorios.md`](relatorios.md)). A
+  property **`Company.receipt_store_display`** resolve o texto (vazio quando `blank`);
+  ambos os templates renderizam `&nbsp;` nesse caso para **manter o espaço** (papel
+  timbrado). Substituiu o uso de `company.display_name` nesses cabeçalhos (que continua
+  existindo para o `__str__` e o nome no side menu).
+- **`receipt_product_code`** (`ReceiptProductCode`: `barcode`/`manufacturer`/`none`,
+  default `barcode`) — qual código exibir por item, **um só ou nenhum**. No A4 vira uma
+  coluna única cujo rótulo vem da property **`Company.receipt_product_code_label`**
+  ("Cód. barras" / "Cód. fabricante"); no 58mm vira o prefixo do nome do item.
+- **`sales_show_barcode`** / **`sales_show_manufacturer_code`** (BooleanField, default
+  `True`) — mostram/ocultam **independentemente** as colunas de código de barras e de
+  código do fabricante nas telas **Carrinho**, **Pagamento** e **Detalhes da venda**
+  (colunas envolvidas em `{% if company.sales_show_* %}`). No carrinho, o `colspan` do
+  "Total geral" acompanha as colunas visíveis (ver [`carrinho.md`](carrinho.md#ui)).
 
 ## Decisões deixadas para depois
 

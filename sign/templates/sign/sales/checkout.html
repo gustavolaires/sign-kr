@@ -6,7 +6,7 @@
 {% block content %}
 <div id="checkout-app" data-subtotal-cents="{{ cart_total_cents }}">
     <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold">Finalização</h1>
+        <h1 class="text-2xl font-bold">Pagamento</h1>
         <div class="flex items-center gap-3">
             <button type="submit" form="checkout-form" formaction="{% url 'sign:sale_quote' %}" name="format" value="58mm" formnovalidate
                     class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
@@ -31,8 +31,8 @@
         <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <tr>
-                    <th class="px-4 py-3">Cód. barras</th>
-                    <th class="px-4 py-3">Cód.</th>
+                    {% if company.sales_show_barcode %}<th class="px-4 py-3">Cód. barras</th>{% endif %}
+                    {% if company.sales_show_manufacturer_code %}<th class="px-4 py-3">Cód.</th>{% endif %}
                     <th class="px-4 py-3">Produto</th>
                     <th class="px-4 py-3">Fabricante</th>
                     <th class="px-4 py-3">Qtd.</th>
@@ -43,8 +43,8 @@
             <tbody class="divide-y divide-gray-100">
                 {% for item in cart_items %}
                     <tr>
-                        <td class="px-4 py-3 text-gray-600">{{ item.product.barcode|default:"—" }}</td>
-                        <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer_code|default:"—" }}</td>
+                        {% if company.sales_show_barcode %}<td class="px-4 py-3 text-gray-600">{{ item.product.barcode|default:"—" }}</td>{% endif %}
+                        {% if company.sales_show_manufacturer_code %}<td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer_code|default:"—" }}</td>{% endif %}
                         <td class="px-4 py-3 font-medium">{{ item.product.name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer.name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ item.quantity }} {{ item.product.unit_type }}</td>
@@ -65,7 +65,12 @@
                 <h2 class="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-700">Cliente e observações</h2>
                 <div class="space-y-4">
                     <div>
-                        <label for="{{ form.client.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">Cliente</label>
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <label for="{{ form.client.id_for_label }}" class="block text-sm font-medium text-gray-700">Cliente</label>
+                            <span id="client-service-badge" class="hidden items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                                <i class="fa-solid fa-wrench"></i> Prestador de serviço
+                            </span>
+                        </div>
                         {{ form.client }}
                         {% for error in form.client.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
                     </div>

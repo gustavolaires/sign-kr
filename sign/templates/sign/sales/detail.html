@@ -28,7 +28,7 @@
                 <div class="bg-white px-4 py-3">
                     <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</dt>
                     <dd class="mt-1 text-gray-900">
-                        {% if sale.client %}<a href="{% url 'sign:client_detail' sale.client.pk %}" class="text-blue-600 hover:text-blue-800">{{ sale.client.name }}</a>{% else %}Venda avulsa{% endif %}
+                        {% if sale.client %}<a href="{% url 'sign:client_detail' sale.client.pk %}" class="text-blue-600 hover:text-blue-800">{{ sale.client.name }}</a>{% if sale.client.service_provider %} <i class="fa-solid fa-wrench text-gray-500" title="Prestador de serviço" aria-label="Prestador de serviço"></i>{% endif %}{% else %}Venda avulsa{% endif %}
                     </dd>
                 </div>
                 <div class="bg-white px-4 py-3">
@@ -51,8 +51,8 @@
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                         <tr>
-                            <th class="px-4 py-3">Cód. barras</th>
-                            <th class="px-4 py-3">Cód.</th>
+                            {% if company.sales_show_barcode %}<th class="px-4 py-3">Cód. barras</th>{% endif %}
+                            {% if company.sales_show_manufacturer_code %}<th class="px-4 py-3">Cód.</th>{% endif %}
                             <th class="px-4 py-3">Produto</th>
                             <th class="px-4 py-3">Fabricante</th>
                             <th class="px-4 py-3">Qtd.</th>
@@ -63,8 +63,8 @@
                     <tbody class="divide-y divide-gray-100">
                         {% for item in sale.items.all %}
                             <tr>
-                                <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.barcode|default:"—" }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.manufacturer_code|default:"—" }}</td>
+                                {% if company.sales_show_barcode %}<td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.barcode|default:"—" }}</td>{% endif %}
+                                {% if company.sales_show_manufacturer_code %}<td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.manufacturer_code|default:"—" }}</td>{% endif %}
                                 <td class="px-4 py-3 font-medium">{{ item.product_snapshot.name }}</td>
                                 <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.manufacturer_name }}</td>
                                 <td class="px-4 py-3 text-gray-600">{{ item.quantity }} {{ item.product_snapshot.unit_type }}</td>

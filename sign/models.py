@@ -529,6 +529,22 @@ class RoundingType(models.TextChoices):
     REAL_10 = "real_10", "Real (Múltiplo de 10)"
 
 
+class ReceiptStoreName(models.TextChoices):
+    """Qual nome da loja imprimir em comprovantes, orçamentos e relatórios."""
+
+    NAME = "name", "Nome"
+    LEGAL_NAME = "legal_name", "Razão social"
+    BLANK = "blank", "Em branco (manter espaço)"
+
+
+class ReceiptProductCode(models.TextChoices):
+    """Qual código do produto exibir em comprovantes e orçamentos."""
+
+    BARCODE = "barcode", "Código de barras"
+    MANUFACTURER = "manufacturer", "Código do fabricante"
+    NONE = "none", "Nenhum"
+
+
 class Company(models.Model):
     """Dados da empresa exibidos na UI e nos comprovantes (não fiscais).
 
@@ -579,6 +595,26 @@ class Company(models.Model):
         default=RoundingType.CENT,
     )
 
+    # Personalização da exibição (comprovantes/orçamentos e telas de venda).
+    receipt_store_name = models.CharField(
+        "Nome exibido em comprovantes, orçamentos e relatórios",
+        max_length=10,
+        choices=ReceiptStoreName.choices,
+        default=ReceiptStoreName.NAME,
+    )
+    receipt_product_code = models.CharField(
+        "Código de produto em comprovantes/orçamentos",
+        max_length=12,
+        choices=ReceiptProductCode.choices,
+        default=ReceiptProductCode.BARCODE,
+    )
+    sales_show_barcode = models.BooleanField(
+        "Mostrar código de barras nas telas de venda", default=True
+    )
+    sales_show_manufacturer_code = models.BooleanField(
+        "Mostrar código do fabricante nas telas de venda", default=True
+    )
+
     class Meta:
         verbose_name = "Empresa"
         verbose_name_plural = "Empresa"
@@ -590,6 +626,23 @@ class Company(models.Model):
     def display_name(self):
         """Nome de exibição: razão social se preenchida, senão o nome."""
         return self.legal_name or self.name
+
+    @property
+    def receipt_store_display(self):
+        """Nome a imprimir em comprovantes/orçamentos/relatórios (vazio quando 'Em branco')."""
+        if self.receipt_store_name == ReceiptStoreName.NAME:
+            return self.name
+        if self.receipt_store_name == ReceiptStoreName.LEGAL_NAME:
+            return self.legal_name
+        return ""
+
+    @property
+    def receipt_product_code_label(self):
+        """Rótulo da coluna de código no comprovante (vazio quando 'Nenhum')."""
+        return {
+            ReceiptProductCode.BARCODE: "Cód. barras",
+            ReceiptProductCode.MANUFACTURER: "Cód. fabricante",
+        }.get(self.receipt_product_code, "")
 
     @property
     def daily_sales_goal(self):

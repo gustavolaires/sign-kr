@@ -188,6 +188,21 @@
   }
   recompute();
 
+  // Indicativo visual quando o cliente escolhido é prestador de serviço.
+  var clientSelect = document.getElementById("id_client");
+  var clientBadge = document.getElementById("client-service-badge");
+  function syncClientBadge() {
+    if (!clientSelect || !clientBadge) return;
+    var option = clientSelect.options[clientSelect.selectedIndex];
+    var isProvider = !!option && option.getAttribute("data-service-provider") === "1";
+    clientBadge.classList.toggle("hidden", !isProvider);
+    clientBadge.classList.toggle("inline-flex", isProvider);
+  }
+  if (clientSelect) {
+    clientSelect.addEventListener("change", syncClientBadge);
+    syncClientBadge();
+  }
+
   // ----- Calculadora de desconto (modal com range sliders, estilo ábaco) -----
   var calcModal = document.getElementById("discount-calc-modal");
   var calcData = document.getElementById("calc-items-data");

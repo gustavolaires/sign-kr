@@ -61,7 +61,7 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium">#{{ sale.pk }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ sale.client.name|default:"Venda avulsa" }}</td>
+                    <td class="px-4 py-3 text-gray-600">{{ sale.client.name|default:"Venda avulsa" }}{% if sale.client.service_provider %} <i class="fa-solid fa-wrench text-gray-500" title="Prestador de serviço" aria-label="Prestador de serviço"></i>{% endif %}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ sale.discount|floatformat:2 }}</td>
                     <td class="px-4 py-3 font-medium text-gray-700">R$ {{ sale.total|floatformat:2 }}</td>
                     <td class="px-4 py-3">

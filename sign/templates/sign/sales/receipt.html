@@ -155,8 +155,7 @@
     <div class="doc fmt-a4">
         <div class="head">
             <div class="company">
-                <div class="company-name">{{ company.display_name }}</div>
-                {% if company.legal_name %}<div class="company-line">{{ company.name }}</div>{% endif %}
+                <div class="company-name">{% if company.receipt_store_display %}{{ company.receipt_store_display }}{% else %}&nbsp;{% endif %}</div>
                 {% if company.cnpj %}<div class="company-line">CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
                 {% if company.street %}<div class="company-line">{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}{% if company.complement %} - {{ company.complement }}{% endif %}</div>{% endif %}
                 {% if company.district or company.city %}<div class="company-line">{{ company.district }}{% if company.district and company.city %} - {% endif %}{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}{% if company.postal_code %} - CEP {{ company.postal_code|cep }}{% endif %}</div>{% endif %}
@@ -191,7 +190,7 @@
         <table class="items">
             <thead>
                 <tr>
-                    <th>Cód. barras</th>
+                    {% if company.receipt_product_code != 'none' %}<th>{{ company.receipt_product_code_label }}</th>{% endif %}
                     <th>Descrição</th>
                     <th>Marca</th>
                     <th class="num">Quant.</th>
@@ -203,8 +202,8 @@
             <tbody>
                 {% for item in items %}
                 <tr>
-                    <td>{{ item.barcode|default:"—" }}</td>
-                    <td>{% if item.manufacturer_code %}[{{ item.manufacturer_code }}] {% endif %}{{ item.name }}</td>
+                    {% if company.receipt_product_code == 'barcode' %}<td>{{ item.barcode|default:"—" }}</td>{% elif company.receipt_product_code == 'manufacturer' %}<td>{{ item.manufacturer_code|default:"—" }}</td>{% endif %}
+                    <td>{{ item.name }}</td>
                     <td>{{ item.manufacturer_name }}</td>
                     <td class="num">{{ item.quantity }}</td>
                     <td>{{ item.unit_type }}</td>
@@ -257,7 +256,7 @@
     {# ============================ FORMATO 58mm ============================ #}
     <div class="doc fmt-58mm">
         <div class="center">
-            <div class="company-name">{{ company.display_name }}</div>
+            <div class="company-name">{% if company.receipt_store_display %}{{ company.receipt_store_display }}{% else %}&nbsp;{% endif %}</div>
             {% if company.cnpj %}<div>CNPJ: {{ company.cnpj|cpf_cnpj }}</div>{% endif %}
             {% if company.street %}<div>{{ company.street }}{% if company.number %}, {{ company.number }}{% endif %}</div>{% endif %}
             {% if company.city %}<div>{{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}</div>{% endif %}
@@ -277,7 +276,7 @@
         <div class="sec-title">Itens</div>
         {% for item in items %}
         <div class="item">
-            <div class="name">{% if item.barcode %}{{ item.barcode }} · {% endif %}{{ item.name }}</div>
+            <div class="name">{% if company.receipt_product_code == 'barcode' and item.barcode %}{{ item.barcode }} · {% elif company.receipt_product_code == 'manufacturer' and item.manufacturer_code %}{{ item.manufacturer_code }} · {% endif %}{{ item.name }}</div>
             <div class="row">
                 <span>{{ item.quantity }} {{ item.unit_type }} x R$ {{ item.unit_price|floatformat:2 }}</span>
                 <span>R$ {{ item.total|floatformat:2 }}</span>

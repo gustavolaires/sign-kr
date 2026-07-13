@@ -22,6 +22,11 @@ na tela de **Configurações** (seção *Operação e precificação*):
   Centavo / Centavo múltiplo de 10 / Real / Real múltiplo de 2/5/10) — **não** usados
   pela dashboard; são preparação para a precificação (feature futura).
 
+> A tela de Configurações tem também a seção **"Exibição em comprovantes e telas de
+> venda"** (`receipt_store_name`, `receipt_product_code`, `sales_show_barcode`,
+> `sales_show_manufacturer_code`) — não relacionada à dashboard; ver
+> [`vendas.md`](vendas.md#personalização-de-exibição).
+
 ## Serviço (`sign/services/dashboard.py`)
 
 `dashboard_metrics(*, company=None, today=None)` — sem escrita no banco. `company`/

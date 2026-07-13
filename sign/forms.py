@@ -115,6 +115,21 @@ class ManufacturerForm(StyledModelForm):
         fields = ["name"]
 
 
+class ClientSelect(forms.Select):
+    """Select de cliente que marca com ``data-service-provider`` cada option
+    cujo cliente é prestador de serviço — usado pelo ``checkout.js`` para exibir
+    o indicativo visual na tela de Pagamento."""
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(
+            name, value, label, selected, index, subindex, attrs
+        )
+        instance = getattr(value, "instance", None)
+        if instance is not None and getattr(instance, "service_provider", False):
+            option["attrs"]["data-service-provider"] = "1"
+        return option
+
+
 class SaleForm(StyledModelForm):
     """Campos simples da venda (cliente e observações).
 
@@ -126,6 +141,7 @@ class SaleForm(StyledModelForm):
         model = Sale
         fields = ["client", "obs", "discount_obs"]
         widgets = {
+            "client": ClientSelect,
             "obs": forms.Textarea(attrs={"rows": 3}),
             "discount_obs": forms.Textarea(attrs={"rows": 2}),
         }
@@ -230,6 +246,10 @@ class CompanyForm(StyledModelForm):
             "low_stock_threshold",
             "price_multiplier",
             "rounding_type",
+            "receipt_store_name",
+            "receipt_product_code",
+            "sales_show_barcode",
+            "sales_show_manufacturer_code",
         ]
         widgets = {
             # Máscaras aplicadas só visualmente no front (ver static/sign/js/masks.js).
