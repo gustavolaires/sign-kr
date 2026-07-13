@@ -12,6 +12,7 @@ from ..services import (
     REPORT_SPECS,
     _current_month_range,
     _last_12_months_range,
+    _month_to_date_range,
     _prev_month_range,
     build_report,
 )
@@ -26,6 +27,7 @@ DEFAULT_ORIENTATION = "portrait"
 def _default_periods(today):
     """Datas default (YYYY-MM-DD) por janela, para o JS pré-preencher os inputs."""
     windows = {
+        "month_to_date": _month_to_date_range(today),
         "prev_month": _prev_month_range(today),
         "current_month": _current_month_range(today),
         "last_12_months": _last_12_months_range(today),

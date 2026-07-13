@@ -27,6 +27,7 @@ from .reports import (
     # Helpers de janela de data importados por nome em ``views/reports.py``.
     _current_month_range,
     _last_12_months_range,
+    _month_to_date_range,
     _prev_month_range,
 )
 

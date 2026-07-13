@@ -13,16 +13,13 @@
     <section>
         <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Vendas</h2>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {% include "sign/dashboard/_sale_card.html" with label="Vendas hoje" stat=sales.today %}
             {% include "sign/dashboard/_sale_card.html" with label="Vendas na semana" stat=sales.week %}
-            {% include "sign/dashboard/_sale_card.html" with label="Vendas no mês" stat=sales.month %}
-            {% include "sign/dashboard/_sale_card.html" with label="Vendas (total)" stat=sales.total %}
-
+            {% include "sign/dashboard/_num_card.html" with label="Produtos diferentes vendidos hoje" value=distinct.today %}
             {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos hoje" value=units.today %}
             {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos na semana" value=units.week %}
-            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos no mês" value=units.month %}
-            {% include "sign/dashboard/_num_card.html" with label="Produtos vendidos (total)" value=units.total %}
+            {% include "sign/dashboard/_num_card.html" with label="Produtos diferentes vendidos na semana" value=distinct.week %}
         </div>
 
         <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -66,6 +63,19 @@
                     R$ {{ sales.month.revenue|floatformat:2 }} de R$ {{ goals.monthly|floatformat:2 }}
                 </p>
             </div>
+            <!-- Linha 3: Formas de pagamento (hoje) + (semana) -->
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Formas de pagamento (hoje)</p>
+                <div class="relative h-56">
+                    <canvas id="chart-payments-today"></canvas>
+                </div>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p class="mb-4 text-sm font-semibold text-gray-700">Formas de pagamento (semana)</p>
+                <div class="relative h-56">
+                    <canvas id="chart-payments-week"></canvas>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -103,11 +113,11 @@
 
     <!-- ============================ DESPESAS =========================== -->
     <section>
-        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Despesas</h2>
+        <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Despesas do mês</h2>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {% include "sign/dashboard/_money_card.html" with label="Totais do mês" value=expenses.due col_class="sm:col-span-2" %}
+                {% include "sign/dashboard/_money_card.html" with label="Total" value=expenses.due col_class="sm:col-span-2" %}
                 {% include "sign/dashboard/_money_card.html" with label="Pendentes" value=expenses.unpaid %}
                 {% include "sign/dashboard/_money_card.html" with label="Pagas" value=expenses.paid %}
                 {% include "sign/dashboard/_money_card.html" with label="Recorrentes" value=expenses.recurrent %}

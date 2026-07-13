@@ -141,9 +141,28 @@
   gauge("chart-month-goal", "month-goal-pct", data.month_goal || {});
 
   // ---- Doughnut de estado (com legenda + rótulos) ----
-  function statusDoughnut(canvasId, labels, values, colors, formatter) {
+  // legendFormatter (opcional): quando informado, anexa o valor formatado ao
+  // rótulo de cada item da legenda, deixando os valores sempre visíveis.
+  function statusDoughnut(canvasId, labels, values, colors, formatter, legendFormatter) {
     var canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    var legend = { position: "bottom" };
+    if (legendFormatter) {
+      legend.labels = {
+        generateLabels: function (chart) {
+          var ds = chart.data.datasets[0];
+          return chart.data.labels.map(function (label, i) {
+            return {
+              text: label + ": " + legendFormatter(ds.data[i]),
+              fillStyle: ds.backgroundColor[i],
+              strokeStyle: SURFACE,
+              lineWidth: 2,
+              index: i,
+            };
+          });
+        },
+      };
+    }
     new Chart(canvas, {
       type: "doughnut",
       data: {
@@ -162,7 +181,7 @@
         maintainAspectRatio: false,
         cutout: "60%",
         plugins: {
-          legend: { position: "bottom" },
+          legend: legend,
           tooltip: {
             callbacks: {
               label: function (ctx) {
@@ -194,4 +213,48 @@
     [BLUE, YELLOW],
     brl
   );
+
+  // ---- Doughnut de formas de pagamento (valor por tipo) ----
+  // Paleta categórica por código de pagamento (tokens da marca + cinza).
+  var PAYMENT_COLORS = {
+    credit: BLUE,
+    debit: "#1b2a4e", // navy
+    cash: YELLOW,
+    pix: RED,
+    other: "#9ca3af", // gray-400
+  };
+
+  function paymentDoughnut(canvasId, items) {
+    items = items || [];
+    if (!items.length) {
+      // Estado vazio: anel cinza único, sem tooltip.
+      statusDoughnut(
+        canvasId,
+        ["Sem vendas no período"],
+        [1],
+        [TRACK],
+        function () {
+          return "";
+        }
+      );
+      return;
+    }
+    statusDoughnut(
+      canvasId,
+      items.map(function (i) {
+        return i.label;
+      }),
+      items.map(function (i) {
+        return i.value;
+      }),
+      items.map(function (i) {
+        return PAYMENT_COLORS[i.code] || "#9ca3af";
+      }),
+      brl,
+      brl // valores visíveis na legenda (ex.: "Dinheiro: R$ 150,00")
+    );
+  }
+
+  paymentDoughnut("chart-payments-today", data.payments_today);
+  paymentDoughnut("chart-payments-week", data.payments_week);
 })();

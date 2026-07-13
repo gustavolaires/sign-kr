@@ -73,6 +73,15 @@
         .empty { padding: 16px; text-align: center; color: #6b7280; font-size: 12px; }
         .count { margin-top: 8px; font-size: 11px; color: #6b7280; }
 
+        /* ---- Resumo (layout vertical agrupado) ---- */
+        table.summary td:first-child { width: 70%; }
+        .group-head {
+            background: #111827; color: #fff; text-transform: uppercase;
+            font-size: 10px; text-align: left; padding: 6px 8px; border: 1px solid #111827;
+        }
+        tr.subtotal td { font-weight: bold; background: #f3f4f6; }
+        tr.strong td { font-weight: bold; }
+
         /* ---- Regras de impressão ---- */
         @media print {
             body { background: #fff; }
@@ -114,6 +123,29 @@
         {% if period_label %}<div class="report-sub">Período: {{ period_label }}</div>{% endif %}
         {% if meta_label %}<div class="report-sub">{{ meta_label }}</div>{% endif %}
 
+        {% if groups %}
+        <table class="summary">
+            {% for group in groups %}
+                <tbody>
+                    <tr><th class="group-head" colspan="2">{{ group.title }}</th></tr>
+                    {% for row in group.rows %}
+                        <tr{% if row.strong %} class="strong"{% endif %}>
+                            <td>{{ row.label }}</td>
+                            <td class="num">{% if row.type == 'money' %}R$ {{ row.value|floatformat:2 }}{% else %}{{ row.value }}{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                    {% if group.total %}
+                        <tr class="subtotal">
+                            <td>{{ group.total.label }}</td>
+                            <td class="num">R$ {{ group.total.value|floatformat:2 }}</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            {% empty %}
+                <tbody><tr><td class="empty">Sem dados para os filtros informados.</td></tr></tbody>
+            {% endfor %}
+        </table>
+        {% else %}
         <table>
             <thead>
                 <tr>
@@ -143,6 +175,7 @@
         </table>
 
         {% if rows %}<div class="count">{{ rows|length }} registro{{ rows|length|pluralize }}.</div>{% endif %}
+        {% endif %}
     </div>
 </body>
 </html>

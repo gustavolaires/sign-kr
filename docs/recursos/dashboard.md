@@ -31,8 +31,8 @@ na tela de **Configurações** (seção *Operação e precificação*):
 
 `dashboard_metrics(*, company=None, today=None)` — sem escrita no banco. `company`/
 `today` são **injetáveis** (testes); por padrão usam `Company.get_solo()` e
-`timezone.localdate()`. Retorna um dict com `sales`, `units`, `products`, `expenses`,
-`goals` e `chart_data` (este último serializado para o JS).
+`timezone.localdate()`. Retorna um dict com `sales`, `units`, `distinct`, `products`,
+`expenses`, `goals` e `chart_data` (este último serializado para o JS).
 
 Regras não óbvias:
 
@@ -42,6 +42,12 @@ Regras não óbvias:
   `timezone.localdate()`.
 - **Vendas**: por período (hoje/semana/mês/geral) contam-se `Count("id")` e soma-se
   `Sum("total_cents")`. Produtos vendidos = `Sum(SaleItem.quantity)` nos mesmos períodos.
+  **Produtos diferentes vendidos** (`distinct`, hoje/semana) = `Count("product_snapshot__product",
+  distinct=True)` ignorando snapshots sem `product` (produto apagado), coerente com o relatório
+  "Produtos mais vendidos".
+- **Formas de pagamento** (`chart_data.payments_today`/`payments_week`): `Sum(SalePayment.value_cents)`
+  por `payment_type` (na ordem de `PaymentType.choices`), incluindo só os tipos com valor > 0.
+  Cada item é `{code, label, value}` (valor em reais).
 - **Faturamento por dia**: duas séries com `TruncDate`, preenchendo dias sem venda
   com 0 — `weekly` (7 dias, Seg→Dom) e `monthly` (todos os dias do mês, rótulos
   `"1".."31"`). Ambas expostas em `chart_data` com `labels`/`revenue`/`daily_goal`.
@@ -75,12 +81,15 @@ Regras não óbvias:
 
 ## Template e gráficos (`sign/templates/sign/dashboard/`)
 
-- `index.html` estende `base.html`: três `<section>` (Vendas/Produtos/Despesas) num
+- `index.html` estende `base.html`: três `<section>` (Vendas/Produtos/**Despesas do mês**) num
   wrapper `flex flex-col gap-10` (respiro entre grupos), com grades de cartões KPI
   (partials `_sale_card.html` = nº + R$, `_num_card.html`, `_money_card.html`) e
   `<canvas>` para os gráficos. O `_money_card.html` aceita um `col_class` opcional — em
-  Despesas o card **"Totais do mês"** usa `sm:col-span-2` (largura total), e os quatro
+  Despesas o card **"Total"** usa `sm:col-span-2` (largura total), e os quatro
   demais (Pendentes/Pagas, Recorrentes/Isoladas) alinham em 2×2 abaixo dele.
+- **KPIs de Vendas** (grade `sm:grid-cols-2 lg:grid-cols-3`, 6 cartões): Vendas hoje, Vendas na
+  semana, Produtos vendidos hoje/na semana e Produtos diferentes vendidos hoje/na semana.
+  (Os antigos cartões de mês/total saíram da UI — o serviço ainda os calcula para os gráficos.)
 - Dados dos gráficos passam ao JS via `{{ chart_data|json_script:"dashboard-data" }}`
   (padrão do `checkout.html`).
 - **Chart.js v4 (UMD) vendorizado** em `sign/static/sign/js/vendor/chart.umd.min.js`
@@ -89,14 +98,19 @@ Regras não óbvias:
   (função reutilizável `salesByDayChart`, chamada para `chart-weekly` e
   `chart-monthly` — barras de faturamento + linha tracejada de meta diária, com %
   no tooltip), dois medidores doughnut (meta semanal/mensal, `cutout:'75%'`, %
-  renderizado em **HTML** no centro — sem plugin datalabels) e dois doughnuts
-  (saúde do estoque; situação das despesas).
-- **Layout da seção Vendas** (grade `lg:grid-cols-2`, 2×2): linha 1 = "Vendas da
-  semana por dia" + "Meta semanal"; linha 2 = "Vendas do mês por dia" + "Meta mensal".
+  renderizado em **HTML** no centro — sem plugin datalabels), dois doughnuts
+  (saúde do estoque; situação das despesas) e dois doughnuts de **formas de pagamento**
+  (hoje/semana, `paymentDoughnut` reusa `statusDoughnut` com paleta por código de
+  pagamento; estado vazio quando não há vendas no período).
+- **Layout dos gráficos de Vendas** (grade `lg:grid-cols-2`): linha 1 = "Vendas da
+  semana por dia" + "Meta semanal"; linha 2 = "Vendas do mês por dia" + "Meta mensal";
+  linha 3 = "Formas de pagamento (hoje)" + "Formas de pagamento (semana)".
 - **Paleta triádica pop-art** (azul/amarelo/vermelho; definida no topo do `dashboard.js`):
   azul `#155AF0` (Ok / Pagas / faturamento / atingido), amarelo-ouro `#F6B717`
   (estoque baixo / pendentes / linha de meta), vermelho `#E42D28` (estoque zerado),
   `gray-200` `#e5e7eb` (trilho dos medidores); arcos com anel branco de 2px.
+  Os doughnuts de **formas de pagamento** usam uma paleta categórica por código
+  (`PAYMENT_COLORS`: crédito=azul, débito=navy, dinheiro=amarelo, pix=vermelho, outros=cinza).
 
 ## Build / migrações
 
@@ -107,8 +121,9 @@ Regras não óbvias:
 ## Testes (`sign/tests.py`)
 
 `DashboardMetrics*Tests` cobrem `dashboard_metrics`: fórmulas de meta (incl. poucos
-dias de operação), janela de data (venda de hoje 23h não vaza), despesas por saldo
-(invariante pagas+não pagas=a pagar), buckets de estoque e guardas de zero.
+dias de operação), janela de data (venda de hoje 23h não vaza), produtos diferentes
+vendidos + formas de pagamento hoje/semana (`DashboardMetricsSalesExtrasTests`),
+despesas por saldo (invariante pagas+não pagas=a pagar), buckets de estoque e guardas de zero.
 
 ## Verificação rápida
 

@@ -11,7 +11,15 @@ from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 
-from ..models import Company, ExpenseInstallment, Product, Sale, SaleItem
+from ..models import (
+    Company,
+    ExpenseInstallment,
+    PaymentType,
+    Product,
+    Sale,
+    SaleItem,
+    SalePayment,
+)
 from .money import _cents_to_reais
 
 
@@ -76,6 +84,44 @@ def dashboard_metrics(*, company=None, today=None):
         ),
         "total": units_sold(items),
     }
+
+    # --- Produtos diferentes vendidos = contagem de produtos distintos ---
+    # Ignora itens cujo produto foi apagado (snapshot sem product), coerente
+    # com o relatório "Produtos mais vendidos".
+    def distinct_products(qs):
+        return (
+            qs.filter(product_snapshot__product__isnull=False).aggregate(
+                d=Count("product_snapshot__product", distinct=True)
+            )["d"]
+            or 0
+        )
+
+    distinct_metrics = {
+        "today": distinct_products(items.filter(sale__created_at__date=today)),
+        "week": distinct_products(
+            items.filter(sale__created_at__date__range=(week_start, week_end))
+        ),
+    }
+
+    # --- Formas de pagamento (valor por tipo) para hoje e para a semana ---
+    # Só os tipos com valor > 0 entram (mantém os doughnuts limpos).
+    def payment_chart(date_filter):
+        by_type = {
+            row["payment_type"]: row["v"] or 0
+            for row in SalePayment.objects.filter(**date_filter)
+            .values("payment_type")
+            .annotate(v=Sum("value_cents"))
+        }
+        return [
+            {"code": code, "label": label, "value": _cents_to_reais(by_type[code])}
+            for code, label in PaymentType.choices
+            if by_type.get(code, 0)
+        ]
+
+    payments_today = payment_chart({"sale__created_at__date": today})
+    payments_week = payment_chart(
+        {"sale__created_at__date__range": (week_start, week_end)}
+    )
 
     # --- Faturamento da semana por dia (Seg→Dom), preenchendo dias vazios ---
     week_by_day = (
@@ -203,11 +249,14 @@ def dashboard_metrics(*, company=None, today=None):
             "paid": expenses_metrics["paid"],
             "unpaid": expenses_metrics["unpaid"],
         },
+        "payments_today": payments_today,
+        "payments_week": payments_week,
     }
 
     return {
         "sales": sales_metrics,
         "units": units_metrics,
+        "distinct": distinct_metrics,
         "products": products_metrics,
         "expenses": expenses_metrics,
         "goals": goals,

@@ -13,11 +13,19 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db.models import F, Sum
+from django.db.models import Count, F, Sum
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 
-from ..models import Client, ExpenseInstallment, Product, Sale, SaleItem
+from ..models import (
+    Client,
+    ExpenseInstallment,
+    PaymentType,
+    Product,
+    Sale,
+    SaleItem,
+    SalePayment,
+)
 from .money import _cents_to_reais, _parse_reais, reais_to_cents
 
 
@@ -54,7 +62,7 @@ REPORT_SPECS = [
     {
         "key": "best_products",
         "label": "Produtos mais vendidos",
-        "period": "prev_month",
+        "period": "month_to_date",
         "cutoff": "units",
         "fixed_columns": [_report_col("units", "Unidades vendidas", "int")],
         "optional_columns": _PRODUCT_COLUMNS,
@@ -62,7 +70,7 @@ REPORT_SPECS = [
     {
         "key": "sales",
         "label": "Vendas",
-        "period": "prev_month",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [],
         "optional_columns": [
@@ -78,9 +86,31 @@ REPORT_SPECS = [
         ],
     },
     {
+        "key": "sales_summary",
+        "label": "Vendas - Resumo",
+        "period": "month_to_date",
+        "cutoff": False,
+        "fixed_columns": [],
+        # As "colunas opcionais" aqui são as informações (linhas) do resumo —
+        # a seleção reusa os checkboxes de colunas; todas marcadas por padrão.
+        "optional_columns": [
+            _report_col("count", "Nº de vendas", "int"),
+            _report_col("units", "Produtos vendidos", "int"),
+            _report_col("distinct_units", "Produtos diferentes vendidos", "int"),
+            _report_col("subtotal", "Subtotal", "money"),
+            _report_col("discount", "Desconto", "money"),
+            _report_col("total", "Total", "money"),
+            _report_col("pay_credit", "Crédito", "money"),
+            _report_col("pay_debit", "Débito", "money"),
+            _report_col("pay_cash", "Dinheiro", "money"),
+            _report_col("pay_pix", "Pix", "money"),
+            _report_col("pay_other", "Outros", "money"),
+        ],
+    },
+    {
         "key": "sales_by_day",
-        "label": "Total de vendas por dia",
-        "period": "prev_month",
+        "label": "Vendas - Total por dia",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [
             _report_col("day", "Dia", "date"),
@@ -90,8 +120,8 @@ REPORT_SPECS = [
     },
     {
         "key": "sales_by_month",
-        "label": "Total de vendas por mês",
-        "period": "last_12_months",
+        "label": "Vendas - Total por mês",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [
             _report_col("month", "Mês", "text"),
@@ -101,8 +131,8 @@ REPORT_SPECS = [
     },
     {
         "key": "best_clients",
-        "label": "Clientes que mais compram",
-        "period": "prev_month",
+        "label": "Clientes - Maiores compradores",
+        "period": "month_to_date",
         "cutoff": "money",
         "fixed_columns": [_report_col("total", "Total comprado", "money")],
         "optional_columns": [
@@ -117,7 +147,7 @@ REPORT_SPECS = [
     {
         "key": "expenses",
         "label": "Despesas",
-        "period": "current_month",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [
             _report_col("name", "Despesa", "text"),
@@ -134,7 +164,7 @@ REPORT_SPECS = [
     {
         "key": "expenses_open",
         "label": "Despesas abertas",
-        "period": "current_month",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [
             _report_col("name", "Despesa", "text"),
@@ -149,7 +179,7 @@ REPORT_SPECS = [
     {
         "key": "expenses_paid",
         "label": "Despesas pagas",
-        "period": "current_month",
+        "period": "month_to_date",
         "cutoff": False,
         "fixed_columns": [
             _report_col("name", "Despesa", "text"),
@@ -166,6 +196,26 @@ REPORT_SPECS = [
 ]
 
 _REPORT_SPECS_BY_KEY = {spec["key"]: spec for spec in REPORT_SPECS}
+
+# "Vendas - Resumo": agrupamento das informações (linhas) em 3 blocos. ``total``
+# indica que o grupo mostra um rodapé "Somatório" das linhas exibidas.
+_SALES_SUMMARY_GROUPS = [
+    {"title": "Vendas", "keys": ["count", "units", "distinct_units"], "total": False},
+    {"title": "Valores", "keys": ["subtotal", "discount", "total"], "total": False},
+    {
+        "title": "Formas de pagamento",
+        "keys": ["pay_credit", "pay_debit", "pay_cash", "pay_pix", "pay_other"],
+        "total": True,
+    },
+]
+
+_SALES_SUMMARY_PAYMENT_KEYS = {
+    "pay_credit": PaymentType.CREDIT,
+    "pay_debit": PaymentType.DEBIT,
+    "pay_cash": PaymentType.CASH,
+    "pay_pix": PaymentType.PIX,
+    "pay_other": PaymentType.OTHER,
+}
 
 
 # --- Leitura de parâmetros (aceita QueryDict do request ou dict simples) ---
@@ -229,7 +279,13 @@ def _last_12_months_range(today):
     return date(year, month, 1), last_end
 
 
+def _month_to_date_range(today):
+    """Do 1º dia do mês corrente até hoje (período padrão de todos os relatórios)."""
+    return today.replace(day=1), today
+
+
 _PERIOD_DEFAULTS = {
+    "month_to_date": _month_to_date_range,
     "prev_month": _prev_month_range,
     "current_month": _current_month_range,
     "last_12_months": _last_12_months_range,
@@ -332,12 +388,11 @@ def _report_best_products(params, today, period):
 
 def _report_sales(params, today, period):
     start, end, _ = period
-    sales = (
-        Sale.objects.select_related("client")
-        .prefetch_related("payments")
-        .filter(created_at__date__range=(start, end))
-        .order_by("-created_at")
-    )
+    all_sales = bool(_param(params, "all_sales"))
+    sales = Sale.objects.select_related("client").prefetch_related("payments")
+    if not all_sales:
+        sales = sales.filter(created_at__date__range=(start, end))
+    sales = sales.order_by("-created_at")
     records = [
         {
             "number": s.pk,
@@ -357,11 +412,96 @@ def _report_sales(params, today, period):
     return records, ""
 
 
+def _report_sales_summary(params, today, period):
+    """Valores agregados do resumo de vendas (um dict key→valor já em reais/int)."""
+    start, end, _ = period
+    all_sales = bool(_param(params, "all_sales"))
+
+    sales = Sale.objects.all()
+    items = SaleItem.objects.all()
+    payments = SalePayment.objects.all()
+    if not all_sales:
+        sales = sales.filter(created_at__date__range=(start, end))
+        items = items.filter(sale__created_at__date__range=(start, end))
+        payments = payments.filter(sale__created_at__date__range=(start, end))
+
+    agg = sales.aggregate(
+        count=Count("id"),
+        subtotal=Sum("subtotal_cents"),
+        discount=Sum("discount_cents"),
+        total=Sum("total_cents"),
+    )
+    units = items.aggregate(u=Sum("quantity"))["u"] or 0
+    distinct_units = (
+        items.filter(product_snapshot__product__isnull=False).aggregate(
+            d=Count("product_snapshot__product", distinct=True)
+        )["d"]
+        or 0
+    )
+    pay_by_type = {
+        row["payment_type"]: row["v"] or 0
+        for row in payments.values("payment_type").annotate(v=Sum("value_cents"))
+    }
+
+    values = {
+        "count": agg["count"] or 0,
+        "units": units,
+        "distinct_units": distinct_units,
+        "subtotal": _cents_to_reais(agg["subtotal"]),
+        "discount": _cents_to_reais(agg["discount"]),
+        "total": _cents_to_reais(agg["total"]),
+    }
+    for key, code in _SALES_SUMMARY_PAYMENT_KEYS.items():
+        values[key] = _cents_to_reais(pay_by_type.get(code, 0))
+    return values
+
+
+def _build_sales_summary_groups(spec, params, values):
+    """Monta os grupos (linhas Indicador/Valor + somatórios) do resumo de vendas.
+
+    As linhas exibidas são as informações selecionadas (checkboxes ``col``; se
+    nenhuma, os defaults do spec). Grupos sem itens selecionados são omitidos.
+    """
+    labels = {c["key"]: c["label"] for c in spec["optional_columns"]}
+    types = {c["key"]: c["type"] for c in spec["optional_columns"]}
+
+    chosen = set(_param_list(params, "col"))
+    if not chosen:
+        chosen = {c["key"] for c in spec["optional_columns"] if c["default"]}
+
+    groups = []
+    for group in _SALES_SUMMARY_GROUPS:
+        keys = [k for k in group["keys"] if k in chosen]
+        if not keys:
+            continue
+        rows = [
+            {
+                "label": labels[k],
+                "value": values[k],
+                "type": types[k],
+                "strong": k == "total",  # destaca a linha "Total" em negrito
+            }
+            for k in keys
+        ]
+        total = None
+        if group["total"]:
+            total = {
+                "label": "Somatório",
+                "value": sum(values[k] for k in keys),
+                "type": "money",
+            }
+        groups.append({"title": group["title"], "rows": rows, "total": total})
+    return groups
+
+
 def _report_sales_by_day(params, today, period):
     start, end, _ = period
+    all_sales = bool(_param(params, "all_sales"))
+    sales = Sale.objects.all()
+    if not all_sales:
+        sales = sales.filter(created_at__date__range=(start, end))
     rows = (
-        Sale.objects.filter(created_at__date__range=(start, end))
-        .annotate(day=TruncDate("created_at"))
+        sales.annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(total=Sum("total_cents"))
         .order_by("day")
@@ -374,16 +514,29 @@ def _report_sales_by_day(params, today, period):
 
 def _report_sales_by_month(params, today, period):
     start, end, _ = period
+    all_sales = bool(_param(params, "all_sales"))
+    sales = Sale.objects.all()
+    if not all_sales:
+        sales = sales.filter(created_at__date__range=(start, end))
     rows = (
-        Sale.objects.filter(created_at__date__range=(start, end))
-        .annotate(m=TruncMonth("created_at"))
+        sales.annotate(m=TruncMonth("created_at"))
         .values("m")
         .annotate(total=Sum("total_cents"))
     )
     total_by_key = {(r["m"].year, r["m"].month): r["total"] or 0 for r in rows}
+    # Sem período (todos os registros): itera do mês mais antigo ao mais recente
+    # com venda; sem vendas, devolve vazio.
+    if all_sales:
+        if not total_by_key:
+            return [], ""
+        (start_year, start_month) = min(total_by_key)
+        (end_year, end_month) = max(total_by_key)
+    else:
+        start_year, start_month = start.year, start.month
+        end_year, end_month = end.year, end.month
     records = []
-    year, month = start.year, start.month
-    while (year, month) <= (end.year, end.month):
+    year, month = start_year, start_month
+    while (year, month) <= (end_year, end_month):
         cents = total_by_key.get((year, month), 0)
         records.append(
             {"month": f"{month:02d}/{year}", "total": _cents_to_reais(cents)}
@@ -437,9 +590,10 @@ def _report_best_clients(params, today, period):
 
 def _report_expenses(params, today, period, *, mode):
     start, end, _ = period
-    installments = ExpenseInstallment.objects.select_related("expense").filter(
-        due_date__range=(start, end)
-    )
+    all_sales = bool(_param(params, "all_sales"))
+    installments = ExpenseInstallment.objects.select_related("expense")
+    if not all_sales:
+        installments = installments.filter(due_date__range=(start, end))
     if mode == "open":
         installments = installments.filter(
             paid_value_cents__lt=F("value_cents")
@@ -481,6 +635,23 @@ def build_report(*, report_type, params, today=None):
 
     period = _resolve_period(spec, params, today)
     all_sales = bool(_param(params, "all_sales"))
+
+    # Rótulo do período: "Todos os registros" quando o filtro de data é ignorado.
+    if spec.get("period") and all_sales:
+        period_label = "Todos os registros"
+    else:
+        period_label = period[2]
+
+    # "Vendas - Resumo": layout vertical agrupado (grupos em vez de columns/rows).
+    if report_type == "sales_summary":
+        values = _report_sales_summary(params, today, period)
+        return {
+            "title": spec["label"],
+            "period_label": period_label,
+            "meta_label": "",
+            "groups": _build_sales_summary_groups(spec, params, values),
+        }
+
     columns = _resolve_columns(spec, params)
 
     if report_type == "products":
@@ -501,12 +672,6 @@ def build_report(*, report_type, params, today=None):
         records, meta = _report_expenses(params, today, period, mode="open")
     else:  # expenses_paid
         records, meta = _report_expenses(params, today, period, mode="paid")
-
-    # Rótulo do período: "Todas as vendas" quando o corte ignora o período.
-    if spec.get("cutoff") and all_sales:
-        period_label = "Todas as vendas"
-    else:
-        period_label = period[2]
 
     rows = [
         [{"type": c["type"], "value": rec.get(c["key"])} for c in columns]

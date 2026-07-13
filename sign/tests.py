@@ -11,10 +11,12 @@ from .models import (
     Expense,
     ExpenseInstallment,
     Manufacturer,
+    PaymentType,
     Product,
     ProductSnapshot,
     Sale,
     SaleItem,
+    SalePayment,
 )
 from .services import build_report, dashboard_metrics
 
@@ -36,6 +38,13 @@ def _add_item(sale, product, quantity):
         quantity=quantity,
         unit_price_cents=product.unit_price_cents,
         total_cents=product.unit_price_cents * quantity,
+    )
+
+
+def _add_payment(sale, payment_type, value_cents):
+    """Adiciona uma forma de pagamento a uma venda."""
+    return SalePayment.objects.create(
+        sale=sale, payment_type=payment_type, value_cents=value_cents
     )
 
 
@@ -91,6 +100,47 @@ class DashboardMetricsSalesWindowTests(TestCase):
         self.assertEqual(metrics["sales"]["month"]["revenue"], 150.0)
         # Total: as três.
         self.assertEqual(metrics["sales"]["total"]["count"], 3)
+
+
+class DashboardMetricsSalesExtrasTests(TestCase):
+    """Produtos diferentes vendidos e formas de pagamento (hoje/semana)."""
+
+    def test_distinct_products_and_payments(self):
+        today = date(2026, 7, 15)  # quarta; semana 13→19 jul
+        maker = Manufacturer.objects.create(name="ACME")
+        a = Product.objects.create(
+            name="A", manufacturer=maker, quantity=100, unit_price_cents=1000
+        )
+        b = Product.objects.create(
+            name="B", manufacturer=maker, quantity=100, unit_price_cents=1000
+        )
+        c = Product.objects.create(
+            name="C", manufacturer=maker, quantity=100, unit_price_cents=1000
+        )
+        # Venda de hoje: A e B (2 produtos distintos).
+        s_today = _make_sale(15000, datetime(2026, 7, 15, 10, 0))
+        _add_item(s_today, a, 2)
+        _add_item(s_today, b, 3)
+        _add_payment(s_today, PaymentType.CASH, 10000)
+        _add_payment(s_today, PaymentType.PIX, 5000)
+        # Venda anterior na semana (segunda 13/07): C.
+        s_week = _make_sale(3000, datetime(2026, 7, 13, 10, 0))
+        _add_item(s_week, c, 1)
+        _add_payment(s_week, PaymentType.CREDIT, 3000)
+
+        m = dashboard_metrics(company=Company.get_solo(), today=today)
+        self.assertEqual(m["distinct"]["today"], 2)  # A, B
+        self.assertEqual(m["distinct"]["week"], 3)  # A, B, C
+
+        # Doughnut de hoje: só dinheiro e pix (ordem de PaymentType.choices).
+        today_pay = m["chart_data"]["payments_today"]
+        self.assertEqual(
+            [(p["code"], p["value"]) for p in today_pay],
+            [("cash", 100.0), ("pix", 50.0)],
+        )
+        # Semana: crédito + dinheiro + pix.
+        week_pay = {p["code"]: p["value"] for p in m["chart_data"]["payments_week"]}
+        self.assertEqual(week_pay, {"credit": 30.0, "cash": 100.0, "pix": 50.0})
 
 
 class DashboardMetricsExpensesTests(TestCase):
@@ -174,6 +224,7 @@ class DashboardMetricsGuardTests(TestCase):
 
 TODAY = date(2026, 7, 15)
 JUNE = {"date_from": "2026-06-01", "date_to": "2026-06-30"}
+JULY = {"date_from": "2026-07-01", "date_to": "2026-07-31"}
 
 
 class ReportProductsTests(TestCase):
@@ -365,23 +416,31 @@ class ReportExpensesTests(TestCase):
         )
 
     def test_all_open_paid_and_type_mapping(self):
-        all_r = build_report(report_type="expenses", params={}, today=TODAY)
+        all_r = build_report(report_type="expenses", params=JULY, today=TODAY)
         self.assertEqual(len(all_r["rows"]), 2)
         types = {_report_cell_map(all_r, i)["name"]: _report_cell_map(all_r, i)["type"]
                  for i in range(len(all_r["rows"]))}
         self.assertEqual(types, {"Aluguel": "Recorrente", "Compra": "Isolada"})
 
-        open_r = build_report(report_type="expenses_open", params={}, today=TODAY)
+        open_r = build_report(report_type="expenses_open", params=JULY, today=TODAY)
         self.assertEqual(
             [_report_cell_map(open_r, i)["name"] for i in range(len(open_r["rows"]))],
             ["Compra"],
         )
 
-        paid_r = build_report(report_type="expenses_paid", params={}, today=TODAY)
+        paid_r = build_report(report_type="expenses_paid", params=JULY, today=TODAY)
         self.assertEqual(
             [_report_cell_map(paid_r, i)["name"] for i in range(len(paid_r["rows"]))],
             ["Aluguel"],
         )
+
+    def test_all_records_ignores_period(self):
+        # "Considerar todos os registros" traz também a parcela de agosto.
+        report = build_report(
+            report_type="expenses", params={"all_sales": "1"}, today=TODAY
+        )
+        self.assertEqual(len(report["rows"]), 3)
+        self.assertEqual(report["period_label"], "Todos os registros")
 
 
 class ReportGuardTests(TestCase):
@@ -391,6 +450,94 @@ class ReportGuardTests(TestCase):
         with self.assertRaises(ValidationError):
             build_report(report_type="nope", params={}, today=TODAY)
 
-    def test_default_period_label_is_previous_month(self):
+    def test_default_period_label_is_month_to_date(self):
+        # Padrão único: 1º dia do mês atual até hoje.
         report = build_report(report_type="sales", params={}, today=TODAY)
-        self.assertEqual(report["period_label"], "01/06/2026 a 30/06/2026")
+        self.assertEqual(report["period_label"], "01/07/2026 a 15/07/2026")
+
+
+class ReportSalesSummaryTests(TestCase):
+    """Resumo de vendas: grupos, somatórios, seleção e "todos os registros"."""
+
+    def _sale(self, *, subtotal, discount, total, when):
+        sale = Sale.objects.create(
+            subtotal_cents=subtotal, discount_cents=discount, total_cents=total
+        )
+        Sale.objects.filter(pk=sale.pk).update(created_at=timezone.make_aware(when))
+        return Sale.objects.get(pk=sale.pk)
+
+    def setUp(self):
+        maker = Manufacturer.objects.create(name="ACME")
+        self.a = Product.objects.create(
+            name="Alfa", manufacturer=maker, quantity=100, unit_price_cents=1000
+        )
+        self.b = Product.objects.create(
+            name="Beta", manufacturer=maker, quantity=100, unit_price_cents=2000
+        )
+        # Duas vendas no período (month_to_date: 01/07 a 15/07).
+        s1 = self._sale(
+            subtotal=16000, discount=1000, total=15000, when=datetime(2026, 7, 5, 12, 0)
+        )
+        _add_item(s1, self.a, 2)
+        _add_item(s1, self.b, 3)
+        _add_payment(s1, PaymentType.CASH, 15000)
+        s2 = self._sale(
+            subtotal=5000, discount=0, total=5000, when=datetime(2026, 7, 10, 12, 0)
+        )
+        _add_item(s2, self.a, 1)
+        _add_payment(s2, PaymentType.PIX, 5000)
+        # Venda de junho (fora do período padrão).
+        s3 = self._sale(
+            subtotal=99900, discount=0, total=99900, when=datetime(2026, 6, 20, 12, 0)
+        )
+        _add_payment(s3, PaymentType.CREDIT, 99900)
+
+    def test_default_period_groups_and_totals(self):
+        report = build_report(report_type="sales_summary", params={}, today=TODAY)
+        self.assertEqual(report["title"], "Vendas - Resumo")
+        groups = {g["title"]: g for g in report["groups"]}
+
+        vendas = {r["label"]: r["value"] for r in groups["Vendas"]["rows"]}
+        self.assertEqual(vendas["Nº de vendas"], 2)
+        self.assertEqual(vendas["Produtos vendidos"], 6)  # 2 + 3 + 1
+        self.assertEqual(vendas["Produtos diferentes vendidos"], 2)  # Alfa, Beta
+        self.assertIsNone(groups["Vendas"]["total"])  # grupo sem somatório
+
+        valores = {r["label"]: r["value"] for r in groups["Valores"]["rows"]}
+        self.assertEqual(valores["Subtotal"], 210.0)
+        self.assertEqual(valores["Desconto"], 10.0)
+        self.assertEqual(valores["Total"], 200.0)
+        self.assertIsNone(groups["Valores"]["total"])  # grupo sem somatório
+
+        pag = {r["label"]: r["value"] for r in groups["Formas de pagamento"]["rows"]}
+        self.assertEqual(pag["Dinheiro"], 150.0)
+        self.assertEqual(pag["Pix"], 50.0)
+        self.assertEqual(pag["Crédito"], 0.0)  # a venda de junho ficou fora
+        self.assertEqual(groups["Formas de pagamento"]["total"]["value"], 200.0)
+
+    def test_all_records_includes_everything(self):
+        report = build_report(
+            report_type="sales_summary", params={"all_sales": "1"}, today=TODAY
+        )
+        self.assertEqual(report["period_label"], "Todos os registros")
+        groups = {g["title"]: g for g in report["groups"]}
+        vendas = {r["label"]: r["value"] for r in groups["Vendas"]["rows"]}
+        self.assertEqual(vendas["Nº de vendas"], 3)  # inclui junho
+        pag = {r["label"]: r["value"] for r in groups["Formas de pagamento"]["rows"]}
+        self.assertEqual(pag["Crédito"], 999.0)  # 99900 centavos
+
+    def test_selection_drops_rows_and_empty_groups(self):
+        report = build_report(
+            report_type="sales_summary",
+            params={"col": ["total", "pay_credit"]},
+            today=TODAY,
+        )
+        # Grupo "Vendas" some (nenhuma informação selecionada).
+        self.assertEqual([g["title"] for g in report["groups"]],
+                         ["Valores", "Formas de pagamento"])
+        valores = report["groups"][0]
+        self.assertEqual([r["label"] for r in valores["rows"]], ["Total"])
+        self.assertIsNone(valores["total"])  # grupo Valores sem somatório
+        pag = report["groups"][1]
+        self.assertEqual([r["label"] for r in pag["rows"]], ["Crédito"])
+        self.assertEqual(pag["total"]["value"], 0.0)  # somatório do grupo pagamentos

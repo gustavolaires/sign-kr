@@ -41,7 +41,7 @@
             <label id="all-sales-wrap" class="mt-3 inline-flex items-center gap-2 text-sm text-gray-700" hidden>
                 <input id="all-sales" type="checkbox" name="all_sales" value="1"
                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-200">
-                Considerar todas as vendas (ignorar período)
+                Considerar todos os registros (ignorar período)
             </label>
         </section>
 
@@ -125,10 +125,10 @@
     }
 
     function syncPeriodInputs() {
-        // Desativa De/Até quando "todas as vendas" está marcado (rankings) ou
-        // quando o relatório não usa período.
+        // Desativa De/Até quando "todos os registros" está marcado ou quando o
+        // relatório não usa período.
         const meta = META[typeSelect.value] || {};
-        const off = !meta.period || (!!meta.cutoff && allSales.checked);
+        const off = !meta.period || allSales.checked;
         dateFrom.disabled = off;
         dateTo.disabled = off;
     }
@@ -156,8 +156,8 @@
         setBlock(cutoffBlock, !!meta.cutoff);
         cutoffValueLabel.textContent = cutoffLabel();
 
-        // "Todas as vendas" só faz sentido nos rankings (relatórios com corte).
-        const showAllSales = !!meta.period && !!meta.cutoff;
+        // "Todos os registros" vale para qualquer relatório com período.
+        const showAllSales = !!meta.period;
         allSalesWrap.hidden = !showAllSales;
         allSales.disabled = !showAllSales;
 
