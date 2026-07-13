@@ -22,6 +22,7 @@
             <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <tr>
                     <th class="px-4 py-3">Cód. barras</th>
+                    <th class="px-4 py-3">Cód.</th>
                     <th class="px-4 py-3">Produto</th>
                     <th class="px-4 py-3">Fabricante</th>
                     <th class="px-4 py-3">Disponível</th>
@@ -35,7 +36,8 @@
                 {% for item in cart_items %}
                     <tr data-id="{{ item.product.pk }}" class="hover:bg-gray-50">
                         <td class="px-4 py-3 text-gray-600">{{ item.product.barcode|default:"—" }}</td>
-                        <td class="px-4 py-3 font-medium">{% if item.product.manufacturer_code %}[{{ item.product.manufacturer_code }}] {% endif %}{{ item.product.name }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer_code|default:"—" }}</td>
+                        <td class="px-4 py-3 font-medium">{{ item.product.name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ item.product.manufacturer.name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ item.product.quantity }} {{ item.product.unit_type }}</td>
                         <td class="px-4 py-3">
@@ -61,7 +63,7 @@
             </tbody>
             <tfoot class="border-t border-gray-200 bg-gray-50">
                 <tr>
-                    <td colspan="6" class="px-4 py-3 text-right font-semibold">Total geral</td>
+                    <td colspan="7" class="px-4 py-3 text-right font-semibold">Total geral</td>
                     <td colspan="2" class="px-4 py-3 font-bold">
                         <span id="cart-grand-total">R$ {{ cart_total|floatformat:2 }}</span>
                     </td>
@@ -74,7 +76,7 @@
         <div class="mt-6 flex justify-end">
             <a href="{% url 'sign:checkout' %}"
                class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-blue-700">
-                Finalizar
+                Pagamento
                 <i class="fa-solid fa-arrow-right w-5"></i>
             </a>
         </div>

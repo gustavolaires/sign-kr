@@ -52,6 +52,7 @@
                     <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                         <tr>
                             <th class="px-4 py-3">Cód. barras</th>
+                            <th class="px-4 py-3">Cód.</th>
                             <th class="px-4 py-3">Produto</th>
                             <th class="px-4 py-3">Fabricante</th>
                             <th class="px-4 py-3">Qtd.</th>
@@ -63,7 +64,8 @@
                         {% for item in sale.items.all %}
                             <tr>
                                 <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.barcode|default:"—" }}</td>
-                                <td class="px-4 py-3 font-medium">{% if item.product_snapshot.manufacturer_code %}[{{ item.product_snapshot.manufacturer_code }}] {% endif %}{{ item.product_snapshot.name }}</td>
+                                <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.manufacturer_code|default:"—" }}</td>
+                                <td class="px-4 py-3 font-medium">{{ item.product_snapshot.name }}</td>
                                 <td class="px-4 py-3 text-gray-600">{{ item.product_snapshot.manufacturer_name }}</td>
                                 <td class="px-4 py-3 text-gray-600">{{ item.quantity }} {{ item.product_snapshot.unit_type }}</td>
                                 <td class="px-4 py-3 text-gray-600">R$ {{ item.unit_price|floatformat:2 }}</td>
