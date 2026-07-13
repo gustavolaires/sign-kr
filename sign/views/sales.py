@@ -10,6 +10,7 @@ from django.views.generic import DetailView, ListView
 from ..cart import COOKIE_NAME, Cart
 from ..forms import SaleForm
 from ..models import PaymentType, Sale
+from ..search import filter_unaccent
 from ..services import compute_quote_amounts, create_sale
 
 # Formatos de comprovante suportados (58mm térmico / A4).
@@ -211,7 +212,7 @@ class SaleListView(ListView):
         date_to = params.get("date_to", "").strip()
 
         if client:
-            qs = qs.filter(client__name__icontains=client)
+            qs = filter_unaccent(qs, "client__name", client)
         if date_from:
             qs = qs.filter(created_at__date__gte=date_from)
         if date_to:

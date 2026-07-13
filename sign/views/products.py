@@ -15,6 +15,7 @@ from django.views.generic import (
 
 from ..forms import ProductForm
 from ..models import Product
+from ..search import filter_unaccent
 
 
 class ProductListView(ListView):
@@ -62,11 +63,11 @@ class ProductListView(ListView):
         status = self._current_status()
 
         if name:
-            qs = qs.filter(name__icontains=name)
+            qs = filter_unaccent(qs, "name", name)
         if barcode:
             qs = qs.filter(barcode__icontains=barcode)
         if manufacturer:
-            qs = qs.filter(manufacturer__name__icontains=manufacturer)
+            qs = filter_unaccent(qs, "manufacturer__name", manufacturer)
         if manufacturer_code:
             qs = qs.filter(manufacturer_code__icontains=manufacturer_code)
         if status == "active":

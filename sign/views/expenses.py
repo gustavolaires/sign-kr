@@ -23,6 +23,7 @@ from ..forms import (
     InstallmentPaymentForm,
 )
 from ..models import Expense, ExpenseInstallment
+from ..search import filter_unaccent
 from ..services import create_expense, register_payment, reais_to_cents
 
 
@@ -50,7 +51,7 @@ class ExpenseListView(ListView):
         due_month = params.get("due_month", "").strip()
 
         if name:
-            qs = qs.filter(name__icontains=name)
+            qs = filter_unaccent(qs, "name", name)
         if recurrent in ("0", "1"):
             qs = qs.filter(recurrent=(recurrent == "1"))
 
