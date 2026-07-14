@@ -26,6 +26,7 @@ from ..models import (
     SaleItem,
     SalePayment,
 )
+from .dates import created_at_range
 from .money import _cents_to_reais, _parse_reais, reais_to_cents
 
 
@@ -350,7 +351,10 @@ def _report_best_products(params, today, period):
 
     items = SaleItem.objects.filter(product_snapshot__product_id__isnull=False)
     if not all_sales:
-        items = items.filter(sale__created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        items = items.filter(
+            sale__created_at__gte=created_from, sale__created_at__lt=created_to
+        )
     agg = items.values("product_snapshot__product_id").annotate(
         units=Sum("quantity")
     )
@@ -391,7 +395,10 @@ def _report_sales(params, today, period):
     all_sales = bool(_param(params, "all_sales"))
     sales = Sale.objects.select_related("client").prefetch_related("payments")
     if not all_sales:
-        sales = sales.filter(created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        sales = sales.filter(
+            created_at__gte=created_from, created_at__lt=created_to
+        )
     sales = sales.order_by("-created_at")
     records = [
         {
@@ -421,9 +428,16 @@ def _report_sales_summary(params, today, period):
     items = SaleItem.objects.all()
     payments = SalePayment.objects.all()
     if not all_sales:
-        sales = sales.filter(created_at__date__range=(start, end))
-        items = items.filter(sale__created_at__date__range=(start, end))
-        payments = payments.filter(sale__created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        sales = sales.filter(
+            created_at__gte=created_from, created_at__lt=created_to
+        )
+        items = items.filter(
+            sale__created_at__gte=created_from, sale__created_at__lt=created_to
+        )
+        payments = payments.filter(
+            sale__created_at__gte=created_from, sale__created_at__lt=created_to
+        )
 
     agg = sales.aggregate(
         count=Count("id"),
@@ -499,7 +513,10 @@ def _report_sales_by_day(params, today, period):
     all_sales = bool(_param(params, "all_sales"))
     sales = Sale.objects.all()
     if not all_sales:
-        sales = sales.filter(created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        sales = sales.filter(
+            created_at__gte=created_from, created_at__lt=created_to
+        )
     rows = (
         sales.annotate(day=TruncDate("created_at"))
         .values("day")
@@ -517,7 +534,10 @@ def _report_sales_by_month(params, today, period):
     all_sales = bool(_param(params, "all_sales"))
     sales = Sale.objects.all()
     if not all_sales:
-        sales = sales.filter(created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        sales = sales.filter(
+            created_at__gte=created_from, created_at__lt=created_to
+        )
     rows = (
         sales.annotate(m=TruncMonth("created_at"))
         .values("m")
@@ -555,7 +575,10 @@ def _report_best_clients(params, today, period):
 
     sales = Sale.objects.exclude(client__isnull=True)
     if not all_sales:
-        sales = sales.filter(created_at__date__range=(start, end))
+        created_from, created_to = created_at_range(start, end)
+        sales = sales.filter(
+            created_at__gte=created_from, created_at__lt=created_to
+        )
     agg = sales.values("client").annotate(total=Sum("total_cents"))
     if mode == "cut":
         try:

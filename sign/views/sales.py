@@ -5,13 +5,14 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.generic import DetailView, ListView
 
 from ..cart import COOKIE_NAME, Cart
 from ..forms import SaleForm
 from ..models import PaymentType, Sale
 from ..search import filter_unaccent
-from ..services import compute_quote_amounts, create_sale
+from ..services import compute_quote_amounts, create_sale, created_at_range
 
 # Formatos de comprovante suportados (58mm térmico / A4).
 RECEIPT_FORMATS = {"58mm", "a4"}
@@ -213,10 +214,14 @@ class SaleListView(ListView):
 
         if client:
             qs = filter_unaccent(qs, "client__name", client)
-        if date_from:
-            qs = qs.filter(created_at__date__gte=date_from)
-        if date_to:
-            qs = qs.filter(created_at__date__lte=date_to)
+        # Filtra por intervalo de datetime (usa o índice de created_at) em vez de
+        # created_at__date, que aplicaria DATE() por linha e ignoraria o índice.
+        parsed_from = parse_date(date_from)
+        parsed_to = parse_date(date_to)
+        if parsed_from:
+            qs = qs.filter(created_at__gte=created_at_range(parsed_from, parsed_from)[0])
+        if parsed_to:
+            qs = qs.filter(created_at__lt=created_at_range(parsed_to, parsed_to)[1])
         return qs.order_by("-id")
 
     def get_context_data(self, **kwargs):

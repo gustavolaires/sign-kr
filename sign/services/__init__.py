@@ -8,6 +8,7 @@ atributo ``services.<nome>``) continue funcionando como quando era um único mó
 """
 
 from .money import _cents_to_reais, _parse_reais, reais_to_cents
+from .dates import created_at_range
 from .dashboard import dashboard_metrics
 from .sales import compute_quote_amounts, create_sale
 from .expenses import cancel_payment, create_expense, register_payment
@@ -34,6 +35,8 @@ from .reports import (
 __all__ = [
     # money
     "reais_to_cents",
+    # dates
+    "created_at_range",
     # dashboard
     "dashboard_metrics",
     # sales

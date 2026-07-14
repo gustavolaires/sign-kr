@@ -20,6 +20,7 @@ from ..models import (
     SaleItem,
     SalePayment,
 )
+from .dates import created_at_range
 from .money import _cents_to_reais
 
 
@@ -46,6 +47,13 @@ def dashboard_metrics(*, company=None, today=None):
     month_start = today.replace(day=1)
     month_end = today.replace(day=days_in_month)
 
+    # Intervalos half-open de datetime por janela (dia/semana/mês). Filtrar por
+    # created_at__gte/__lt usa o índice de created_at; created_at__date aplicaria
+    # DATE() por linha (callback Python no SQLite) e ignoraria o índice.
+    today_from, today_to = created_at_range(today, today)
+    week_from, week_to = created_at_range(week_start, week_end)
+    month_from, month_to = created_at_range(month_start, month_end)
+
     # --- Vendas: contagem + faturamento (created_at é DateTimeField) ---
     sales = Sale.objects.all()
 
@@ -57,10 +65,14 @@ def dashboard_metrics(*, company=None, today=None):
         }
 
     sales_metrics = {
-        "today": sale_stats(sales.filter(created_at__date=today)),
-        "week": sale_stats(sales.filter(created_at__date__range=(week_start, week_end))),
+        "today": sale_stats(
+            sales.filter(created_at__gte=today_from, created_at__lt=today_to)
+        ),
+        "week": sale_stats(
+            sales.filter(created_at__gte=week_from, created_at__lt=week_to)
+        ),
         "month": sale_stats(
-            sales.filter(created_at__date__range=(month_start, month_end))
+            sales.filter(created_at__gte=month_from, created_at__lt=month_to)
         ),
         "total": sale_stats(sales),
     }
@@ -75,12 +87,14 @@ def dashboard_metrics(*, company=None, today=None):
         return qs.aggregate(u=Sum("quantity"))["u"] or 0
 
     units_metrics = {
-        "today": units_sold(items.filter(sale__created_at__date=today)),
+        "today": units_sold(
+            items.filter(sale__created_at__gte=today_from, sale__created_at__lt=today_to)
+        ),
         "week": units_sold(
-            items.filter(sale__created_at__date__range=(week_start, week_end))
+            items.filter(sale__created_at__gte=week_from, sale__created_at__lt=week_to)
         ),
         "month": units_sold(
-            items.filter(sale__created_at__date__range=(month_start, month_end))
+            items.filter(sale__created_at__gte=month_from, sale__created_at__lt=month_to)
         ),
         "total": units_sold(items),
     }
@@ -97,9 +111,11 @@ def dashboard_metrics(*, company=None, today=None):
         )
 
     distinct_metrics = {
-        "today": distinct_products(items.filter(sale__created_at__date=today)),
+        "today": distinct_products(
+            items.filter(sale__created_at__gte=today_from, sale__created_at__lt=today_to)
+        ),
         "week": distinct_products(
-            items.filter(sale__created_at__date__range=(week_start, week_end))
+            items.filter(sale__created_at__gte=week_from, sale__created_at__lt=week_to)
         ),
     }
 
@@ -118,14 +134,16 @@ def dashboard_metrics(*, company=None, today=None):
             if by_type.get(code, 0)
         ]
 
-    payments_today = payment_chart({"sale__created_at__date": today})
+    payments_today = payment_chart(
+        {"sale__created_at__gte": today_from, "sale__created_at__lt": today_to}
+    )
     payments_week = payment_chart(
-        {"sale__created_at__date__range": (week_start, week_end)}
+        {"sale__created_at__gte": week_from, "sale__created_at__lt": week_to}
     )
 
     # --- Faturamento da semana por dia (Seg→Dom), preenchendo dias vazios ---
     week_by_day = (
-        sales.filter(created_at__date__range=(week_start, week_end))
+        sales.filter(created_at__gte=week_from, created_at__lt=week_to)
         .annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(revenue=Sum("total_cents"))
@@ -136,7 +154,7 @@ def dashboard_metrics(*, company=None, today=None):
 
     # --- Faturamento do mês por dia (1→último dia), preenchendo dias vazios ---
     month_by_day = (
-        sales.filter(created_at__date__range=(month_start, month_end))
+        sales.filter(created_at__gte=month_from, created_at__lt=month_to)
         .annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(revenue=Sum("total_cents"))
@@ -168,11 +186,17 @@ def dashboard_metrics(*, company=None, today=None):
     # --- Produtos (estoque) ---
     # Estoque baixo/zerado consideram só produtos ativos e usam o estoque
     # mínimo de cada produto (o limite da empresa é apenas o default de cadastro).
-    active_products = Product.objects.filter(is_active=True)
-    total_products = Product.objects.count()
-    active_count = active_products.count()
-    low_stock = active_products.filter(quantity__lte=F("min_stock")).count()
-    zero_stock = active_products.filter(quantity=0).count()
+    # Uma única varredura de Product com contagens condicionais (era 4 queries).
+    counts = Product.objects.aggregate(
+        total=Count("id"),
+        active=Count("id", filter=Q(is_active=True)),
+        low=Count("id", filter=Q(is_active=True, quantity__lte=F("min_stock"))),
+        zero=Count("id", filter=Q(is_active=True, quantity=0)),
+    )
+    total_products = counts["total"]
+    active_count = counts["active"]
+    low_stock = counts["low"]
+    zero_stock = counts["zero"]
 
     def share(n, base):
         return round(n / base * 100, 1) if base else 0.0
