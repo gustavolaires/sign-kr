@@ -19,6 +19,8 @@ sys.path.insert(0, SPECPATH)
 # Templates/estáticos do pacote sign (inclui img/page_icon.ico) + estáticos coletados.
 datas = collect_data_files('sign')
 datas += [('staticfiles', 'staticfiles')]
+# Versão do app, acessível em _internal/ em runtime (ao lado de .env/db.sqlite3).
+datas += [('version.txt', '.')]
 
 # Código dinâmico do app (migrations, views, context_processors, templatetags).
 hiddenimports = collect_submodules('sign')
