@@ -74,6 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Ativa, por requisição, o fuso configurado na empresa (padrão UTC).
+    'sign.middleware.ActiveTimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'

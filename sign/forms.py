@@ -246,6 +246,7 @@ class CompanyForm(StyledModelForm):
             "low_stock_threshold",
             "price_multiplier",
             "rounding_type",
+            "timezone",
             "receipt_store_name",
             "receipt_product_code",
             "sales_show_barcode",

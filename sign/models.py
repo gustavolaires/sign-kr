@@ -1,5 +1,6 @@
 import hashlib
 import json
+from datetime import timedelta, timezone as dt_timezone
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -545,6 +546,50 @@ class ReceiptProductCode(models.TextChoices):
     NONE = "none", "Nenhum"
 
 
+class Timezone(models.TextChoices):
+    """Fuso horário de operação/exibição (offset fixo de UTC, sem horário de verão).
+
+    O valor é o offset no formato ``"±HH:MM"``; os dados continuam gravados em UTC
+    (``USE_TZ=True``). Onde o offset corresponde a uma região brasileira principal,
+    o rótulo a indica (o app é usado sobretudo no Brasil).
+    """
+
+    UTC_MINUS_12 = "-12:00", "UTC-12:00"
+    UTC_MINUS_11 = "-11:00", "UTC-11:00"
+    UTC_MINUS_10 = "-10:00", "UTC-10:00"
+    UTC_MINUS_09 = "-09:00", "UTC-09:00"
+    UTC_MINUS_08 = "-08:00", "UTC-08:00"
+    UTC_MINUS_07 = "-07:00", "UTC-07:00"
+    UTC_MINUS_06 = "-06:00", "UTC-06:00"
+    UTC_MINUS_05 = "-05:00", "UTC-05:00 (Rio Branco)"
+    UTC_MINUS_04 = "-04:00", "UTC-04:00 (Manaus)"
+    UTC_MINUS_03 = "-03:00", "UTC-03:00 (Brasília)"
+    UTC_MINUS_02 = "-02:00", "UTC-02:00 (Fernando de Noronha)"
+    UTC_MINUS_01 = "-01:00", "UTC-01:00"
+    UTC = "+00:00", "UTC±00:00"
+    UTC_PLUS_01 = "+01:00", "UTC+01:00"
+    UTC_PLUS_02 = "+02:00", "UTC+02:00"
+    UTC_PLUS_03 = "+03:00", "UTC+03:00"
+    UTC_PLUS_04 = "+04:00", "UTC+04:00"
+    UTC_PLUS_05 = "+05:00", "UTC+05:00"
+    UTC_PLUS_06 = "+06:00", "UTC+06:00"
+    UTC_PLUS_07 = "+07:00", "UTC+07:00"
+    UTC_PLUS_08 = "+08:00", "UTC+08:00"
+    UTC_PLUS_09 = "+09:00", "UTC+09:00"
+    UTC_PLUS_10 = "+10:00", "UTC+10:00"
+    UTC_PLUS_11 = "+11:00", "UTC+11:00"
+    UTC_PLUS_12 = "+12:00", "UTC+12:00"
+    UTC_PLUS_13 = "+13:00", "UTC+13:00"
+    UTC_PLUS_14 = "+14:00", "UTC+14:00"
+
+
+def offset_to_tzinfo(value):
+    """Converte ``"±HH:MM"`` (valor de :class:`Timezone`) num tzinfo de offset fixo."""
+    sign = -1 if value.startswith("-") else 1
+    hours, minutes = value.lstrip("+-").split(":")
+    return dt_timezone(sign * timedelta(hours=int(hours), minutes=int(minutes)))
+
+
 class Company(models.Model):
     """Dados da empresa exibidos na UI e nos comprovantes (não fiscais).
 
@@ -593,6 +638,12 @@ class Company(models.Model):
         max_length=8,
         choices=RoundingType.choices,
         default=RoundingType.CENT,
+    )
+    timezone = models.CharField(
+        "Fuso horário",
+        max_length=6,
+        choices=Timezone.choices,
+        default=Timezone.UTC,
     )
 
     # Personalização da exibição (comprovantes/orçamentos e telas de venda).
@@ -648,6 +699,11 @@ class Company(models.Model):
     def daily_sales_goal(self):
         """Meta de venda diária em reais (somente leitura)."""
         return self.daily_sales_goal_cents / 100
+
+    @property
+    def tzinfo(self):
+        """tzinfo (offset fixo) do fuso configurado, para ``timezone.activate()``."""
+        return offset_to_tzinfo(self.timezone)
 
     def save(self, *args, **kwargs):
         """Força o singleton: a empresa é sempre a linha ``pk=1``."""

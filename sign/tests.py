@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.test import TestCase
 from django.utils import timezone
@@ -17,6 +17,7 @@ from .models import (
     Sale,
     SaleItem,
     SalePayment,
+    offset_to_tzinfo,
 )
 from .services import build_report, dashboard_metrics
 
@@ -541,3 +542,33 @@ class ReportSalesSummaryTests(TestCase):
         pag = report["groups"][1]
         self.assertEqual([r["label"] for r in pag["rows"]], ["Crédito"])
         self.assertEqual(pag["total"]["value"], 0.0)  # somatório do grupo pagamentos
+
+
+class TimezoneConfigTests(TestCase):
+    """Fuso configurável: conversão do offset e janelas seguindo a tz ativa."""
+
+    def test_tzinfo_from_offset(self):
+        self.assertEqual(
+            Company(timezone="-03:00").tzinfo.utcoffset(None), timedelta(hours=-3)
+        )
+        self.assertEqual(
+            Company(timezone="+00:00").tzinfo.utcoffset(None), timedelta(0)
+        )
+
+    def test_sale_window_follows_active_timezone(self):
+        # Venda às 08/07 01:00 UTC == 07/07 22:00 em UTC-03:00.
+        sale = Sale.objects.create(total_cents=10000)
+        Sale.objects.filter(pk=sale.pk).update(
+            created_at=datetime(2026, 7, 8, 1, 0, tzinfo=offset_to_tzinfo("+00:00"))
+        )
+        company = Company.get_solo()
+        with timezone.override(offset_to_tzinfo("-03:00")):
+            # Sob UTC-03:00, a venda cai no dia local 07/07 (não em 08/07).
+            m7 = dashboard_metrics(company=company, today=date(2026, 7, 7))
+            m8 = dashboard_metrics(company=company, today=date(2026, 7, 8))
+        self.assertEqual(m7["sales"]["today"]["count"], 1)
+        self.assertEqual(m8["sales"]["today"]["count"], 0)
+        # Sob UTC, a mesma venda cai em 08/07.
+        with timezone.override(offset_to_tzinfo("+00:00")):
+            m8_utc = dashboard_metrics(company=company, today=date(2026, 7, 8))
+        self.assertEqual(m8_utc["sales"]["today"]["count"], 1)
