@@ -33,6 +33,8 @@ urlpatterns = [
     path("sales/", views.SaleListView.as_view(), name="sale_list"),
     path("sales/<int:pk>/", views.SaleDetailView.as_view(), name="sale_detail"),
     path("sales/<int:pk>/receipt/", views.sale_receipt, name="sale_receipt"),
+    path("sales/<int:pk>/declare/", views.sale_declare, name="sale_declare"),
+    path("sales/<int:pk>/undeclare/", views.sale_undeclare, name="sale_undeclare"),
     # Clientes
     path("clients/", views.ClientListView.as_view(), name="client_list"),
     path("clients/new/", views.ClientCreateView.as_view(), name="client_create"),

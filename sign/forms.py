@@ -495,6 +495,32 @@ class InstallmentPaymentForm(forms.Form):
             field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()
 
 
+class SaleDeclarationForm(forms.Form):
+    """Data/hora em que a venda foi declarada.
+
+    O ``datetime-local`` envia ``2026-10-03T14:35``; ``DateTimeField.to_python``
+    tenta ``parse_datetime`` (ISO, com o ``T``) antes dos ``DATETIME_INPUT_FORMATS``,
+    então não é preciso declarar ``input_formats``. A conversão de/para o fuso usa
+    o fuso ativado por ``ActiveTimezoneMiddleware`` (o configurado na empresa).
+    """
+
+    declared_at = forms.DateTimeField(
+        label="Data e hora da declaração",
+        # ``id`` fixo: é por ele que o ``sales.js`` reseta o campo ao abrir o modal.
+        widget=forms.DateTimeInput(
+            attrs={"type": "datetime-local", "id": "sale-declare-input"},
+            format="%Y-%m-%dT%H:%M",
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Form simples (não-ModelForm): aplica a estilização Tailwind manualmente.
+        for field in self.fields.values():
+            existing = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = f"{existing} {INPUT_CLASSES}".strip()
+
+
 class CsvImportForm(forms.Form):
     """Upload do CSV de carga inicial (produtos/fabricantes)."""
 

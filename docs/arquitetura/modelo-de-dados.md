@@ -38,6 +38,9 @@ Legenda: `1──*` = um-para-muitos; a anotação é a `on_delete` da FK (do la
 - **`Sale`** — **documento imutável** da venda. Totais gravados em centavos
   (`subtotal_cents`/`discount_cents`/`change_cents`/`total_cents`), não
   recalculados. FK `client` **PROTECT** e **opcional** (`NULL` = venda avulsa).
+  `declared_at` (anulável) registra **quando a venda foi declarada** — ato posterior
+  ao checkout, com data/hora informada pelo usuário; *declarada* ≡ ter `declared_at`
+  (ver [`../recursos/vendas.md`](../recursos/vendas.md)).
 - **`ProductSnapshot`** — **réplica reaproveitável** dos dados descritivos do
   produto no momento da venda (ver [Padrão snapshot](#padrão-snapshot)).
 - **`SaleItem`** — linha da venda. FK `sale` **CASCADE**, `product_snapshot`
@@ -125,5 +128,7 @@ Histórico em `sign/migrations/`:
 | `0005_expense_expenseinstallment` | despesas (pai/filho) |
 | `0011_inboundinvoice_invoiceduplicate_invoiceitem` | NF de entrada (pai/filhos) |
 | `0014_inboundinvoice_processed_inboundinvoice_processed_at` | estado de processamento da NF |
+| `0019_company_timezone` | fuso horário configurável na empresa |
+| `0020_sale_declared_at` | declaração da venda (data/hora) |
 
 Gerar/aplicar com o Python do venv (ver `convencoes.md`).

@@ -22,7 +22,7 @@ de alterar o checkout ou os relatórios de vendas.
   `subtotal_cents`, `has_perc_discount`, `perc_discount`, `discount_cents`,
   `discount_obs` (observações do desconto, texto livre — preenchido pela
   calculadora, ver UI), `change_cents` (troco), `total_cents`, `obs`,
-  `created_at`. `client` é
+  `created_at`, `declared_at` (ver "Declaração da venda"). `client` é
   `PROTECT` + opcional (venda avulsa = `NULL`). `Meta.ordering = ["-id"]`;
   `created_at` tem `db_index=True` (relatórios). Propriedades em reais:
   `subtotal`, `discount`, `change`, `total`.
@@ -106,6 +106,56 @@ POST, chama o serviço e, em sucesso, **limpa o cookie do carrinho**
   offline, sem CDN — ver
   [`../arquitetura/convencoes.md`](../arquitetura/convencoes.md#tailwind-css-build)):
   `./tailwindcss.exe -i sign/static/sign/css/input.css -o sign/static/sign/css/output.css --minify`.
+
+## Declaração da venda
+
+Ato **posterior ao checkout**: registra **quando** a venda foi declarada, com data e
+hora informadas manualmente. Vive **só** nas telas de listagem e de detalhe — não
+entra no carrinho, no checkout, no comprovante, no orçamento, no dashboard nem nos
+relatórios.
+
+- **Modelo**: um único campo anulável `Sale.declared_at`
+  (`DateTimeField("Declarada em", null=True, blank=True)`, migração
+  `0020_sale_declared_at`). *Declarada* ≡ ter `declared_at`. Deliberadamente **não**
+  replica o par `processed` + `processed_at` de `InboundInvoice`: lá o booleano
+  existe porque o timestamp é automático; aqui a data é escolhida pelo usuário e é a
+  própria informação.
+- **Form**: `SaleDeclarationForm` (`sign/forms.py`) — `forms.Form` simples (não
+  `StyledModelForm`, então aplica `INPUT_CLASSES` à mão, igual a
+  `InstallmentPaymentForm`) com um `DateTimeField` renderizado como
+  `type="datetime-local"` e `id` fixo `sale-declare-input`. Não precisa de
+  `input_formats`: `DateTimeField.to_python` tenta `parse_datetime` (ISO, com o `T`)
+  antes dos `DATETIME_INPUT_FORMATS`.
+- **Fuso**: ida e volta pelo fuso ativado por `ActiveTimezoneMiddleware` — o valor
+  pré-preenchido sai de `timezone.localtime()` **no servidor** (e não de `new Date()`
+  no browser, que ignoraria `Company.timezone`), e `from_current_timezone` /
+  `to_current_timezone` cuidam da conversão no form.
+- **Views e rotas** (`sign/views/sales.py`): `sale_declare` e `sale_undeclare`,
+  ambas POST-only (GET redireciona ao detalhe) em `sales/<pk>/declare/` e
+  `sales/<pk>/undeclare/`. São escritas de **um único campo**, sem regra de negócio
+  nem cálculo de centavos, então ficam na view — mesmo padrão de
+  `ProductToggleActiveView`; **não** há serviço. O helper `_back_to` usa o `next`
+  postado pelo modal (validado com `url_has_allowed_host_and_scheme`) para a listagem
+  voltar com filtros e página preservados, caindo no detalhe quando ausente ou externo.
+  `_declare_form()` monta o form pré-preenchido para as duas telas.
+- **UI** — ícones do FontAwesome local:
+  - **Listagem** (`sales/list.html`): coluna **"Declarada"** entre *Data* e *Cliente*,
+    com `fa-plug-circle-check` verde quando declarada e **vazia** quando não. Na coluna
+    de ações, `fa-comment-dollar` azul abre o modal; **venda já declarada não mostra
+    ação** (não há desfazer na listagem).
+  - **Detalhe** (`sales/detail.html`): célula **"Declarada"** ao lado de *Data* (ícone
+    + data/hora; só o título quando não declarada — por isso o `<dl>` de "Dados gerais"
+    é `sm:grid-cols-3`). Na barra de ações, botão azul **"Declarar"**
+    (`fa-comment-dollar`) ou botão vermelho **"Desfazer declaração"**
+    (`fa-comment-slash`), que abre um modal de confirmação local à tela.
+  - **Modal** `sign/templates/sign/sales/_declare_modal.html`, incluído pelas duas
+    telas: um `<form method="post">` comum (**sem AJAX**) — reload + `messages.success`,
+    como `installment_pay`. Um único modal serve todas as linhas da tabela: o `action`
+    é preenchido pelo `sales.js` a partir do `data-url` do botão clicado.
+  - **`sales.js`** (`sign/static/sign/js/`): só mecânica de modal, no padrão vanilla de
+    `cart.js` (abrir/fechar com `hidden`/`flex`, backdrop, `Escape`, cancelar).
+- **Testes**: `SaleDeclarationTests` em `sign/tests.py` cobre gravação, fuso, `next`
+  (incluindo rejeição de host externo), GET inócuo, desfazer e a troca dos ícones/botões.
 
 ## Comprovante (não fiscal)
 

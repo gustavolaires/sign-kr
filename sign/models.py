@@ -216,6 +216,9 @@ class Sale(models.Model):
     total_cents = models.PositiveIntegerField("Total (centavos)", default=0)
     obs = models.TextField("Observações", blank=True)
     created_at = models.DateTimeField("Criada em", auto_now_add=True, db_index=True)
+    # Declaração: ato posterior ao checkout, com data/hora informada pelo usuário.
+    # Um campo anulável basta — "declarada" é simplesmente ter ``declared_at``.
+    declared_at = models.DateTimeField("Declarada em", null=True, blank=True)
 
     class Meta:
         verbose_name = "Venda"

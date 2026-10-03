@@ -4,12 +4,14 @@ from types import SimpleNamespace
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import DetailView, ListView
 
 from ..cart import COOKIE_NAME, Cart
-from ..forms import SaleForm
+from ..forms import SaleDeclarationForm, SaleForm
 from ..models import PaymentType, Sale
 from ..search import filter_unaccent
 from ..services import compute_quote_amounts, create_sale, created_at_range
@@ -234,6 +236,7 @@ class SaleListView(ListView):
         }
         ctx["filters"] = filters
         ctx["has_filters"] = any(filters.values())
+        ctx["declare_form"] = _declare_form()
         return ctx
 
 
@@ -249,6 +252,66 @@ class SaleDetailView(DetailView):
             .select_related("client")
             .prefetch_related("items__product_snapshot", "payments")
         )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["declare_form"] = _declare_form()
+        return ctx
+
+
+def _declare_form():
+    """Formulário do modal de declaração, pré-preenchido com o "agora" local.
+
+    O valor sai do servidor (e não de ``new Date()`` no browser) para respeitar o
+    fuso configurado em ``Company.timezone``, ativado por ``ActiveTimezoneMiddleware``.
+    """
+    return SaleDeclarationForm(initial={"declared_at": timezone.localtime()})
+
+
+def _back_to(request, sale):
+    """URL de retorno das ações de declaração.
+
+    Usa o ``next`` postado pelo modal — assim a listagem volta com os filtros e a
+    página preservados — e cai no detalhe da venda se ele faltar ou for externo.
+    """
+    nxt = request.POST.get("next", "")
+    if nxt and url_has_allowed_host_and_scheme(
+        nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return nxt
+    return reverse("sign:sale_detail", kwargs={"pk": sale.pk})
+
+
+def sale_declare(request, pk):
+    """Registra a declaração da venda com a data/hora informada no modal.
+
+    Escrita de um único campo, sem regra de negócio nem cálculo de centavos, então
+    fica na view (mesmo padrão de ``ProductToggleActiveView``).
+    """
+    sale = get_object_or_404(Sale, pk=pk)
+    if request.method != "POST":
+        return redirect("sign:sale_detail", pk=sale.pk)
+
+    form = SaleDeclarationForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Informe uma data e hora válidas para a declaração.")
+    else:
+        sale.declared_at = form.cleaned_data["declared_at"]
+        sale.save(update_fields=["declared_at"])
+        messages.success(request, f"Venda #{sale.pk} declarada com sucesso.")
+    return redirect(_back_to(request, sale))
+
+
+def sale_undeclare(request, pk):
+    """Apaga os dados de declaração da venda (confirmado no modal do detalhe)."""
+    sale = get_object_or_404(Sale, pk=pk)
+    if request.method != "POST":
+        return redirect("sign:sale_detail", pk=sale.pk)
+
+    sale.declared_at = None
+    sale.save(update_fields=["declared_at"])
+    messages.success(request, "Declaração desfeita com sucesso.")
+    return redirect(_back_to(request, sale))
 
 
 def sale_receipt(request, pk):

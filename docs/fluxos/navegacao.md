@@ -101,7 +101,8 @@ Produtos     products/ · products/new/ · products/<pk>/ · .../edit/ · .../de
 Fabricantes  manufacturers/ · .../new/ · .../<pk>/edit/ · .../<pk>/delete/
 Clientes     clients/ · clients/new/ · clients/<pk>/ · .../edit/ · .../delete/
 Carrinho     cart/ · cart/add/ · cart/update/ · cart/remove/     (add/update/remove = AJAX POST)
-Vendas       sales/checkout/ · sales/ · sales/<pk>/
+Vendas       sales/checkout/ · sales/ · sales/<pk>/ · sales/<pk>/receipt/
+             sales/<pk>/declare/ · sales/<pk>/undeclare/     (POST, modal na lista/detalhe)
 Despesas     expenses/ · expenses/new/ · expenses/<pk>/ · .../edit/ · .../delete/
 Parcelas     expenses/<expense_pk>/installments/new/
              installments/<pk>/edit/ · .../delete/ · .../pay/

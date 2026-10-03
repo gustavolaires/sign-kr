@@ -1,4 +1,5 @@
 {% extends "sign/base.html" %}
+{% load static %}
 
 {% block title %}Venda #{{ sale.pk }} · SIGN-KR{% endblock %}
 
@@ -7,6 +8,18 @@
     <div class="mb-4 flex items-center justify-between">
         <h1 class="text-2xl font-bold">Venda #{{ sale.pk }}</h1>
         <div class="flex items-center gap-2">
+            {% if sale.declared_at %}
+                <button type="button" class="sale-undeclare-btn rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
+                    <i class="fa-solid fa-comment-slash w-5"></i>
+                    Desfazer declaração
+                </button>
+            {% else %}
+                <button type="button" class="sale-declare-btn rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                        data-url="{% url 'sign:sale_declare' sale.pk %}" data-sale="#{{ sale.pk }}">
+                    <i class="fa-solid fa-comment-dollar w-5"></i>
+                    Declarar
+                </button>
+            {% endif %}
             <a href="{% url 'sign:sale_receipt' sale.pk %}"
                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                 <i class="fa-solid fa-scroll w-5"></i>
@@ -24,7 +37,7 @@
         {# Dados gerais #}
         <section>
             <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700">Dados gerais</h2>
-            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-2">
+            <dl class="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 sm:grid-cols-3">
                 <div class="bg-white px-4 py-3">
                     <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Cliente</dt>
                     <dd class="mt-1 text-gray-900">
@@ -35,8 +48,14 @@
                     <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Data</dt>
                     <dd class="mt-1 text-gray-900">{{ sale.created_at|date:"d/m/Y H:i" }}</dd>
                 </div>
+                <div class="bg-white px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Declarada</dt>
+                    <dd class="mt-1 text-gray-900">
+                        {% if sale.declared_at %}<i class="fa-solid fa-plug-circle-check text-green-600"></i> {{ sale.declared_at|date:"d/m/Y H:i" }}{% endif %}
+                    </dd>
+                </div>
                 {% if sale.obs %}
-                    <div class="bg-white px-4 py-3 sm:col-span-2">
+                    <div class="bg-white px-4 py-3 sm:col-span-3">
                         <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Observações</dt>
                         <dd class="mt-1 whitespace-pre-line text-gray-900">{{ sale.obs }}</dd>
                     </div>
@@ -130,4 +149,34 @@
         </div>
     </div>
 </div>
+
+{% include "sign/sales/_declare_modal.html" %}
+
+{% comment %}Confirmação de desfazer declaração — só existe nesta tela.{% endcomment %}
+<div id="sale-undeclare-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white px-8 py-6 shadow-xl">
+        <h2 class="text-lg font-bold">Desfazer declaração</h2>
+        <p class="mt-2 text-sm text-gray-700">
+            Tem certeza que deseja desfazer a declaração da venda #{{ sale.pk }}?
+            A data e a hora registradas serão removidas.
+        </p>
+
+        <form method="post" action="{% url 'sign:sale_undeclare' sale.pk %}" class="mt-6 flex justify-end gap-3">
+            {% csrf_token %}
+            <button type="submit"
+                    class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-red-700">
+                <i class="fa-solid fa-comment-slash"></i>
+                Sim, desfazer
+            </button>
+            <button type="button" id="sale-undeclare-cancel"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'sign/js/sales.js' %}" defer></script>
 {% endblock %}

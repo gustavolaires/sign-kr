@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from django.core.exceptions import ValidationError
@@ -572,3 +573,97 @@ class TimezoneConfigTests(TestCase):
         with timezone.override(offset_to_tzinfo("+00:00")):
             m8_utc = dashboard_metrics(company=company, today=date(2026, 7, 8))
         self.assertEqual(m8_utc["sales"]["today"]["count"], 1)
+
+
+class SaleDeclarationTests(TestCase):
+    """Declaração da venda: gravação, fuso, retorno e desfazer."""
+
+    def setUp(self):
+        self.sale = Sale.objects.create(total_cents=15000)
+        self.declare_url = reverse("sign:sale_declare", args=[self.sale.pk])
+        self.undeclare_url = reverse("sign:sale_undeclare", args=[self.sale.pk])
+        self.detail_url = reverse("sign:sale_detail", args=[self.sale.pk])
+
+    def _set_company_timezone(self, value):
+        company = Company.get_solo()
+        company.timezone = value
+        company.save()
+
+    def test_declare_stores_datetime_in_company_timezone(self):
+        # O datetime-local envia hora local; sob UTC-03:00, 07/07 22:00 local
+        # equivale a 08/07 01:00 UTC.
+        self._set_company_timezone("-03:00")
+        response = self.client.post(
+            self.declare_url, {"declared_at": "2026-07-07T22:00"}
+        )
+        self.assertRedirects(response, self.detail_url)
+        self.sale.refresh_from_db()
+        self.assertEqual(
+            self.sale.declared_at,
+            datetime(2026, 7, 8, 1, 0, tzinfo=offset_to_tzinfo("+00:00")),
+        )
+
+    def test_declare_returns_to_list_preserving_filters(self):
+        nxt = reverse("sign:sale_list") + "?client=ana&page=2"
+        response = self.client.post(
+            self.declare_url, {"declared_at": "2026-07-07T22:00", "next": nxt}
+        )
+        self.assertEqual(response["Location"], nxt)
+
+    def test_declare_ignores_external_next(self):
+        response = self.client.post(
+            self.declare_url,
+            {"declared_at": "2026-07-07T22:00", "next": "https://evil.example/x"},
+        )
+        self.assertRedirects(response, self.detail_url)
+
+    def test_declare_with_invalid_datetime_keeps_sale_undeclared(self):
+        response = self.client.post(self.declare_url, {"declared_at": "nada"})
+        self.assertRedirects(response, self.detail_url)
+        self.sale.refresh_from_db()
+        self.assertIsNone(self.sale.declared_at)
+
+    def test_get_does_not_change_anything(self):
+        self.client.get(self.declare_url)
+        self.client.get(self.undeclare_url)
+        self.sale.refresh_from_db()
+        self.assertIsNone(self.sale.declared_at)
+
+    def test_undeclare_clears_the_datetime(self):
+        self.sale.declared_at = timezone.now()
+        self.sale.save(update_fields=["declared_at"])
+        response = self.client.post(self.undeclare_url)
+        self.assertRedirects(response, self.detail_url)
+        self.sale.refresh_from_db()
+        self.assertIsNone(self.sale.declared_at)
+
+    def test_list_shows_action_only_while_undeclared(self):
+        list_url = reverse("sign:sale_list")
+        html = self.client.get(list_url).content.decode()
+        self.assertIn("fa-comment-dollar", html)
+        self.assertNotIn("fa-plug-circle-check", html)
+
+        self.client.post(self.declare_url, {"declared_at": "2026-07-07T22:00"})
+        html = self.client.get(list_url).content.decode()
+        self.assertIn("fa-plug-circle-check", html)
+        self.assertNotIn("fa-comment-dollar", html)
+
+    def test_detail_swaps_declare_and_undeclare_buttons(self):
+        html = self.client.get(self.detail_url).content.decode()
+        self.assertIn("sale-declare-btn", html)
+        self.assertNotIn("sale-undeclare-btn", html)
+
+        self.client.post(self.declare_url, {"declared_at": "2026-07-07T22:00"})
+        html = self.client.get(self.detail_url).content.decode()
+        self.assertIn("sale-undeclare-btn", html)
+        self.assertNotIn("sale-declare-btn", html)
+
+    def test_declare_modal_is_prefilled_with_local_now(self):
+        self._set_company_timezone("-03:00")
+        html = self.client.get(self.detail_url).content.decode()
+        expected = timezone.localtime(
+            timezone.now(), offset_to_tzinfo("-03:00")
+        ).strftime("%Y-%m-%dT%H:%M")
+        self.assertIn('id="sale-declare-input"', html)
+        self.assertIn(f'value="{expected}"', html)
+

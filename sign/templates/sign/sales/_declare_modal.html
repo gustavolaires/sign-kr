@@ -1,0 +1,41 @@
+{% comment %}
+Modal de declaração da venda, compartilhado pela listagem e pelo detalhe.
+Um único modal serve todas as linhas da tabela: o `action` do form é preenchido
+pelo `sales.js` a partir do `data-url` do botão `.sale-declare-btn` clicado.
+O envio é um POST de formulário comum (sem AJAX), com reload e mensagem.
+{% endcomment %}
+<div id="sale-declare-modal"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-lg rounded-xl bg-white px-8 py-6 shadow-xl">
+        <h2 class="text-lg font-bold">Declarar venda</h2>
+        <p class="mt-1 text-sm text-gray-500">
+            Informe a data e a hora da declaração da venda
+            <span id="sale-declare-label" class="font-medium text-gray-700"></span>.
+        </p>
+
+        <form id="sale-declare-form" method="post" action="" class="mt-4">
+            {% csrf_token %}
+            {# Volta para a tela de origem preservando filtros e paginação. #}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+            <label for="{{ declare_form.declared_at.id_for_label }}"
+                   class="mb-1 block text-sm font-medium text-gray-700">
+                {{ declare_form.declared_at.label }}
+            </label>
+            {{ declare_form.declared_at }}
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="submit"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                    <i class="fa-solid fa-check"></i>
+                    Confirmar
+                </button>
+                <button type="button" id="sale-declare-cancel"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark"></i>
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

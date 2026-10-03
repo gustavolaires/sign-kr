@@ -70,8 +70,10 @@ from .sales import (
     SaleDetailView,
     SaleListView,
     checkout,
+    sale_declare,
     sale_quote,
     sale_receipt,
+    sale_undeclare,
 )
 from .suppliers import (
     RepresentativeCreateView,
@@ -133,8 +135,10 @@ __all__ = [
     "report_index",
     "report_render",
     "checkout",
+    "sale_declare",
     "sale_quote",
     "sale_receipt",
+    "sale_undeclare",
     "SaleDetailView",
     "SaleListView",
     "RepresentativeCreateView",

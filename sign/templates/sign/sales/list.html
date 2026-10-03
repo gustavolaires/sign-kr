@@ -1,4 +1,5 @@
 {% extends "sign/base.html" %}
+{% load static %}
 
 {% block title %}Vendas · SIGN-KR{% endblock %}
 
@@ -48,31 +49,44 @@
     <table class="min-w-full divide-y divide-gray-200 text-sm">
         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
             <tr>
-                <th class="px-4 py-3">Venda</th>
-                <th class="px-4 py-3">Data</th>
-                <th class="px-4 py-3">Cliente</th>
-                <th class="px-4 py-3">Desconto</th>
-                <th class="px-4 py-3">Total</th>
-                <th class="px-4 py-3 text-right">Ações</th>
+                {% comment %}
+                `w-px` + `whitespace-nowrap` encolhe a coluna para a largura exata do
+                conteúdo (truque padrão de tabela com layout automático): Venda, Data,
+                Declarada e Ações nunca sobram espaço. Toda a folga restante é
+                repartida entre Cliente, Desconto e Total na proporção 3:1:1.
+                {% endcomment %}
+                <th class="w-px whitespace-nowrap px-4 py-3">Venda</th>
+                <th class="w-px whitespace-nowrap px-4 py-3">Data</th>
+                <th class="w-px whitespace-nowrap px-4 py-3 text-center">Declarada</th>
+                <th class="w-3/5 px-4 py-3">Cliente</th>
+                <th class="w-1/5 whitespace-nowrap px-4 py-3">Desconto</th>
+                <th class="w-1/5 whitespace-nowrap px-4 py-3">Total</th>
+                <th class="w-px whitespace-nowrap px-4 py-3 text-right">Ações</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
             {% for sale in sales %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-medium">#{{ sale.pk }}</td>
-                    <td class="px-4 py-3 text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-gray-600">{{ sale.created_at|date:"d/m/Y H:i" }}</td>
+                    <td class="px-4 py-3 text-center">{% if sale.declared_at %}<i class="fa-solid fa-plug-circle-check fa-lg text-green-600" title="Declarada em {{ sale.declared_at|date:'d/m/Y H:i' }}" aria-label="Declarada"></i>{% endif %}</td>
                     <td class="px-4 py-3 text-gray-600">{{ sale.client.name|default:"Venda avulsa" }}{% if sale.client.service_provider %} <i class="fa-solid fa-wrench text-gray-500" title="Prestador de serviço" aria-label="Prestador de serviço"></i>{% endif %}</td>
                     <td class="px-4 py-3 text-gray-600">R$ {{ sale.discount|floatformat:2 }}</td>
                     <td class="px-4 py-3 font-medium text-gray-700">R$ {{ sale.total|floatformat:2 }}</td>
                     <td class="px-4 py-3">
                         <div class="flex justify-end gap-4 text-base">
+                            {% if not sale.declared_at %}
+                                <button type="button" class="sale-declare-btn text-blue-600 hover:text-blue-800"
+                                        data-url="{% url 'sign:sale_declare' sale.pk %}" data-sale="#{{ sale.pk }}"
+                                        title="Declarar venda" aria-label="Declarar venda"><i class="fa-solid fa-comment-dollar fa-lg"></i></button>
+                            {% endif %}
                             <a href="{% url 'sign:sale_detail' sale.pk %}" class="text-blue-600 hover:text-blue-800" title="Ver" aria-label="Ver"><i class="fa-solid fa-eye fa-lg"></i></a>
                         </div>
                     </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
                         {% if has_filters %}Nenhuma venda encontrada.{% else %}Nenhuma venda registrada.{% endif %}
                     </td>
                 </tr>
@@ -80,6 +94,8 @@
         </tbody>
     </table>
 </div>
+
+{% include "sign/sales/_declare_modal.html" %}
 
 {% if is_paginated %}
     {% with qs="client="|add:filters.client|add:"&date_from="|add:filters.date_from|add:"&date_to="|add:filters.date_to %}
@@ -106,4 +122,5 @@
         });
     })();
 </script>
+<script src="{% static 'sign/js/sales.js' %}" defer></script>
 {% endblock %}
