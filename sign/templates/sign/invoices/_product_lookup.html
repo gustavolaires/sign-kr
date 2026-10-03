@@ -1,0 +1,49 @@
+{% comment %}
+Modal de escolha da lupa de busca de produto (campo "Código" de um item de NF).
+Compartilhado pela tela de nova NF e pela de produto da NF; a mecânica está em
+sign/static/sign/js/product-lookup.js. Só aparece quando a busca devolve mais de
+um produto — com um resultado o preenchimento é direto.
+{% endcomment %}
+<div id="product-lookup-modal"
+     data-lookup-url="{% url 'sign:invoice_item_product_lookup' %}"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-xl">
+        <div class="border-b border-gray-200 px-8 py-5">
+            <h2 class="text-lg font-bold">Produtos encontrados</h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Mais de um produto cadastrado usa o código
+                <span id="product-lookup-code" class="font-medium text-gray-700"></span>.
+                Escolha qual deve preencher a descrição e o tipo de unidade.
+            </p>
+        </div>
+
+        <div id="product-lookup-options" class="grow space-y-2 overflow-y-auto px-8 py-5"></div>
+
+        <div class="flex justify-end gap-3 border-t border-gray-200 px-8 py-5">
+            <button id="product-lookup-confirm" type="button"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+                <i class="fa-solid fa-check"></i>
+                Escolher
+            </button>
+            <button id="product-lookup-cancel" type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <i class="fa-solid fa-xmark"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+
+<template id="product-lookup-option-template">
+    <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:bg-gray-50">
+        <input type="radio" name="product_lookup_choice" class="mt-1 shrink-0">
+        <span class="grow">
+            <span class="flex items-center gap-2">
+                <span data-role="option-name" class="text-sm font-medium text-gray-900"></span>
+                <span data-role="option-inactive"
+                      class="hidden rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Inativo</span>
+            </span>
+            <span data-role="option-details" class="mt-0.5 block text-xs text-gray-500"></span>
+        </span>
+    </label>
+</template>

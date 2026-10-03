@@ -73,6 +73,7 @@ urlpatterns = [
     path("duplicates/<int:pk>/edit/", views.InvoiceDuplicateUpdateView.as_view(), name="invoice_duplicate_update"),
     path("duplicates/<int:pk>/delete/", views.InvoiceDuplicateDeleteView.as_view(), name="invoice_duplicate_delete"),
     # Produtos da nota fiscal
+    path("invoices/items/product-lookup/", views.invoice_item_product_lookup, name="invoice_item_product_lookup"),
     path("invoices/<int:invoice_pk>/items/new/", views.InvoiceItemCreateView.as_view(), name="invoice_item_create"),
     path("items/<int:pk>/edit/", views.InvoiceItemUpdateView.as_view(), name="invoice_item_update"),
     path("items/<int:pk>/delete/", views.InvoiceItemDeleteView.as_view(), name="invoice_item_delete"),

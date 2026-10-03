@@ -186,6 +186,31 @@ def format_nf_search(tokens):
     return "".join(f"{tok};" for tok in tokens)
 
 
+def search_products_by_nf_code(code, *, supplier=None):
+    """Produtos cujo ``nf_search_id`` contém ``code`` como **token exato**.
+
+    É a busca canônica de "qual produto cadastrado corresponde a este código da
+    nota" — usada pela lupa das telas de item de NF e pelo
+    ``suggest_product_match`` do processamento.
+
+    Quando o ``supplier`` é mono-marca (``multiple_brands=False`` com
+    ``manufacturer`` definido), restringe ao fabricante dele; caso contrário
+    busca no catálogo inteiro. Produtos inativos **são** incluídos (uma NF pode
+    estar justamente reabastecendo um produto desativado por falta de estoque).
+    Retorna uma lista ordenada por nome (``Product.Meta.ordering``).
+    """
+    code = (code or "").strip()
+    if not code:
+        return []
+    queryset = Product.objects.filter(nf_search_id__icontains=code).select_related(
+        "manufacturer"
+    )
+    if supplier and not supplier.multiple_brands and supplier.manufacturer_id:
+        queryset = queryset.filter(manufacturer_id=supplier.manufacturer_id)
+    # O __icontains acima é só um pré-filtro: o token tem de bater inteiro.
+    return [p for p in queryset if code in nf_search_tokens(p.nf_search_id)]
+
+
 def suggest_product_match(item):
     """Sugere o ``Product`` já cadastrado para um ``InvoiceItem``.
 
@@ -196,11 +221,11 @@ def suggest_product_match(item):
     code = (item.code or "").strip()
     description = (item.description or "").strip()
 
-    # 1) nf_search_id — token exato (o __icontains é só um pré-filtro).
-    if code:
-        for product in Product.objects.filter(nf_search_id__icontains=code):
-            if code in nf_search_tokens(product.nf_search_id):
-                return product, "nf_search_id"
+    # 1) nf_search_id — token exato (sem filtro de fornecedor: a decisão final é
+    #    do usuário na tela de processamento).
+    matches = search_products_by_nf_code(code)
+    if matches:
+        return matches[0], "nf_search_id"
 
     # 2) Descrição do item igual ao nome ou à descrição de um produto
     #    (igualdade case-insensitive).

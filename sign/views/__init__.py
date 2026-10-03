@@ -45,6 +45,7 @@ from .invoices import (
     InvoiceItemCreateView,
     InvoiceItemDeleteView,
     InvoiceItemUpdateView,
+    invoice_item_product_lookup,
     invoice_process,
 )
 from .manufacturers import (
@@ -116,6 +117,7 @@ __all__ = [
     "InvoiceItemCreateView",
     "InvoiceItemDeleteView",
     "InvoiceItemUpdateView",
+    "invoice_item_product_lookup",
     "ManufacturerCreateView",
     "ManufacturerDeleteView",
     "ManufacturerListView",

@@ -662,6 +662,15 @@ class InvoiceItemForm(StyledModelForm):
             (value, value if value else label)
             for value, label in self.fields["unit_type"].choices
         ]
+        # Marcadores para a lupa de busca de produto (product-lookup.js); evita
+        # depender dos ids gerados pelo Django e mantém o partial _field.html
+        # genérico para descrição e tipo de unidade.
+        for field_name, role in (
+            ("code", "lookup-code"),
+            ("description", "lookup-description"),
+            ("unit_type", "lookup-unit-type"),
+        ):
+            self.fields[field_name].widget.attrs["data-role"] = role
         if self.instance and self.instance.pk:
             for reais_field, cents_field in self.MONEY_FIELDS.items():
                 self.fields[reais_field].initial = (

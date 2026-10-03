@@ -10,5 +10,7 @@
   --color-header-hover: #59657a;
 }
 
-/* Fontes de classes a serem escaneadas (templates do app sign). */
+/* Fontes de classes a serem escaneadas (templates e scripts do app sign). */
 @source "../../../templates/**/*.html";
+/* O JS aplica classes dinamicamente (ex.: feedback da lupa de produto). */
+@source "../js/*.js";

@@ -18,6 +18,7 @@ from .invoices import (
     nf_search_tokens,
     process_inbound_invoice,
     round_price_cents,
+    search_products_by_nf_code,
     suggest_product_match,
     suggested_price_cents,
 )
@@ -49,6 +50,7 @@ __all__ = [
     # invoices
     "create_inbound_invoice",
     "process_inbound_invoice",
+    "search_products_by_nf_code",
     "suggest_product_match",
     "suggested_price_cents",
     "round_price_cents",

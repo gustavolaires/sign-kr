@@ -1,4 +1,5 @@
 {% extends "sign/base.html" %}
+{% load static %}
 
 {% block title %}{% if form.instance.pk %}Editar produto{% else %}Novo produto{% endif %} · SIGN-KR{% endblock %}
 
@@ -18,7 +19,7 @@
 </div>
 
 <div class="flex justify-center rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-    <div class="grow max-w-2xl">
+    <div class="grow max-w-2xl" data-lookup-scope data-supplier-id="{{ invoice.supplier_id }}">
         <form method="post" class="space-y-5">
             {% csrf_token %}
 
@@ -28,7 +29,23 @@
                 </div>
             {% endif %}
 
-            {% include "sign/clients/_field.html" with field=form.code %}
+            <div>
+                <label for="{{ form.code.id_for_label }}" class="mb-1 block text-sm font-medium text-gray-700">
+                    {{ form.code.label }}{% if form.code.field.required %} <span class="text-red-500">*</span>{% endif %}
+                </label>
+                <div class="flex gap-2">
+                    {{ form.code }}
+                    <button type="button" data-role="lookup-search" title="Buscar produto cadastrado"
+                            aria-label="Buscar produto cadastrado"
+                            class="hidden shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-600 shadow-sm hover:bg-gray-50">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <p data-role="lookup-feedback" class="mt-1 hidden text-xs"></p>
+                {% for error in form.code.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
             {% include "sign/clients/_field.html" with field=form.description %}
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 {% include "sign/clients/_field.html" with field=form.unit_type %}
@@ -55,4 +72,7 @@
 </div>
 </div>
 </div>
+
+{% include "sign/invoices/_product_lookup.html" %}
+<script src="{% static 'sign/js/product-lookup.js' %}" defer></script>
 {% endblock %}

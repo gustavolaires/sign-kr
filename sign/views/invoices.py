@@ -3,9 +3,11 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_GET
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -29,6 +31,7 @@ from ..services import (
     create_inbound_invoice,
     process_inbound_invoice,
     reais_to_cents,
+    search_products_by_nf_code,
     suggest_product_match,
     suggested_price_cents,
 )
@@ -499,3 +502,39 @@ class InvoiceItemDeleteView(DeleteView):
     def form_valid(self, form):
         messages.success(self.request, "Produto excluído com sucesso.")
         return super().form_valid(form)
+
+
+@require_GET
+def invoice_item_product_lookup(request):
+    """Busca produtos cadastrados pelo código digitado num item de NF (AJAX).
+
+    Usada pela lupa das telas de criação da NF e de produto da NF. Leitura pura
+    (por isso ``require_GET``, sem CSRF); o contrato JSON segue o do carrinho:
+    ``{"ok": True, "results": [...]}`` ou ``{"ok": False, "error": "..."}``.
+    """
+    code = (request.GET.get("code") or "").strip()
+    if not code:
+        return JsonResponse(
+            {"ok": False, "error": "Informe o código do produto."}, status=400
+        )
+
+    # Fornecedor ausente ou inexistente degrada para a busca ampla: na tela de
+    # nova NF ele pode ainda não ter sido escolhido.
+    supplier = None
+    supplier_id = request.GET.get("supplier")
+    if supplier_id:
+        supplier = Supplier.objects.filter(pk=supplier_id).first()
+
+    results = [
+        {
+            "id": product.pk,
+            "name": product.name,
+            "unit_type": product.unit_type,
+            "manufacturer": product.manufacturer.name,
+            "manufacturer_code": product.manufacturer_code,
+            "barcode": product.barcode,
+            "is_active": product.is_active,
+        }
+        for product in search_products_by_nf_code(code, supplier=supplier)
+    ]
+    return JsonResponse({"ok": True, "results": results})

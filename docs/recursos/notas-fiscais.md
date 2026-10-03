@@ -48,9 +48,18 @@ seção [Processamento](#processamento).
   `real_2`=200, `real_5`=500, `real_10`=1000). É a lógica canônica de precificação.
 - **`suggested_price_cents(item, company)`** — `item.unit_price_cents *
   company.price_multiplier`, arredondado por `round_price_cents`.
+- **`search_products_by_nf_code(code, *, supplier=None)`** — busca canônica
+  "qual produto cadastrado corresponde a este código da nota": retorna a **lista**
+  de `Product` cujo `nf_search_id` contém `code` como **token exato** (o
+  `__icontains` é só pré-filtro), ordenada por nome. Com `supplier` **mono-marca**
+  (`multiple_brands=False` + `manufacturer`), restringe ao fabricante dele;
+  multi-marcas busca no catálogo inteiro. **Inclui inativos** (a NF pode estar
+  reabastecendo um produto desativado). Usada pela lupa das telas de item e pelo
+  `suggest_product_match`.
 - **`suggest_product_match(item)`** — sugere o `Product` já cadastrado
-  (retorna `(product, motivo)`), tentando em ordem: (1) token exato em
-  `nf_search_id`; (2) `name`/`description` do produto == descrição do item
+  (retorna `(product, motivo)`), tentando em ordem: (1) primeiro resultado de
+  `search_products_by_nf_code` (token exato em `nf_search_id`, sem filtro de
+  fornecedor); (2) `name`/`description` do produto == descrição do item
   (igualdade case-insensitive). `(None, None)` se nada casar. Obs.: no primeiro
   processamento o `nf_search_id` costuma estar vazio (é preenchido justamente ao
   processar/associar), então as associações iniciais tendem a vir por descrição
@@ -73,7 +82,9 @@ Todos herdam `StyledModelForm`; valores em reais são `DecimalField` **virtuais*
   `unit_price`, `total`, `icms_base`, `icms`, `ipi` (R$). **Obrigatórios**: `code`,
   `description`, `unit_type`, `quantity` e `unit_price`; `total`/impostos são
   opcionais. `unit_type` exibe a sigla (mesmo ajuste do `ProductForm`); `quantity`
-  com `step="any"`.
+  com `step="any"`. `code`/`description`/`unit_type` recebem `data-role`
+  (`lookup-code`/`lookup-description`/`lookup-unit-type`) para a **lupa** achá-los
+  sem depender dos ids do Django — ver [Lupa de busca de produto](#lupa-de-busca-de-produto).
 
 ## Views (`sign/views/invoices.py`) e URLs (`sign/urls.py`)
 
@@ -92,6 +103,7 @@ CBVs genéricas + `SuccessMessageMixin`. Paths em inglês; **todos os `name` con
 | `invoice_duplicate_create` | `invoices/<invoice_pk>/duplicates/new/` | `InvoiceDuplicateCreateView` |
 | `invoice_duplicate_update` | `duplicates/<pk>/edit/` | `InvoiceDuplicateUpdateView` |
 | `invoice_duplicate_delete` | `duplicates/<pk>/delete/` | `InvoiceDuplicateDeleteView` |
+| `invoice_item_product_lookup` | `invoices/items/product-lookup/` | `invoice_item_product_lookup` (JSON, `@require_GET`; lupa de busca de produto) |
 | `invoice_item_create` | `invoices/<invoice_pk>/items/new/` | `InvoiceItemCreateView` |
 | `invoice_item_update` | `items/<pk>/edit/` | `InvoiceItemUpdateView` |
 | `invoice_item_delete` | `items/<pk>/delete/` | `InvoiceItemDeleteView` |
@@ -131,6 +143,52 @@ CBVs genéricas + `SuccessMessageMixin`. Paths em inglês; **todos os `name` con
   repetidores (adicionar/remover linha); os inputs paralelos são
   `dup_due_date/dup_value` e
   `item_code/item_description/item_unit_type/item_quantity/item_unit_price/item_total/item_icms_base/item_icms/item_ipi`.
+- **`_product_lookup.html`**: partial com o modal da **lupa** (escolha entre
+  vários produtos) + `<template>` de opção. Incluído pelo `form.html` (só na
+  criação, **fora** do `<form>` para os radios não irem no POST) e pelo
+  `items/form.html` (criação **e** edição). Comportamento em
+  `sign/static/sign/js/product-lookup.js`.
+
+## Lupa de busca de produto
+
+Nas telas **Nova nota fiscal** (linhas de produto inline) e **Novo/Editar
+produto da nota**, um botão de **lupa** (`fa-magnifying-glass`) aparece ao lado
+do campo **Código** assim que algo é digitado nele. Ao clicar, busca o código
+entre os produtos já cadastrados e **pré-carrega Descrição e Tipo de unidade** —
+antecipando, no lançamento, o casamento que o [Processamento](#processamento)
+faria depois. Isso evita descrições divergentes que fariam o item cair como
+"Produto novo" e duplicar o cadastro.
+
+| Resultado | Comportamento |
+|---|---|
+| 1 produto | Preenche direto; aviso verde com o nome do produto. |
+| 2+ produtos | Abre o modal `_product_lookup.html` com **Escolher** / **Cancelar**. |
+| 0 produtos | Aviso âmbar: nenhum produto com o código; pode ser produto novo. |
+
+- **Critério**: só `Product.nf_search_id`, **token exato** — o mesmo do
+  `suggest_product_match`. Basta esse campo porque `ProductForm.save` e a
+  [carga CSV](carga-inicial.md) já copiam `barcode` e `manufacturer_code` para
+  dentro dele, e o processamento anexa o código da nota.
+- **Fornecedor**: restringe ao fabricante só quando o fornecedor é **mono-marca**
+  (`multiple_brands=False` com `manufacturer`). O id vem do `<select>`
+  `#id_supplier` na tela de nova NF e do `data-supplier-id` (da própria nota) na
+  tela de item.
+- **Inativos** aparecem com badge **Inativo** — a NF pode estar reabastecendo um
+  produto desativado por falta de estoque.
+- **Preenchimento**: `description ← product.name` (inverso do que
+  `process_inbound_invoice` faz ao criar produto) e `unit_type ← product.unit_type`.
+- **Backend**: rota `invoice_item_product_lookup` →
+  `search_products_by_nf_code`. É `@require_GET` (leitura pura, sem CSRF),
+  com o contrato JSON do carrinho (`{"ok": ..., "results"|"error"}`).
+- **Frontend**: `product-lookup.js` (IIFE ES5, como `cart.js`). Trabalha por
+  **delegação** sobre elementos `[data-lookup-scope]`, então serve igual às
+  linhas clonadas do `<template>` da NF e à página isolada do item; dentro do
+  escopo localiza os campos pelos `data-role` (`lookup-code`,
+  `lookup-description`, `lookup-unit-type`, `lookup-feedback`, `lookup-search`).
+  O modal usa a mecânica `hidden`↔`flex` + backdrop + `Esc` do carrinho.
+
+> O `input.css` tem `@source "../js/*.js"` porque o JS aplica classes de cor do
+> feedback dinamicamente — sem isso o Tailwind não as geraria.
 
 ## Menu
 
@@ -155,13 +213,19 @@ Item **NF Entrada** (`fa-solid fa-dolly`) na seção **Financeiro** do `base.htm
 2. Menu **Comercial → NF Entrada → Nova nota fiscal**: criar com fornecedor,
    datas e valores (em reais), **adicionando 2 faturas e 2 produtos inline**
    (conferir os valores no detalhe; linhas sem número/código são ignoradas).
-3. Detalhe → adicionar 3ª fatura e 3º produto (páginas separadas), editar um e
-   excluir outro de cada.
-4. Editar a NF (só cabeçalho) → volta ao detalhe.
-5. Excluir a NF → faturas e produtos somem (CASCADE).
-6. Tentar excluir o **Fornecedor** vinculado → mensagem PT-BR de bloqueio
+3. **Lupa**: pôr um código conhecido no campo *IDs de busca para NF* de dois
+   produtos de fabricantes diferentes. Na linha de produto da NF, digitar o
+   código → a lupa aparece → clicar abre o modal; *Escolher* preenche Descrição
+   e Tipo de unidade, *Cancelar*/`Esc`/clique no fundo não alteram nada. Com
+   fornecedor **mono-marca** sobra um só produto e o preenchimento é direto.
+   Código inexistente → aviso de produto novo.
+4. Detalhe → adicionar 3ª fatura e 3º produto (páginas separadas), editar um e
+   excluir outro de cada (a lupa também funciona aqui).
+5. Editar a NF (só cabeçalho) → volta ao detalhe.
+6. Excluir a NF → faturas e produtos somem (CASCADE).
+7. Tentar excluir o **Fornecedor** vinculado → mensagem PT-BR de bloqueio
    (`ProtectedError`), sem quebrar.
-7. Detalhe → **Processar** → conferir sugestões, confirmar; no detalhe conferir o
+8. Detalhe → **Processar** → conferir sugestões, confirmar; no detalhe conferir o
    badge "Processada" e que Editar/Deletar e o CRUD de itens/faturas sumiram.
    Conferir no estoque/preços dos produtos e nas despesas geradas.
 
